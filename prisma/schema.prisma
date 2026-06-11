@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String            @id @default(cuid())
+  name          String?
+  email         String            @unique
+  emailVerified DateTime?
+  image         String?
+  coins         Float             @default(200.0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  accounts      Account[]
+  sessions      Session[]
+  websites      Website[]
+  transactions  CoinTransaction[]
+  fixes         AiFix[]
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model Website {
+  id         String   @id @default(cuid())
+  url        String
+  name       String?
+  userId     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  githubPat  String?
+  githubRepo String?
+
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analyses Analysis[]
+  fixes    AiFix[]
+
+  @@unique([userId, url])
+}
+
+model Analysis {
+  id           String   @id @default(cuid())
+  websiteId    String
+  status       String   @default("pending") // pending | running | completed | failed
+  overallScore Int?
+  startedAt    DateTime @default(now())
+  completedAt  DateTime?
+  errorMessage String?
+
+  website Website          @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+  results AnalysisResult[]
+}
+
+model AnalysisResult {
+  id              String   @id @default(cuid())
+  analysisId      String
+  module          String   // technical | onpage | content | schema | images | sitemap | geo | sxo | performance
+  status          String   @default("pending")
+  score           Int?
+  data            Json?
+  issues          Json?
+  executionTimeMs Int?
+  createdAt       DateTime @default(now())
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, module])
+}
+
+model CoinTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Float
+  description String
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AiFix {
+  id            String   @id @default(cuid())
+  userId        String
+  websiteId     String
+  issueId       String
+  issueTitle    String
+  filePath      String
+  prUrl         String?
+  prNumber      Int?
+  status        String   @default("completed") // pending | completed | failed
+  commitMessage String?
+  explanation   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  website Website @relation(fields: [websiteId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([websiteId])
+}
