@@ -3,9 +3,9 @@ import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SEOBoostr — AI-Powered SEO Analysis Dashboard",
+  title: "SEOBoostr — 10-Module Parallel SEO Audit in Seconds",
   description:
-    "Analyze your website's SEO health across 9 dimensions: technical, on-page, content, schema, images, sitemap, AI visibility, UX, and performance.",
+    "Run a free, instant SEO audit across 10 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, AI visibility, and more. One URL. One scored report.",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
@@ -28,7 +28,7 @@ export default function RootLayout({
         />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
         <link rel="icon" href="/logo.png" type="image/png" />

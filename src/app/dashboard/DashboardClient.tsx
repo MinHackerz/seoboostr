@@ -516,11 +516,28 @@ export function DashboardClient({ user }: { user: User }) {
   // Fetch initial websites and load initial/last-selected target on mount
   useEffect(() => {
     const loadInitialWebsite = async () => {
-      const storedUrl = localStorage.getItem(`last_website_${user.email}`);
-      const targetUrl = storedUrl || (user.email === "demo@seoboostr.io" ? "https://rasid.in" : "");
+      const landingScannedUrl = localStorage.getItem("seoboostr_last_scanned_url");
+      let targetUrl = landingScannedUrl || localStorage.getItem(`last_website_${user.email}`);
+      
+      if (!targetUrl && user.email === "demo@seoboostr.io") {
+        targetUrl = "https://rasid.in";
+      }
+
+      if (landingScannedUrl) {
+        localStorage.removeItem("seoboostr_last_scanned_url");
+      }
 
       if (targetUrl) {
+        // Ensure proper protocol
+        if (!/^https?:\/\//i.test(targetUrl)) {
+          targetUrl = "https://" + targetUrl;
+        }
         setUrl(targetUrl);
+      }
+
+      if (!targetUrl) {
+        setIsAnalyzing(false);
+        return;
       }
 
       setIsAnalyzing(true);
@@ -532,14 +549,17 @@ export function DashboardClient({ user }: { user: User }) {
 
           const matchingSite = list.find(
             (w: any) =>
-              w.url.toLowerCase() === targetUrl.toLowerCase() ||
-              w.url.toLowerCase().includes(targetUrl.toLowerCase())
+              w.url.toLowerCase() === targetUrl!.toLowerCase() ||
+              w.url.toLowerCase().includes(targetUrl!.toLowerCase()) ||
+              targetUrl!.toLowerCase().includes(w.url.toLowerCase())
           );
 
           if (matchingSite) {
             setSavedWebsiteId(matchingSite.id);
             setGithubRepo(matchingSite.githubRepo || "");
             setGithubPat(matchingSite.githubPat || "");
+            localStorage.setItem(`last_website_${user.email}`, matchingSite.url);
+
             if (matchingSite.analyses && matchingSite.analyses.length > 0) {
               const latestAnalysis = matchingSite.analyses[0];
               if (latestAnalysis.status === "completed") {
@@ -552,37 +572,71 @@ export function DashboardClient({ user }: { user: User }) {
                 }
               }
             }
-          }
-        }
+          } else {
+            // Auto-register and run crawl for the scanned URL if not registered
+            const localResultsStr = localStorage.getItem("seoboostr_last_scanned_results");
+            let initialResults = null;
+            if (localResultsStr) {
+              try {
+                initialResults = JSON.parse(localResultsStr);
+              } catch (e) {
+                console.error("Failed to parse local scan results:", e);
+              }
+            }
 
-        // Auto-run crawl for demo mode if no completed audit is present
-        if (user.email === "demo@seoboostr.io" && targetUrl === "https://rasid.in") {
-          const saveRes = await fetch("/api/websites", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ url: "https://rasid.in" }),
-          });
-
-          if (saveRes.ok) {
-            const website = await saveRes.json();
-            setSavedWebsiteId(website.id);
-            setGithubRepo(website.githubRepo || "");
-            setGithubPat(website.githubPat || "");
-            localStorage.setItem(`last_website_${user.email}`, website.url);
-
-            const analyzeRes = await fetch("/api/analyze", {
+            const saveRes = await fetch("/api/websites", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ websiteId: website.id }),
+              body: JSON.stringify({ url: targetUrl, initialResults }),
             });
 
-            if (analyzeRes.ok) {
-              const result = await analyzeRes.json();
-              setAnalysis(result);
-              fetchWebsites();
-            } else {
-              const errResult = await analyzeRes.json();
-              setError(errResult.error || "Analysis failed");
+            if (saveRes.ok) {
+              const website = await saveRes.json();
+              setSavedWebsiteId(website.id);
+              setGithubRepo(website.githubRepo || "");
+              setGithubPat(website.githubPat || "");
+              localStorage.setItem(`last_website_${user.email}`, website.url);
+
+              if (initialResults) {
+                localStorage.removeItem("seoboostr_last_scanned_results");
+                const updatedListRes = await fetch("/api/websites");
+                if (updatedListRes.ok) {
+                  const newList = await updatedListRes.json();
+                  setWebsites(newList);
+                  const matchingSite = newList.find((w: any) => w.id === website.id);
+                  if (matchingSite && matchingSite.analyses && matchingSite.analyses.length > 0) {
+                    const latestAnalysis = matchingSite.analyses[0];
+                    const resultsRes = await fetch(`/api/results/${latestAnalysis.id}`);
+                    if (resultsRes.ok) {
+                      const fullAnalysis = await resultsRes.json();
+                      setAnalysis(fullAnalysis);
+                      setIsAnalyzing(false);
+                      return;
+                    }
+                  }
+                }
+              }
+
+              const analyzeRes = await fetch("/api/analyze", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ websiteId: website.id }),
+              });
+
+              if (analyzeRes.ok) {
+                const result = await analyzeRes.json();
+                setAnalysis(result);
+                // Refresh list
+                const updatedListRes = await fetch("/api/websites");
+                if (updatedListRes.ok) {
+                  setWebsites(await updatedListRes.json());
+                }
+                setIsAnalyzing(false);
+                return;
+              } else {
+                const errResult = await analyzeRes.json();
+                setError(errResult.error || "Analysis failed");
+              }
             }
           }
         }
@@ -765,7 +819,7 @@ export function DashboardClient({ user }: { user: User }) {
               )}
             </button>
             <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={() => signOut({ callbackUrl: "/" })}
               className="flex items-center gap-1.5 px-2 py-1.5 sm:px-3 border border-border rounded-lg text-xs font-semibold text-muted-foreground hover:text-danger hover:border-danger/30 hover:bg-danger/5 transition-all cursor-pointer"
             >
               <HugeiconsIcon icon={Logout01Icon} size={14} />
@@ -1694,27 +1748,13 @@ function OverviewTab({
             {fixableForSeverity.length > 0 ? (
               hasGithubLinked ? (
                 <button
-                  onClick={() => onFixAllIssues(activeSeverityTab)}
-                  disabled={isFixingAll}
-                  className={`group flex items-center gap-2 px-4 py-2 bg-gradient-to-r ${severityBtnGradient[activeSeverityTab] ?? "from-slate-600 to-slate-700"} text-white text-xs font-extrabold rounded-xl shadow-md hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-100 transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:scale-100 select-none border border-white/10`}
+                  disabled={true}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400 text-xs font-bold border border-slate-200 rounded-xl cursor-not-allowed select-none"
                 >
-                  {isFixingAll ? (
-                    <>
-                      <svg className="animate-spin w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      <span>Fixing... please wait</span>
-                    </>
-                  ) : (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
-                        className="w-3.5 h-3.5 shrink-0 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-125">
-                        <path d="M11.644 1.706a1.05 1.05 0 0 1 1.78 0l2.03 4.3a1.05 1.05 0 0 0 .78.78l4.3 2.03a1.05 1.05 0 0 1 0 1.78l-4.3 2.03a1.05 1.05 0 0 0-.78.78l-2.03 4.3a1.05 1.05 0 0 1-1.78 0l-2.03-4.3a1.05 1.05 0 0 0-.78-.78L4.656 12.63a1.05 1.05 0 0 1 0-1.78l4.3-2.03a1.05 1.05 0 0 0 .78-.78l2.03-4.3Zm5.63 12.18a.5.5 0 0 1 .84 0l.96 2.04a.5.5 0 0 0 .36.36l2.04.96a.5.5 0 0 1 0 .84l-2.04.96a.5.5 0 0 0-.36.36l-.96 2.04a.5.5 0 0 1-.84 0l-.96-2.04a.5.5 0 0 0-.36-.36l-2.04-.96a.5.5 0 0 1 0-.84l2.04-.96a.5.5 0 0 0 .36-.36l.96-2.04Z" />
-                      </svg>
-                      <span>Fix All {activeSeverityTab.charAt(0).toUpperCase() + activeSeverityTab.slice(1)} ({fixableForSeverity.length}) &bull; {fixAllCost.toFixed(1)} cr</span>
-                    </>
-                  )}
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 shrink-0 text-slate-400">
+                    <path d="M11.644 1.706a1.05 1.05 0 0 1 1.78 0l2.03 4.3a1.05 1.05 0 0 0 .78.78l4.3 2.03a1.05 1.05 0 0 1 0 1.78l-4.3 2.03a1.05 1.05 0 0 0-.78.78l-2.03 4.3a1.05 1.05 0 0 1-1.78 0l-2.03-4.3a1.05 1.05 0 0 0-.78-.78L4.656 12.63a1.05 1.05 0 0 1 0-1.78l4.3-2.03a1.05 1.05 0 0 0 .78-.78l2.03-4.3Zm5.63 12.18a.5.5 0 0 1 .84 0l.96 2.04a.5.5 0 0 0 .36.36l2.04.96a.5.5 0 0 1 0 .84l-2.04.96a.5.5 0 0 0-.36.36l-.96 2.04a.5.5 0 0 1-.84 0l-.96-2.04a.5.5 0 0 0-.36-.36l-2.04-.96a.5.5 0 0 1 0-.84l2.04-.96a.5.5 0 0 0 .36-.36l.96-2.04Z" />
+                  </svg>
+                  <span>Fix All (Coming Soon)</span>
                 </button>
               ) : (
                 <button

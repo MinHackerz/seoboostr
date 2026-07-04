@@ -199,40 +199,15 @@ export function IssueCard({
                 {/* Primary action button — morphs through all fix states */}
                 {hasGithubLinked ? (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!isCompleted && !isFixing && !isFixingInBackground) onFixIssue(issue);
-                    }}
-                    disabled={isFixing || isFixingInBackground || isCompleted}
-                    className={`w-full flex items-center justify-center gap-2 h-9 px-4 rounded-lg text-[11px] font-semibold tracking-wide transition-all duration-200 border select-none ${
-                      isCompleted
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200 cursor-default"
-                        : isFixing || isFixingInBackground
-                        ? "bg-indigo-500 text-white border-indigo-600 cursor-not-allowed opacity-80"
-                        : "bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white border-indigo-700 shadow-sm hover:shadow-md hover:shadow-indigo-500/25 hover:-translate-y-px active:translate-y-0 cursor-pointer"
-                    }`}
+                    disabled={true}
+                    className="w-full flex items-center justify-center gap-2 h-9 px-4 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed select-none"
                   >
-                    {isFixing || isFixingInBackground ? (
-                      <svg className="animate-spin w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                    ) : (
-                      <HugeiconsIcon
-                        icon={isCompleted ? CheckmarkCircle02Icon : GitPullRequestIcon}
-                        size={13}
-                        className="shrink-0"
-                      />
-                    )}
-                    <span>
-                      {isFixing
-                        ? "Fixing…"
-                        : isFixingInBackground
-                        ? "Fixing in Background"
-                        : isCompleted
-                        ? "Fix Applied"
-                        : "Fix with AI"}
-                    </span>
+                    <HugeiconsIcon
+                      icon={GitPullRequestIcon}
+                      size={13}
+                      className="shrink-0 text-slate-400"
+                    />
+                    <span>AI Fix: Coming Soon</span>
                   </button>
                 ) : (
                   <button

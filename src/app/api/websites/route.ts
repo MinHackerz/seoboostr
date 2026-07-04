@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { url, name } = body;
+  const { url, name, initialResults } = body;
 
   if (!url) {
     return Response.json({ error: "URL is required" }, { status: 400 });
@@ -78,6 +78,48 @@ export async function POST(request: NextRequest) {
         userId: session.user.id,
       },
     });
+
+    // Save initialResults if provided, and no analysis exists
+    if (Array.isArray(initialResults) && initialResults.length > 0) {
+      const existingAnalysisCount = await prisma.analysis.count({
+        where: { websiteId: website.id },
+      });
+
+      if (existingAnalysisCount === 0) {
+        console.log(`[POST /api/websites] Saving ${initialResults.length} initial results for ${normalizedUrl}`);
+        
+        const validScores = initialResults
+          .filter((res: any) => typeof res.score === "number" && res.score > 0)
+          .map((res: any) => res.score);
+        
+        const overallScore = validScores.length > 0
+          ? Math.round(validScores.reduce((a: number, b: number) => a + b, 0) / validScores.length)
+          : 70;
+
+        const analysis = await prisma.analysis.create({
+          data: {
+            websiteId: website.id,
+            status: "completed",
+            overallScore,
+            completedAt: new Date(),
+          },
+        });
+
+        for (const item of initialResults) {
+          const dbModule = item.moduleId === "ai" ? "geo" : item.moduleId;
+          await prisma.analysisResult.create({
+            data: {
+              analysisId: analysis.id,
+              module: dbModule,
+              status: "completed",
+              score: item.score,
+              issues: item.issuesList || [],
+              data: { finding: item.finding },
+            },
+          });
+        }
+      }
+    }
 
     return Response.json(website, { status: 201 });
   } catch (error) {
