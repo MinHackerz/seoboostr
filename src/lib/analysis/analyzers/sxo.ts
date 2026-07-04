@@ -1,4 +1,4 @@
-import type { Analyzer, ModuleResult, Issue, ParsedPage, FetchResult } from "../types";
+import type { Analyzer, ModuleResult, Issue, ParsedPage } from "../types";
 
 function classifyPageType(page: ParsedPage): string {
   const url = page.url.toLowerCase();
@@ -18,7 +18,7 @@ function classifyPageType(page: ParsedPage): string {
 
 export const sxoAnalyzer: Analyzer = {
   name: "sxo",
-  async analyze(page: ParsedPage, fetchResult: FetchResult): Promise<ModuleResult> {
+  async analyze(page: ParsedPage): Promise<ModuleResult> {
     const startTime = Date.now();
 
     // Bypass for sign in, sign up, login, register, and other auth-related pages

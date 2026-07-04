@@ -6,7 +6,7 @@ import { ScoreGauge } from "@/components/ScoreGauge";
 import { IssueList } from "@/components/IssueCard";
 import { GithubSettingsModal } from "@/components/GithubSettingsModal";
 import { ProfileModal } from "@/components/ProfileModal";
-import type { ModuleResult, Issue } from "@/lib/analysis/types";
+import type { ModuleResult } from "@/lib/analysis/types";
 import { PageSpeedTab } from "@/components/PageSpeedTab";
 import { WebsiteDropdown } from "@/components/WebsiteDropdown";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -18,18 +18,15 @@ import {
   Tag01Icon,
   Image01Icon,
   CompassIcon,
-  Link01Icon,
   ArtificialIntelligence01Icon,
   Target01Icon,
   FlashIcon,
   Logout01Icon,
-  Search01Icon,
   ActivityIcon,
   ArrowLeft01Icon,
   ArrowRight01Icon,
   Refresh01Icon,
   GithubIcon,
-  GitPullRequestIcon,
   Alert01Icon,
 } from "@hugeicons/core-free-icons";
 
@@ -85,6 +82,7 @@ export function DashboardClient({ user }: { user: User }) {
   const [url, setUrl] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isRefreshingModule, setIsRefreshingModule] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [savedWebsiteId, setSavedWebsiteId] = useState<string | null>(null);
@@ -105,8 +103,6 @@ export function DashboardClient({ user }: { user: User }) {
   const [completedFixes, setCompletedFixes] = useState<Record<string, boolean>>({});
   const [isVerifyingMap, setIsVerifyingMap] = useState<Record<string, boolean>>({});
   const [isFixingAll, setIsFixingAll] = useState(false);
-  const [fixAllResults, setFixAllResults] = useState<{ prUrl: string; title: string }[]>([]);
-  const [showFixResultModal, setShowFixResultModal] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
@@ -244,7 +240,7 @@ export function DashboardClient({ user }: { user: User }) {
       }
       alert(`🚀 Bulk AI Fixes started in the background!\n\nAll ${issuesToFix.length} fixes have been successfully initiated. You can check their live progress in your Profile modal under 'AI Fixes History'.`);
       fetchWebsites();
-    } catch (err) {
+    } catch {
       setError("An error occurred during the bulk fixing operation.");
     } finally {
       setIsFixingAll(false);
@@ -304,14 +300,10 @@ export function DashboardClient({ user }: { user: User }) {
     await handleBulkFix(issuesToFix, severity);
   }, [analysis, handleBulkFix]);
 
-  // Module-scoped — used by each ModuleTab’s “Fix All” button
-  const handleFixModuleIssues = useCallback(async (moduleIssues: any[], moduleName: string) => {
-    const fixable = moduleIssues.filter((i) => !!i.url && i.severity !== "info");
-    await handleBulkFix(fixable, moduleName);
-  }, [handleBulkFix]);
+
   // ─────────────────────────────────────────────────────────────────────────────
 
-  const handleUpdateAnalysisModule = useCallback((updatedModule: ModuleResult) => {
+  const handleUpdateAnalysisModule = useCallback((updatedModule: ModuleResult & { overallScore?: number }) => {
     setAnalysis((prev) => {
       if (!prev) return null;
       const exists = prev.modules.some((m) => m.module === updatedModule.module);
@@ -321,9 +313,45 @@ export function DashboardClient({ user }: { user: User }) {
       return {
         ...prev,
         modules: newModules,
+        overallScore: updatedModule.overallScore !== undefined ? updatedModule.overallScore : prev.overallScore,
       };
     });
   }, []);
+
+  const handleRefreshModule = useCallback(async (moduleName: string) => {
+    if (!analysis) return;
+    setError(null);
+    setIsRefreshingModule(true);
+
+    try {
+      const res = await fetch("/api/analyze/module", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          analysisId: analysis.id,
+          module: moduleName,
+        }),
+      });
+
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.error || `Failed to refresh ${moduleName}`);
+      }
+
+      handleUpdateAnalysisModule({
+        ...result.moduleResult,
+        overallScore: result.overallScore,
+      });
+
+      if (result.coins !== undefined) {
+        setCoins(result.coins);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong refreshing module");
+    } finally {
+      setIsRefreshingModule(false);
+    }
+  }, [analysis, handleUpdateAnalysisModule]);
 
 
 
@@ -1147,6 +1175,10 @@ export function DashboardClient({ user }: { user: User }) {
                         onVerifyFix={handleVerifyFix}
                         hasGithubLinked={!!githubRepo}
                         onOpenGithubSettings={() => setIsSettingsOpen(true)}
+                        onRefreshModule={handleRefreshModule}
+                        isRefreshing={isRefreshingModule}
+                        currentCoins={coins}
+                        isDemoMode={isDemoMode}
                       />
                     )}
                   </div>
@@ -1754,6 +1786,10 @@ function ModuleTab({
   onVerifyFix,
   hasGithubLinked,
   onOpenGithubSettings,
+  onRefreshModule,
+  isRefreshing,
+  currentCoins,
+  isDemoMode = false,
 }: {
   result: ModuleResult | undefined;
   moduleName: string;
@@ -1765,6 +1801,10 @@ function ModuleTab({
   onVerifyFix?: (issue: any) => Promise<void>;
   hasGithubLinked?: boolean;
   onOpenGithubSettings?: () => void;
+  onRefreshModule?: (moduleName: string) => Promise<void>;
+  isRefreshing?: boolean;
+  currentCoins?: number;
+  isDemoMode?: boolean;
 }) {
   const [selectedPage, setSelectedPage] = useState<string>("all");
   const [copied, setCopied] = useState<boolean>(false);
@@ -1818,12 +1858,48 @@ function ModuleTab({
     return true;
   });
 
+  const scannedPagesCount = (result && result.data && Array.isArray(result.data.scannedPages))
+    ? result.data.scannedPages.length
+    : 1;
+  const estimatedCost = scannedPagesCount * 0.05;
+  const isCoinsInsufficient = currentCoins !== undefined && currentCoins < estimatedCost;
+
   return (
     <div className="space-y-6">
       {/* Module Header Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center justify-center shadow-sm">
+        <div className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center justify-center shadow-sm relative">
           <ScoreGauge score={result.score} size={110} label={moduleName} />
+          {onRefreshModule && (
+            <button
+              onClick={(e) => {
+                if (isDemoMode) {
+                  e.preventDefault();
+                  return;
+                }
+                onRefreshModule(result.module);
+              }}
+              disabled={isRefreshing || isDemoMode || isCoinsInsufficient}
+              title={
+                isDemoMode
+                  ? "Refresh is disabled in demo mode."
+                  : isCoinsInsufficient
+                    ? `Insufficient coins. Requires ${estimatedCost.toFixed(2)} coins. Your balance: ${currentCoins?.toFixed(2)} coins.`
+                    : `Refresh this section (costs ${estimatedCost.toFixed(2)} coins)`
+              }
+              className={`mt-4 flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-700 font-bold border rounded-xl shadow-sm transition-all text-xs border-slate-200 ${isDemoMode || isRefreshing || isCoinsInsufficient
+                ? "opacity-50 cursor-not-allowed pointer-events-none"
+                : "hover:bg-slate-50 hover:shadow cursor-pointer"
+                }`}
+            >
+              <HugeiconsIcon
+                icon={Refresh01Icon}
+                size={12}
+                className={isRefreshing ? "animate-spin text-accent" : "text-slate-400"}
+              />
+              <span>{isRefreshing ? "Refreshing..." : "Refresh Section"}</span>
+            </button>
+          )}
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6 sm:col-span-2 shadow-sm flex flex-col justify-between">

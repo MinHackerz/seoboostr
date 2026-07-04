@@ -234,20 +234,11 @@ function extractSchemaMarkup($: cheerio.CheerioAPI): SchemaInfo[] {
   return schemas;
 }
 
-function validateSchema(data: Record<string, unknown>, type: string): string[] {
+function validateSchema(data: Record<string, unknown>, _type: string): string[] {
   const errors: string[] = [];
 
   if (!data["@context"]) errors.push("Missing @context");
   if (!data["@type"]) errors.push("Missing @type");
-
-  // Deprecated type checks
-  const deprecated = ["HowTo", "SpecialAnnouncement", "ClaimReview", "VehicleListing"];
-  if (deprecated.includes(type)) {
-    errors.push(`${type} is deprecated — rich results have been removed`);
-  }
-  if (type === "FAQ") {
-    errors.push("FAQ schema is restricted to government and healthcare authority sites only");
-  }
 
   return errors;
 }
@@ -288,4 +279,79 @@ function extractHreflang($: cheerio.CheerioAPI): HreflangTag[] {
     });
   });
   return tags;
+}
+
+interface RobotsBlock {
+  userAgents: string[];
+  rules: { type: "allow" | "disallow"; path: string }[];
+}
+
+function parseRobotsTxt(robotsTxt: string): RobotsBlock[] {
+  const blocks: RobotsBlock[] = [];
+  let currentBlock: RobotsBlock = { userAgents: [], rules: [] };
+  let inUserAgentSection = true;
+
+  const lines = robotsTxt.split(/\r?\n/);
+  for (const line of lines) {
+    const cleanLine = line.split("#")[0].trim();
+    if (!cleanLine) continue;
+
+    const parts = cleanLine.split(":");
+    if (parts.length < 2) continue;
+
+    const key = parts[0].trim().toLowerCase();
+    const value = parts.slice(1).join(":").trim();
+
+    if (key === "user-agent") {
+      if (!inUserAgentSection) {
+        if (currentBlock.userAgents.length > 0) {
+          blocks.push(currentBlock);
+        }
+        currentBlock = { userAgents: [], rules: [] };
+        inUserAgentSection = true;
+      }
+      currentBlock.userAgents.push(value.toLowerCase());
+    } else if (key === "disallow" || key === "allow") {
+      inUserAgentSection = false;
+      currentBlock.rules.push({
+        type: key,
+        path: value,
+      });
+    }
+  }
+
+  if (currentBlock.userAgents.length > 0) {
+    blocks.push(currentBlock);
+  }
+
+  return blocks;
+}
+
+export function isCrawlerBlocked(robotsTxt: string, crawlerToken: string): boolean {
+  const blocks = parseRobotsTxt(robotsTxt);
+  const tokenLower = crawlerToken.toLowerCase();
+
+  // 1. Find block specifically matching this crawler
+  let matchingBlock = blocks.find((b) =>
+    b.userAgents.includes(tokenLower)
+  );
+
+  // 2. If not found, look for wildcard block
+  if (!matchingBlock) {
+    matchingBlock = blocks.find((b) =>
+      b.userAgents.includes("*")
+    );
+  }
+
+  if (!matchingBlock) return false;
+
+  // 3. Check if the block disallows the entire site ('/')
+  const hasDisallowRoot = matchingBlock.rules.some(
+    (r) => r.type === "disallow" && r.path === "/"
+  );
+  const hasAllowRoot = matchingBlock.rules.some(
+    (r) => r.type === "allow" && r.path === "/"
+  );
+
+  return hasDisallowRoot && !hasAllowRoot;
 }

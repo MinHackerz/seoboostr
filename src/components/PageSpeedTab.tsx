@@ -115,21 +115,6 @@ export function PageSpeedTab({
     }
   }, [analysisId, onUpdateAnalysis]);
 
-  // Metric color helper
-  const getMetricColorClass = (score: number | null) => {
-    if (score === null) return "text-slate-500 bg-slate-50 border-slate-100";
-    if (score >= 0.9) return "text-emerald-700 bg-emerald-50/50 border-emerald-100";
-    if (score >= 0.5) return "text-amber-700 bg-amber-50/50 border-amber-100";
-    return "text-rose-700 bg-rose-50/50 border-rose-100";
-  };
-
-  const getMetricDotClass = (score: number | null) => {
-    if (score === null) return "bg-slate-400";
-    if (score >= 0.9) return "bg-emerald-500";
-    if (score >= 0.5) return "bg-amber-500";
-    return "bg-rose-500";
-  };
-
   // 1. Missing API Key Setup Screen
   if (missingApiKey) {
     return (
@@ -332,6 +317,23 @@ export function PageSpeedTab({
                 <span>Copy</span>
               </>
             )}
+          </button>
+
+          {/* Refresh Button */}
+          <button
+            onClick={runAudit}
+            disabled={isLoading}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 border rounded-xl text-[10px] font-extrabold transition-all duration-150 cursor-pointer select-none bg-white border-slate-200 hover:border-slate-350 hover:bg-slate-50 text-slate-600 ${
+              isLoading ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
+            }`}
+            title="Refresh PageSpeed Insights"
+          >
+            <HugeiconsIcon
+              icon={Refresh01Icon}
+              size={12}
+              className={isLoading ? "animate-spin text-accent" : "text-slate-400"}
+            />
+            <span>{isLoading ? "Refreshing..." : "Refresh Section"}</span>
           </button>
 
           {/* Strategy Toggle */}

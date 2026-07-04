@@ -210,10 +210,10 @@ export async function POST(request: NextRequest) {
     let siteHost = website.url;
     try {
       siteHost = new URL(website.url).hostname;
-    } catch (e) { fontStyle: "italic" }
+    } catch { }
 
     // 1. Immediately deduct coins and create pending fix record in transaction
-    const [updatedUser, pendingFix] = await prisma.$transaction([
+    const [, pendingFix] = await prisma.$transaction([
       prisma.user.update({
         where: { id: session.user.id },
         data: {
@@ -572,7 +572,7 @@ ${explanation || "No explanation provided."}
       let siteHost = website.url;
       try {
         siteHost = new URL(website.url).hostname;
-      } catch (e) {}
+      } catch { }
 
       await prisma.$transaction([
         prisma.user.update({

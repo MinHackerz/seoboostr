@@ -1,4 +1,5 @@
 import type { Analyzer, ModuleResult, Issue, ParsedPage, FetchResult } from "../types";
+import { isCrawlerBlocked } from "../parser";
 
 export const technicalAnalyzer: Analyzer = {
   name: "technical",
@@ -90,8 +91,7 @@ export const technicalAnalyzer: Analyzer = {
         const allowedAiCrawlers: string[] = [];
 
         aiCrawlers.forEach((crawler) => {
-          const regex = new RegExp(`User-agent:\\s*${crawler}[\\s\\S]*?Disallow:\\s*/`, "i");
-          if (fetchResult.robotsTxt && regex.test(fetchResult.robotsTxt)) {
+          if (fetchResult.robotsTxt && isCrawlerBlocked(fetchResult.robotsTxt, crawler)) {
             blockedAiCrawlers.push(crawler);
           } else {
             allowedAiCrawlers.push(crawler);

@@ -42,16 +42,12 @@ export async function POST(request: NextRequest) {
   const isResume = resume === true && !!existingAnalysis;
 
   let previouslyScanned: string[] = [];
-  let pendingPages: string[] = [];
   if (isResume && existingAnalysis) {
     const prevTechResult = existingAnalysis.results.find((r: any) => r.module === "technical");
     if (prevTechResult && prevTechResult.data) {
       const techData = prevTechResult.data as any;
       if (techData.scannedPages && Array.isArray(techData.scannedPages)) {
         previouslyScanned = techData.scannedPages;
-      }
-      if (techData.pendingPages && Array.isArray(techData.pendingPages)) {
-        pendingPages = techData.pendingPages;
       }
     }
   }
@@ -68,8 +64,8 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const hasPending = pendingPages.length > 0;
   
+
   // Dynamic minimum coins
   let minCoinsRequired = 1.0;
   if (isResume) {
@@ -173,16 +169,16 @@ export async function POST(request: NextRequest) {
       },
     });
     // Insert module results one at a time to stay well under connection limits
-    for (const module of result.modules) {
+    for (const mod of result.modules) {
       await prisma.analysisResult.create({
         data: {
           analysisId: analysis.id,
-          module: module.module,
-          status: module.status,
-          score: module.score,
-          data: module.data as object,
-          issues: module.issues as object[],
-          executionTimeMs: module.executionTimeMs,
+          module: mod.module,
+          status: mod.status,
+          score: mod.score,
+          data: mod.data as object,
+          issues: mod.issues as object[],
+          executionTimeMs: mod.executionTimeMs,
         },
       });
     }

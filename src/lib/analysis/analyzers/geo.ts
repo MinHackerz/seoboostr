@@ -1,4 +1,5 @@
 import type { Analyzer, ModuleResult, Issue, ParsedPage, FetchResult } from "../types";
+import { isCrawlerBlocked } from "../parser";
 
 export const geoAnalyzer: Analyzer = {
   name: "geo",
@@ -21,11 +22,7 @@ export const geoAnalyzer: Analyzer = {
 
       const crawlerStatus: Record<string, string> = {};
       aiCrawlers.forEach((crawler) => {
-        const regex = new RegExp(
-          `User-agent:\\s*${crawler.token}[\\s\\S]*?Disallow:\\s*/`,
-          "i"
-        );
-        crawlerStatus[crawler.name] = fetchResult.robotsTxt!.match(regex)
+        crawlerStatus[crawler.name] = isCrawlerBlocked(fetchResult.robotsTxt!, crawler.token)
           ? "blocked"
           : "allowed";
       });
@@ -104,6 +101,8 @@ export const geoAnalyzer: Analyzer = {
     const hasTables = page.textContent.includes("|") || page.schemaMarkup.some((s) => s.raw.includes("Table"));
     const hasLists = page.headings.length >= 3;
     data.questionHeadings = hasQuestionHeadings;
+    data.hasTables = hasTables;
+    data.hasLists = hasLists;
 
     if (!hasQuestionHeadings) {
       issues.push({

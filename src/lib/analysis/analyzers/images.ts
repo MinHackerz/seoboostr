@@ -1,8 +1,8 @@
-import type { Analyzer, ModuleResult, Issue, ParsedPage, FetchResult } from "../types";
+import type { Analyzer, ModuleResult, Issue, ParsedPage } from "../types";
 
 export const imagesAnalyzer: Analyzer = {
   name: "images",
-  async analyze(page: ParsedPage, _fetchResult: FetchResult): Promise<ModuleResult> {
+  async analyze(page: ParsedPage): Promise<ModuleResult> {
     const startTime = Date.now();
     const issues: Issue[] = [];
     const data: Record<string, unknown> = {};

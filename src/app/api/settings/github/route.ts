@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
           if (parts[0] && parts[1]) {
             parsedRepo = `${parts[0]}/${parts[1]}`.replace(/\.git$/i, "");
           }
-        } catch (e) {
+        } catch {
           console.warn("[GitHub Settings] Failed to parse URL, fallback to raw input:", parsedRepo);
         }
       }

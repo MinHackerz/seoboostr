@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
+import { calculateOverallScore } from "@/lib/analysis/orchestrator";
 
 export const maxDuration = 60; // Allow up to 60s for Vercel/slow PageSpeed API
 
@@ -186,7 +187,7 @@ export async function POST(request: NextRequest) {
     // Calculate score for the module (overall average performance score of mobile and desktop)
     const pagespeedScore = Math.round((mobileParsed.scores.performance + desktopParsed.scores.performance) / 2);
 
-    const result = await prisma.analysisResult.upsert({
+    await prisma.analysisResult.upsert({
       where: {
         analysisId_module: {
           analysisId: analysis.id,
@@ -213,6 +214,24 @@ export async function POST(request: NextRequest) {
 
     console.log(`[PageSpeed] Audits completed successfully for ${targetUrl}`);
 
+    // Recalculate overall score of the Analysis
+    const allResults = await prisma.analysisResult.findMany({
+      where: { analysisId: analysis.id },
+    });
+
+    const formattedResults = allResults.map(r => ({
+      module: r.module,
+      status: r.status,
+      score: r.score ?? 0,
+    }));
+
+    const overallScore = calculateOverallScore(formattedResults);
+
+    await prisma.analysis.update({
+      where: { id: analysis.id },
+      data: { overallScore },
+    });
+
     return Response.json({
       module: "pagespeed",
       status: "completed",
@@ -220,6 +239,7 @@ export async function POST(request: NextRequest) {
       data: dataPayload,
       issues: issues,
       executionTimeMs,
+      overallScore,
     });
   } catch (error) {
     console.error("[PageSpeed] Execution error:", error);

@@ -57,14 +57,6 @@ const severityConfig = {
   },
 };
 
-const getCostLabel = (severity: string) => {
-  if (severity === "critical") return "1.5 Coins";
-  if (severity === "high") return "1.0 Coin";
-  if (severity === "medium") return "0.75 Coins";
-  if (severity === "low") return "0.5 Coins";
-  return "Free";
-};
-
 export function IssueCard({
   issue,
   onFixIssue,

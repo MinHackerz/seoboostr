@@ -24,7 +24,7 @@ const ALL_ANALYZERS = [
 ];
 
 // Weighted scoring for overall SEO health
-const MODULE_WEIGHTS: Record<string, number> = {
+export const MODULE_WEIGHTS: Record<string, number> = {
   technical: 0.15,
   onpage: 0.15,
   content: 0.15,
@@ -37,7 +37,7 @@ const MODULE_WEIGHTS: Record<string, number> = {
   pagespeed: 0.10,
 };
 
-function calculateOverallScore(modules: ModuleResult[]): number {
+export function calculateOverallScore(modules: { module: string; status: string; score: number }[]): number {
   let totalWeight = 0;
   let weightedSum = 0;
 
@@ -52,44 +52,6 @@ function calculateOverallScore(modules: ModuleResult[]): number {
   return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
 }
 
-// Utility to discover and clean internal pages
-function getSubpagesToCrawl(homepageUrl: string, parsedHomepage: ParsedPage): string[] {
-  const normalizedHomepage = new URL(homepageUrl).toString();
-  const origin = new URL(homepageUrl).origin;
-  const urls = new Set<string>();
-  urls.add(normalizedHomepage);
-
-  for (const link of parsedHomepage.links) {
-    if (!link.isInternal || !link.href) continue;
-    try {
-      const resolved = new URL(link.href, normalizedHomepage);
-      // Clean URL: remove hash and query parameters for clean crawling paths
-      resolved.hash = "";
-      resolved.search = "";
-
-      // Normalize pathname by removing trailing slashes for subpaths (e.g. /blog/ -> /blog)
-      let path = resolved.pathname;
-      if (path.length > 1 && path.endsWith("/")) {
-        path = path.slice(0, -1);
-      }
-      resolved.pathname = path;
-
-      const cleanUrl = resolved.toString();
-      // Ensure same origin
-      if (resolved.origin === origin) {
-        // Exclude static assets
-        if (!/\.(png|jpe?g|gif|svg|pdf|zip|xml|txt|css|js|woff2?|json|ico)$/i.test(resolved.pathname)) {
-          urls.add(cleanUrl);
-        }
-      }
-    } catch {
-      // Ignore invalid URLs
-    }
-  }
-
-  // Homepage + first 4 unique subpage paths (max 5 pages total)
-  return Array.from(urls).slice(0, 5);
-}
 
 // Discover all unique page URLs on the site using the homepage links and sitemap.xml
 function discoverAllPages(homepageUrl: string, parsedHomepage: ParsedPage, sitemapXml?: string): string[] {
@@ -423,7 +385,7 @@ export async function runAnalysis(
       discoveredPages: discovered,
       crawledInThisRun,
     };
-  } catch (error) {
+  } catch {
     return {
       id,
       url,
@@ -435,6 +397,151 @@ export async function runAnalysis(
       pendingPages: [],
       discoveredPages: [],
       crawledInThisRun: [],
+    };
+  }
+}
+
+export async function runSingleModuleAnalysis(
+  url: string,
+  moduleName: string,
+  options?: {
+    previouslyScannedPages?: string[];
+  }
+): Promise<ModuleResult & { crawledInThisRun: string[] }> {
+  // Step 1: Fetch and parse the home page
+  const homepageFetch: FetchResult = await fetchPage(url);
+  const homepageParsed: ParsedPage = parsePage(homepageFetch.html, homepageFetch.finalUrl);
+  const homepageUrl = new URL(homepageFetch.finalUrl).toString();
+
+  // Step 2: Determine pages to crawl (up to 5 pages)
+  let crawledInThisRun: string[] = [];
+  if (options?.previouslyScannedPages && options.previouslyScannedPages.length > 0) {
+    crawledInThisRun = options.previouslyScannedPages;
+  } else {
+    const discovered = discoverAllPages(homepageFetch.finalUrl, homepageParsed, homepageFetch.sitemapXml);
+    crawledInThisRun = discovered.slice(0, 5);
+  }
+
+  // Step 3: Fetch subpages in parallel (excluding homepage)
+  const subpagesFetchAndParse = await Promise.all(
+    crawledInThisRun.filter(p => p !== homepageUrl).map(async (subpageUrl) => {
+      try {
+        const fetchResult = await fetchSubpage(subpageUrl);
+        const parsedPage = parsePage(fetchResult.html, fetchResult.finalUrl);
+        return { url: subpageUrl, fetchResult, parsedPage, success: true };
+      } catch (err) {
+        console.error(`Failed to crawl subpage ${subpageUrl}:`, err);
+        return { url: subpageUrl, fetchResult: null, parsedPage: null, success: false };
+      }
+    })
+  );
+
+  const allPages = [
+    { url: homepageUrl, fetchResult: homepageFetch, parsedPage: homepageParsed },
+    ...subpagesFetchAndParse
+      .filter((p) => p.success)
+      .map((p) => ({ url: p.url, fetchResult: p.fetchResult!, parsedPage: p.parsedPage! })),
+  ];
+
+  // Step 4: Find analyzer
+  const analyzer = ALL_ANALYZERS.find((a) => a.name === moduleName);
+  if (!analyzer) {
+    throw new Error(`Analyzer not found for module ${moduleName}`);
+  }
+
+  const isSiteWide = analyzer.name === "sitemap";
+  if (isSiteWide) {
+    const startTime = Date.now();
+    const run = await analyzer.analyze(homepageParsed, homepageFetch);
+    const issuesWithUrl = (run.issues || []).map((issue) => ({
+      ...issue,
+      url: homepageUrl,
+    }));
+    return {
+      module: analyzer.name,
+      status: "completed" as const,
+      score: run.score,
+      issues: issuesWithUrl,
+      data: run.data,
+      executionTimeMs: Date.now() - startTime,
+      crawledInThisRun: [homepageUrl],
+    };
+  } else {
+    const startTime = Date.now();
+    const pageRuns = await Promise.all(
+      allPages.map(async (page) => {
+        try {
+          const run = await analyzer.analyze(page.parsedPage, page.fetchResult);
+          return {
+            ...run,
+            url: page.url,
+            success: true,
+          };
+        } catch (err) {
+          console.error(`Page-specific analyzer ${analyzer.name} failed on ${page.url}:`, err);
+          return {
+            module: analyzer.name,
+            status: "failed" as const,
+            score: 0,
+            issues: [],
+            data: {},
+            executionTimeMs: 0,
+            url: page.url,
+            success: false,
+          };
+        }
+      })
+    );
+
+    const successfulRuns = pageRuns.filter((r) => r.success);
+    if (successfulRuns.length === 0) {
+      throw new Error(`Failed to execute analyzer on all pages`);
+    }
+
+    const runScore = Math.round(
+      successfulRuns.reduce((sum, r) => sum + r.score, 0) / successfulRuns.length
+    );
+
+    const runIssues = successfulRuns.flatMap((run) =>
+      (run.issues || []).map((issue) => ({
+        ...issue,
+        url: run.url,
+      }))
+    );
+
+    const aggregatedData: Record<string, any> = {};
+    successfulRuns.forEach((run) => {
+      if (!run.data) return;
+      Object.entries(run.data).forEach(([key, val]) => {
+        if (typeof val === "number") {
+          aggregatedData[key] = (aggregatedData[key] || 0) + val;
+        } else if (typeof val === "boolean") {
+          aggregatedData[key] = aggregatedData[key] || val;
+        } else if (Array.isArray(val)) {
+          aggregatedData[key] = [...(aggregatedData[key] || []), ...val];
+        } else {
+          aggregatedData[key] = val;
+        }
+      });
+    });
+
+    Object.keys(aggregatedData).forEach((key) => {
+      const shouldAverage = /time|ms|duration|score|density|fre|ratio/i.test(key);
+      if (shouldAverage && typeof aggregatedData[key] === "number") {
+        aggregatedData[key] = Math.round(aggregatedData[key] / successfulRuns.length);
+      }
+    });
+
+    aggregatedData.scannedPages = crawledInThisRun;
+
+    return {
+      module: analyzer.name,
+      status: "completed" as const,
+      score: runScore,
+      issues: runIssues,
+      data: aggregatedData,
+      executionTimeMs: Date.now() - startTime,
+      crawledInThisRun,
     };
   }
 }

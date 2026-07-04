@@ -1,4 +1,4 @@
-import type { Analyzer, ModuleResult, Issue, ParsedPage, FetchResult } from "../types";
+import type { Analyzer, ModuleResult, Issue, ParsedPage } from "../types";
 
 // Flesch Reading Ease calculation
 function calculateFleschReadingEase(text: string): number {
@@ -59,7 +59,7 @@ const PAGE_TYPE_MINIMUMS: Record<string, number> = {
 
 export const contentAnalyzer: Analyzer = {
   name: "content",
-  async analyze(page: ParsedPage, _fetchResult: FetchResult): Promise<ModuleResult> {
+  async analyze(page: ParsedPage): Promise<ModuleResult> {
     const startTime = Date.now();
     
     // Bypass for sign in, sign up, login, register, and other auth-related pages

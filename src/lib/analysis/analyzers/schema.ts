@@ -1,13 +1,5 @@
-import type { Analyzer, ModuleResult, Issue, ParsedPage, FetchResult } from "../types";
+import type { Analyzer, ModuleResult, Issue, ParsedPage } from "../types";
 
-const ACTIVE_TYPES = [
-  "Organization", "LocalBusiness", "SoftwareApplication", "WebApplication",
-  "Product", "ProductGroup", "Offer", "Service", "Article", "BlogPosting",
-  "NewsArticle", "Review", "AggregateRating", "BreadcrumbList", "WebSite",
-  "WebPage", "Person", "ProfilePage", "ContactPage", "VideoObject",
-  "ImageObject", "Event", "JobPosting", "Course", "DiscussionForumPosting",
-  "BroadcastEvent", "Clip", "SeekToAction", "SoftwareSourceCode",
-];
 
 const DEPRECATED_TYPES: Record<string, string> = {
   HowTo: "Rich results removed September 2023",
@@ -23,7 +15,7 @@ const RESTRICTED_TYPES: Record<string, string> = {
 
 export const schemaAnalyzer: Analyzer = {
   name: "schema",
-  async analyze(page: ParsedPage, _fetchResult: FetchResult): Promise<ModuleResult> {
+  async analyze(page: ParsedPage): Promise<ModuleResult> {
     const startTime = Date.now();
     const issues: Issue[] = [];
     const data: Record<string, unknown> = {};
@@ -68,10 +60,10 @@ export const schemaAnalyzer: Analyzer = {
       if (DEPRECATED_TYPES[schema.type]) {
         issues.push({
           id: `schema-deprecated-${idx}`,
-          title: `Deprecated schema: ${schema.type}`,
-          description: DEPRECATED_TYPES[schema.type],
-          severity: "high",
-          recommendation: `Remove ${schema.type} schema markup — it no longer generates rich results.`,
+          title: `Schema deprecated for Google Rich Results: ${schema.type}`,
+          description: `${DEPRECATED_TYPES[schema.type]}. Although it no longer generates visual rich results in Google, it remains a valid schema format useful for general semantic parsing and AI search crawlers.`,
+          severity: "low",
+          recommendation: `Decide whether to keep or remove ${schema.type}. While it won't display visual rich results on Google, keeping it helps AI models (like ChatGPT, Gemini, and Claude) accurately understand your step-by-step or structured content.`,
         });
       }
 
@@ -79,10 +71,10 @@ export const schemaAnalyzer: Analyzer = {
       if (RESTRICTED_TYPES[schema.type]) {
         issues.push({
           id: `schema-restricted-${idx}`,
-          title: `Restricted schema: ${schema.type}`,
-          description: RESTRICTED_TYPES[schema.type],
-          severity: "medium",
-          recommendation: `${schema.type} schema only generates rich results for specific site types.`,
+          title: `Restricted Google Rich Result: ${schema.type}`,
+          description: `${RESTRICTED_TYPES[schema.type]}. Note that it remains valid structured data parsed by search engines and AI crawlers.`,
+          severity: "low",
+          recommendation: `${schema.type} schema only generates visual rich results for specific site types. Keep it if it helps semantic understanding for AI crawlers, or remove if you want to minimize page payload.`,
         });
       }
 

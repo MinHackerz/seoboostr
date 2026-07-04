@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { defineConfig, env } from "@prisma/config";
+import { defineConfig } from "@prisma/config";
 
 const dbUrl = process.env.DATABASE_URL || "postgresql://mock:mock@localhost:5432/mock";
 

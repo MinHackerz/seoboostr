@@ -123,7 +123,7 @@ export async function fetchPage(url: string): Promise<FetchResult> {
       fetchTextResource(`${baseUrl}/llms.txt`),
     ]);
 
-    let robotsTxt = robotsResult.status === "fulfilled" ? robotsResult.value : undefined;
+    const robotsTxt = robotsResult.status === "fulfilled" ? robotsResult.value : undefined;
     let sitemapXml = sitemapResult.status === "fulfilled" ? sitemapResult.value : undefined;
     const llmsTxt = llmsResult.status === "fulfilled" ? llmsResult.value : undefined;
 
