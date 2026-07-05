@@ -23,33 +23,13 @@ const ALL_ANALYZERS = [
   performanceAnalyzer,
 ];
 
-// Weighted scoring for overall SEO health
-export const MODULE_WEIGHTS: Record<string, number> = {
-  technical: 0.15,
-  onpage: 0.15,
-  content: 0.15,
-  schema: 0.10,
-  images: 0.10,
-  sitemap: 0.05,
-  geo: 0.05,
-  sxo: 0.10,
-  performance: 0.05,
-  pagespeed: 0.10,
-};
-
+// Simple average scoring for overall SEO health
 export function calculateOverallScore(modules: { module: string; status: string; score: number }[]): number {
-  let totalWeight = 0;
-  let weightedSum = 0;
+  const completedModules = modules.filter((m) => m.status === "completed");
+  if (completedModules.length === 0) return 0;
 
-  modules.forEach((m) => {
-    if (m.status === "completed") {
-      const weight = MODULE_WEIGHTS[m.module] || 0.1;
-      weightedSum += m.score * weight;
-      totalWeight += weight;
-    }
-  });
-
-  return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
+  const sum = completedModules.reduce((acc, m) => acc + m.score, 0);
+  return Math.round(sum / completedModules.length);
 }
 
 

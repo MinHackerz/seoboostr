@@ -260,8 +260,7 @@ function ModuleCard({
   );
 }
 
-// ── Main Dashboard ───────────────────────────────────────────
-
+// Calculate overall score when all modules complete
 export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps) {
   const [moduleStatuses, setModuleStatuses] = useState<Record<string, ModuleStatus>>({});
   const [overallScore, setOverallScore] = useState(0);

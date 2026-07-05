@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { NextRequest } from "next/server";
 import { decrypt } from "@/lib/encryption";
+import { calculateOverallScore } from "@/lib/analysis/orchestrator";
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -88,12 +89,14 @@ export async function POST(request: NextRequest) {
       if (existingAnalysisCount === 0) {
         console.log(`[POST /api/websites] Saving ${initialResults.length} initial results for ${normalizedUrl}`);
         
-        const validScores = initialResults
-          .filter((res: any) => typeof res.score === "number" && res.score > 0)
-          .map((res: any) => res.score);
-        
-        const overallScore = validScores.length > 0
-          ? Math.round(validScores.reduce((a: number, b: number) => a + b, 0) / validScores.length)
+        const formattedResults = initialResults.map((r: any) => ({
+          module: r.moduleId === "ai" ? "geo" : r.moduleId,
+          status: "completed",
+          score: typeof r.score === "number" ? r.score : 0,
+        }));
+
+        const overallScore = formattedResults.length > 0
+          ? calculateOverallScore(formattedResults)
           : 70;
 
         const analysis = await prisma.analysis.create({

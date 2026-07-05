@@ -44,7 +44,7 @@ export function ComparisonChart() {
       <div
         className="absolute inset-0 opacity-40 pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, rgba(15,23,42,0.06) 1px, transparent 0)",
+          backgroundImage: "radial-gradient(circle at 1px 1px, var(--dot-grid-color) 1px, transparent 0)",
           backgroundSize: "24px 24px",
         }}
       />
@@ -85,11 +85,11 @@ export function ComparisonChart() {
           {/* Legend */}
           <div className="flex items-center justify-end gap-4 mb-6">
             <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm bg-slate-400" />
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "var(--chart-bar-before)" }} />
               <span className="text-[11px] text-slate-500 font-medium">Before</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm bg-teal-600" />
+              <div className="w-2.5 h-2.5 rounded-sm bg-accent" />
               <span className="text-[11px] text-slate-500 font-medium">After fixes</span>
             </div>
           </div>
@@ -104,30 +104,30 @@ export function ComparisonChart() {
               >
                 <CartesianGrid
                   strokeDasharray="3 3"
-                  stroke="rgba(15,23,42,0.06)"
+                  stroke="var(--chart-grid)"
                   vertical={false}
                 />
                 <XAxis
                   dataKey="module"
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 11, fill: "#64748b", fontFamily: "monospace" }}
+                  tick={{ fontSize: 11, fill: "var(--color-muted)", fontFamily: "monospace" }}
                 />
                 <YAxis
                   domain={[0, 100]}
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fontSize: 11, fill: "#94a3b8", fontFamily: "monospace" }}
+                  tick={{ fontSize: 11, fill: "var(--chart-bar-before)", fontFamily: "monospace" }}
                 />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(15,23,42,0.02)" }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--chart-cursor)" }} />
                 <Bar dataKey="before" radius={[4, 4, 0, 0]} maxBarSize={32}>
                   {data.map((_, i) => (
-                    <Cell key={i} fill="#94a3b8" />
+                    <Cell key={i} fill="var(--chart-bar-before)" />
                   ))}
                 </Bar>
                 <Bar dataKey="after" radius={[4, 4, 0, 0]} maxBarSize={32}>
                   {data.map((_, i) => (
-                    <Cell key={i} fill="#0f766e" />
+                    <Cell key={i} fill="var(--color-accent)" />
                   ))}
                 </Bar>
               </BarChart>

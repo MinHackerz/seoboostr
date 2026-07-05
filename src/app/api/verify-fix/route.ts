@@ -179,31 +179,10 @@ export async function POST(request: NextRequest) {
       return m;
     });
 
-    const MODULE_WEIGHTS: Record<string, number> = {
-      technical: 0.15,
-      onpage: 0.15,
-      content: 0.15,
-      schema: 0.10,
-      images: 0.10,
-      sitemap: 0.05,
-      geo: 0.05,
-      sxo: 0.10,
-      performance: 0.05,
-      pagespeed: 0.10,
-    };
-
-    let totalWeight = 0;
-    let weightedSum = 0;
-
-    allModules.forEach((m) => {
-      if (m.status === "completed" && m.score !== null) {
-        const weight = MODULE_WEIGHTS[m.module] || 0.1;
-        weightedSum += m.score * weight;
-        totalWeight += weight;
-      }
-    });
-
-    const nextOverallScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
+    const completedModules = allModules.filter((m) => m.status === "completed" && m.score !== null);
+    const nextOverallScore = completedModules.length > 0
+      ? Math.round(completedModules.reduce((acc, m) => acc + (m.score ?? 0), 0) / completedModules.length)
+      : 0;
 
     // Update overall analysis score
     await prisma.analysis.update({

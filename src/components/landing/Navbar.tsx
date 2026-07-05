@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { signIn } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 interface NavbarProps {
   onRunAudit: () => void;
@@ -11,6 +11,8 @@ interface NavbarProps {
 export function Navbar({ onRunAudit }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: session, status } = useSession();
+  const isLoggedIn = status === "authenticated";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -63,21 +65,40 @@ export function Navbar({ onRunAudit }: NavbarProps) {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <a
-              href="/login"
-              className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors mr-1"
-            >
-              Sign in
-            </a>
-            <button
-              onClick={() => signIn("credentials", { email: "demo@seoboostr.io", callbackUrl: "/dashboard" })}
-              className="group flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 hover:border-slate-300 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-400 group-hover:text-slate-600 transition-colors" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
-              View Demo
-            </button>
+            {isLoggedIn ? (
+              <>
+                <a
+                  href="/dashboard"
+                  className="px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 hover:border-slate-300 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                >
+                  Dashboard
+                </a>
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors mr-1 cursor-pointer"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <a
+                  href="/login"
+                  className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors mr-1"
+                >
+                  Sign in
+                </a>
+                <button
+                  onClick={() => signIn("credentials", { email: "demo@seoboostr.io", callbackUrl: "/dashboard" })}
+                  className="group flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 hover:border-slate-300 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-400 group-hover:text-slate-600 transition-colors" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                  View Demo
+                </button>
+              </>
+            )}
             <button
               onClick={onRunAudit}
               className="px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors cursor-pointer"
@@ -131,24 +152,48 @@ export function Navbar({ onRunAudit }: NavbarProps) {
                 </a>
               ))}
               <div className="pt-2 border-t border-slate-200/60 space-y-2">
-                <a
-                  href="/login"
-                  className="block text-sm font-medium text-slate-500 mb-1"
-                >
-                  Sign in
-                </a>
-                <button
-                  onClick={() => {
-                    setMobileOpen(false);
-                    signIn("credentials", { email: "demo@seoboostr.io", callbackUrl: "/dashboard" });
-                  }}
-                  className="group w-full flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 hover:border-slate-300 transition-all duration-200 cursor-pointer"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-400 group-hover:text-slate-600 transition-colors" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="5 3 19 12 5 21 5 3" />
-                  </svg>
-                  View Demo
-                </button>
+                {isLoggedIn ? (
+                  <>
+                    <a
+                      href="/dashboard"
+                      onClick={() => setMobileOpen(false)}
+                      className="block text-sm font-semibold text-slate-700 hover:text-teal-600 mb-1"
+                    >
+                      Dashboard
+                    </a>
+                    <button
+                      onClick={() => {
+                        setMobileOpen(false);
+                        signOut({ callbackUrl: "/" });
+                      }}
+                      className="group w-full flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 hover:border-slate-300 transition-all duration-200 cursor-pointer"
+                    >
+                      Logout
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <a
+                      href="/login"
+                      onClick={() => setMobileOpen(false)}
+                      className="block text-sm font-medium text-slate-500 mb-1"
+                    >
+                      Sign in
+                    </a>
+                    <button
+                      onClick={() => {
+                        setMobileOpen(false);
+                        signIn("credentials", { email: "demo@seoboostr.io", callbackUrl: "/dashboard" });
+                      }}
+                      className="group w-full flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 hover:border-slate-300 transition-all duration-200 cursor-pointer"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-400 group-hover:text-slate-600 transition-colors" strokeLinecap="round" strokeLinejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
+                      View Demo
+                    </button>
+                  </>
+                )}
                 <button
                   onClick={() => {
                     setMobileOpen(false);

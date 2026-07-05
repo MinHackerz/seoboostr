@@ -35,7 +35,7 @@ export function SignupGate({ visible }: SignupGateProps) {
       <div
         className="absolute inset-0 opacity-40 pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, rgba(15,23,42,0.06) 1px, transparent 0)",
+          backgroundImage: "radial-gradient(circle at 1px 1px, var(--dot-grid-color) 1px, transparent 0)",
           backgroundSize: "24px 24px",
         }}
       />

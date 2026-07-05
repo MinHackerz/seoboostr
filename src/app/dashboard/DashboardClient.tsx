@@ -112,6 +112,12 @@ export function DashboardClient({ user }: { user: User }) {
     setTheme(initialTheme);
   }, []);
 
+  useEffect(() => {
+    const emailHandle = user.email ? user.email.split("@")[0] : "";
+    const displayName = user.name || emailHandle || "User";
+    document.title = `${displayName}'s Dashboard — SEOBoostr`;
+  }, [user]);
+
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
@@ -1243,7 +1249,7 @@ export function DashboardClient({ user }: { user: User }) {
                     <div className="relative overflow-hidden bg-white rounded-3xl shadow-sm border border-slate-200/80">
                       {/* Subtle dot pattern */}
                       <div className="absolute inset-0 opacity-[0.03]" style={{
-                        backgroundImage: `radial-gradient(circle at 1px 1px, #0f766e 0.5px, transparent 0)`,
+                        backgroundImage: `radial-gradient(circle at 1px 1px, var(--dot-grid-dashboard) 0.5px, transparent 0)`,
                         backgroundSize: '20px 20px',
                       }} />
                       {/* Very subtle corner glow */}
@@ -1401,32 +1407,12 @@ function OverviewTab({
   >("all");
   const [selectedPage, setSelectedPage] = useState<string>("all");
 
-  const clientWeights: Record<string, number> = {
-    technical: 0.15,
-    onpage: 0.15,
-    content: 0.15,
-    schema: 0.10,
-    images: 0.10,
-    sitemap: 0.05,
-    geo: 0.05,
-    sxo: 0.10,
-    performance: 0.05,
-    pagespeed: 0.10,
-  };
-
   const calculatedScore = (() => {
-    let totalWeight = 0;
-    let weightedSum = 0;
+    const completedModules = (analysis.modules || []).filter((m) => m.status === "completed");
+    if (completedModules.length === 0) return analysis.overallScore ?? 0;
 
-    (analysis.modules || []).forEach((m) => {
-      if (m.status === "completed") {
-        const weight = clientWeights[m.module] || 0.1;
-        weightedSum += m.score * weight;
-        totalWeight += weight;
-      }
-    });
-
-    return totalWeight > 0 ? Math.round(weightedSum / totalWeight) : (analysis.overallScore ?? 0);
+    const sum = completedModules.reduce((acc, m) => acc + m.score, 0);
+    return Math.round(sum / completedModules.length);
   })();
 
   const allIssues = (analysis.modules || []).flatMap((m) =>
@@ -1614,7 +1600,7 @@ function OverviewTab({
           </div>
           <div className="mt-4 pt-4 border-t border-border flex justify-between items-center text-sm font-semibold">
             <span className="text-slate-500">Total Issues Found</span>
-            <span className="text-slate-800 text-base font-extrabold">{allIssues.length}</span>
+            <span className="text-slate-800 text-base font-extrabold">{allIssues.filter((i) => i.severity !== "info").length}</span>
           </div>
         </div>
 
@@ -1888,11 +1874,12 @@ function ModuleTab({
   }
 
   const issues = result.issues || [];
+  const activeIssues = issues.filter((i) => i.severity !== "info");
   const scannedPages = Array.from(
-    new Set(issues.map((i) => i.url).filter(Boolean))
+    new Set(activeIssues.map((i) => i.url).filter(Boolean))
   ) as string[];
 
-  const filteredIssues = issues.filter((issue) => {
+  const filteredIssues = activeIssues.filter((issue) => {
     if (selectedPage !== "all" && issue.url !== selectedPage) return false;
     if (activeSeverityTab !== "all" && issue.severity !== activeSeverityTab) return false;
     return true;
@@ -1949,7 +1936,7 @@ function ModuleTab({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <StatCard
               label="Total Issues"
-              value={result.issues.length}
+              value={activeIssues.length}
               suffix="found"
             />
             <StatCard
@@ -2029,14 +2016,14 @@ function ModuleTab({
                   onChange={(e) => setSelectedPage(e.target.value)}
                   className="text-xs font-bold bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-1.5 text-slate-655 focus:outline-none cursor-pointer focus:border-slate-350 max-w-[160px] sm:max-w-[220px] truncate shrink-0"
                 >
-                  <option value="all">All Pages ({issues.length})</option>
+                  <option value="all">All Pages ({activeIssues.length})</option>
                   {scannedPages.map((pageUrl) => {
                     let label = pageUrl;
                     try {
                       const u = new URL(pageUrl);
                       label = u.pathname === "/" ? "Home (/)" : u.pathname;
                     } catch { }
-                    const count = issues.filter((i) => i.url === pageUrl).length;
+                    const count = activeIssues.filter((i) => i.url === pageUrl).length;
                     return (
                       <option key={pageUrl} value={pageUrl}>
                         {label} ({count})
@@ -2050,7 +2037,7 @@ function ModuleTab({
             {/* Segmented Control Tabs */}
             <div className="flex items-center gap-1 p-1 bg-slate-50 border border-slate-100/80 rounded-xl overflow-x-auto scrollbar-none">
               {[
-                { id: "all", label: "All", count: issues.filter((i) => i.severity !== "info").length },
+                { id: "all", label: "All", count: activeIssues.length },
                 { id: "critical", label: "Critical", count: issues.filter((i) => i.severity === "critical").length, activeColor: "text-red-600 bg-red-50/50" },
                 { id: "high", label: "High", count: issues.filter((i) => i.severity === "high").length, activeColor: "text-orange-600 bg-orange-50/50" },
                 { id: "medium", label: "Medium", count: issues.filter((i) => i.severity === "medium").length, activeColor: "text-amber-600 bg-amber-50/50" },
