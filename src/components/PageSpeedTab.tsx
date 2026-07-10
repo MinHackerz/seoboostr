@@ -55,14 +55,6 @@ interface PageSpeedTabProps {
   websiteUrl: string;
   initialResult?: ModuleResult;
   onUpdateAnalysis: (updatedModule: ModuleResult) => void;
-  hasGithubLinked?: boolean;
-  onOpenGithubSettings?: () => void;
-  onFixIssue?: (issue: Issue) => Promise<void>;
-  isFixingMap?: Record<string, boolean>;
-  fixingInBackgroundMap?: Record<string, boolean>;
-  completedFixesMap?: Record<string, boolean>;
-  isVerifyingMap?: Record<string, boolean>;
-  onVerifyFix?: (issue: any) => Promise<void>;
 }
 
 export function PageSpeedTab({
@@ -70,14 +62,6 @@ export function PageSpeedTab({
   websiteUrl,
   initialResult,
   onUpdateAnalysis,
-  hasGithubLinked,
-  onOpenGithubSettings,
-  onFixIssue,
-  isFixingMap = {},
-  fixingInBackgroundMap = {},
-  completedFixesMap = {},
-  isVerifyingMap = {},
-  onVerifyFix,
 }: PageSpeedTabProps) {
   const [strategy, setStrategy] = useState<"mobile" | "desktop">("mobile");
   const [copied, setCopied] = useState<boolean>(false);
@@ -491,14 +475,6 @@ export function PageSpeedTab({
         </h3>
         <IssueList
           issues={initialResult.issues || []}
-          onFixIssue={onFixIssue}
-          isFixingMap={isFixingMap}
-          fixingInBackgroundMap={fixingInBackgroundMap}
-          completedFixesMap={completedFixesMap}
-          isVerifyingMap={isVerifyingMap}
-          onVerifyFix={onVerifyFix}
-          hasGithubLinked={hasGithubLinked}
-          onOpenGithubSettings={onOpenGithubSettings}
         />
       </div>
     </div>

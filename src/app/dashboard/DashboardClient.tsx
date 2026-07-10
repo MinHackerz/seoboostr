@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect } from "react";
 import { signOut } from "next-auth/react";
 import { ScoreGauge } from "@/components/ScoreGauge";
 import { IssueList } from "@/components/IssueCard";
-import { GithubSettingsModal } from "@/components/GithubSettingsModal";
 import { ProfileModal } from "@/components/ProfileModal";
 import type { ModuleResult } from "@/lib/analysis/types";
 import { PageSpeedTab } from "@/components/PageSpeedTab";
@@ -103,21 +102,12 @@ export function DashboardClient({ user }: { user: User }) {
   const [savedWebsiteId, setSavedWebsiteId] = useState<string | null>(null);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [websites, setWebsites] = useState<any[]>([]);
-  const isGithubConnected = websites.some((w) => !!w.githubPat);
   const isDemoMode = user.email === "demo@seoboostr.io";
   const canAddWebsite = !isDemoMode && websites.length < 10;
 
-  // Coins & GitHub Integration States
+  // Coins State
   const [coins, setCoins] = useState<number>(user.coins);
-  const [githubPat, setGithubPat] = useState<string>("");
-  const [githubRepo, setGithubRepo] = useState<string>("");
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isFixingMap, setIsFixingMap] = useState<Record<string, boolean>>({});
-  const [fixingInBackground, setFixingInBackground] = useState<Record<string, boolean>>({});
-  const [completedFixes, setCompletedFixes] = useState<Record<string, boolean>>({});
-  const [isVerifyingMap, setIsVerifyingMap] = useState<Record<string, boolean>>({});
-  const [isFixingAll, setIsFixingAll] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
@@ -169,8 +159,6 @@ export function DashboardClient({ user }: { user: User }) {
         setSavedWebsiteId(null);
         setUrl("");
         setAnalysis(null);
-        setGithubRepo("");
-        setGithubPat("");
       }
       await fetchWebsites();
     } catch (err) {
@@ -179,170 +167,7 @@ export function DashboardClient({ user }: { user: User }) {
     }
   }, [savedWebsiteId, fetchWebsites]);
 
-  const handleSaveGithubSettings = useCallback(async (repo: string, pat: string) => {
-    if (!savedWebsiteId) {
-      throw new Error("No active website selected to connect to GitHub.");
-    }
-    const res = await fetch("/api/settings/github", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ githubRepo: repo, githubPat: pat, websiteId: savedWebsiteId }),
-    });
 
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error || "Failed to update GitHub configuration");
-    }
-
-    setGithubRepo(repo);
-    setGithubPat(pat);
-    fetchWebsites();
-  }, [savedWebsiteId, fetchWebsites]);
-
-  const handleFixIssue = useCallback(async (issue: any) => {
-    if (isFixingMap[issue.id]) return;
-    if (!savedWebsiteId) {
-      setError("Please select a website before attempting to fix issues.");
-      return;
-    }
-
-    setIsFixingMap((prev) => ({ ...prev, [issue.id]: true }));
-    setError(null);
-
-    try {
-      const res = await fetch("/api/fix-issue", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ issue, websiteId: savedWebsiteId }),
-      });
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        throw new Error(result.error || "Failed to execute AI fix");
-      }
-
-      const cost = result.cost ?? 0.5;
-      setCoins((prev) => Math.max(0, prev - cost));
-      setFixingInBackground((prev) => ({ ...prev, [issue.id]: true }));
-
-      alert(`🚀 AI Fix started in the background!\n\nYou can check its live progress in your Profile modal under 'AI Fixes History'.`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong during issue fixing");
-    } finally {
-      setIsFixingMap((prev) => ({ ...prev, [issue.id]: false }));
-    }
-  }, [isFixingMap, savedWebsiteId]);
-
-  // ── General-purpose sequential bulk fixer ────────────────────────────────────────────
-  const handleBulkFix = useCallback(async (issuesToFix: any[], label: string) => {
-    if (!savedWebsiteId) {
-      setError("Please select a website before attempting to fix issues.");
-      return;
-    }
-    if (issuesToFix.length === 0) {
-      alert(`No page-linked ${label} issues found to fix automatically.`);
-      return;
-    }
-    const severityCosts: Record<string, number> = { critical: 1.5, high: 1.0, medium: 0.75, low: 0.5 };
-    const getSeverityCost = (sev: string) => severityCosts[sev] ?? 0.5;
-    const totalCost = issuesToFix.reduce((acc, i) => acc + getSeverityCost(i.severity), 0);
-
-    if (coins < totalCost) {
-      alert(`Insufficient credits.\n\nFixing ${issuesToFix.length} ${label} issue${issuesToFix.length !== 1 ? "s" : ""} costs ${totalCost.toFixed(1)} credits.\nCurrent Balance: ${coins.toFixed(1)} credits.`);
-      return;
-    }
-    if (!confirm(`Fix ${issuesToFix.length} ${label} issue${issuesToFix.length !== 1 ? "s" : ""} via AI?\n\nEach issue will be submitted as a separate GitHub Pull Request for your review before deployment.\nTotal Cost: ${totalCost.toFixed(1)} credits.`)) {
-      return;
-    }
-
-    setIsFixingAll(true);
-    setError(null);
-
-    try {
-      for (const issue of issuesToFix) {
-        setIsFixingMap((prev) => ({ ...prev, [issue.id]: true }));
-        try {
-          const res = await fetch("/api/fix-issue", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ issue, websiteId: savedWebsiteId }),
-          });
-          const result = await res.json();
-          if (res.ok) {
-            const cost = result.cost ?? getSeverityCost(issue.severity);
-            setCoins((prev) => Math.max(0, prev - cost));
-            setFixingInBackground((prev) => ({ ...prev, [issue.id]: true }));
-          } else {
-            console.error(`Failed to fix issue ${issue.id}:`, result.error);
-          }
-        } catch (err) {
-          console.error(`Error fixing issue ${issue.id}:`, err);
-        } finally {
-          setIsFixingMap((prev) => ({ ...prev, [issue.id]: false }));
-        }
-      }
-      alert(`🚀 Bulk AI Fixes started in the background!\n\nAll ${issuesToFix.length} fixes have been successfully initiated. You can check their live progress in your Profile modal under 'AI Fixes History'.`);
-      fetchWebsites();
-    } catch {
-      setError("An error occurred during the bulk fixing operation.");
-    } finally {
-      setIsFixingAll(false);
-    }
-  }, [savedWebsiteId, coins, fetchWebsites]);
-
-  const handleVerifyFix = useCallback(async (issue: any) => {
-    if (isVerifyingMap[issue.id]) return;
-    if (!savedWebsiteId) {
-      setError("Please select a website before attempting to verify fixes.");
-      return;
-    }
-
-    setIsVerifyingMap((prev) => ({ ...prev, [issue.id]: true }));
-    setError(null);
-
-    try {
-      const res = await fetch("/api/verify-fix", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ issue, websiteId: savedWebsiteId }),
-      });
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        throw new Error(result.error || "Failed to verify fix");
-      }
-
-      if (result.isFixed) {
-        alert("🎉 Fix verified successfully! The issue has been resolved and is no longer present on the page.");
-        if (result.analysis) {
-          setAnalysis(result.analysis);
-        }
-      } else {
-        alert("⚠️ Fix could not be verified. The issue is still present on the page. Please check your commit/PR or try again.");
-        setCompletedFixes((prev) => {
-          const next = { ...prev };
-          delete next[issue.id];
-          return next;
-        });
-      }
-    } catch (err) {
-      alert(`Error verifying fix: ${err instanceof Error ? err.message : String(err)}`);
-    } finally {
-      setIsVerifyingMap((prev) => ({ ...prev, [issue.id]: false }));
-    }
-  }, [isVerifyingMap, savedWebsiteId, setCompletedFixes]);
-
-  // Severity-scoped — used by OverviewTab severity filter buttons
-  const handleFixAllIssues = useCallback(async (severity: string) => {
-    if (!analysis) return;
-    const allIssues = (analysis.modules || []).flatMap((m) =>
-      (m.issues || []).map((i) => ({ ...i, moduleName: m.module }))
-    );
-    const issuesToFix = allIssues.filter((i) => !!i.url && i.severity === severity);
-    await handleBulkFix(issuesToFix, severity);
-  }, [analysis, handleBulkFix]);
 
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -420,8 +245,6 @@ export function DashboardClient({ user }: { user: User }) {
 
       const website = await saveRes.json();
       setSavedWebsiteId(website.id);
-      setGithubRepo(website.githubRepo || "");
-      setGithubPat(website.githubPat || "");
       localStorage.setItem(`last_website_${user.email}`, website.url);
 
       // Step 2: Run analysis
@@ -480,8 +303,6 @@ export function DashboardClient({ user }: { user: User }) {
         setSavedWebsiteId(null);
         setUrl("");
         setAnalysis(null);
-        setGithubRepo("");
-        setGithubPat("");
         return;
       }
 
@@ -489,8 +310,6 @@ export function DashboardClient({ user }: { user: User }) {
       if (selected) {
         setSavedWebsiteId(selected.id);
         setUrl(selected.url);
-        setGithubRepo(selected.githubRepo || "");
-        setGithubPat(selected.githubPat || "");
         localStorage.setItem(`last_website_${user.email}`, selected.url);
 
         if (selected.analyses && selected.analyses.length > 0) {
@@ -527,19 +346,6 @@ export function DashboardClient({ user }: { user: User }) {
         const data = await res.json();
         if (data.coins !== undefined) {
           setCoins(data.coins);
-        }
-        if (data.fixes) {
-          const pendingMap: Record<string, boolean> = {};
-          const completedMap: Record<string, boolean> = {};
-          data.fixes.forEach((fix: any) => {
-            if (fix.status === "pending") {
-              pendingMap[fix.issueId] = true;
-            } else if (fix.status === "completed") {
-              completedMap[fix.issueId] = true;
-            }
-          });
-          setFixingInBackground(pendingMap);
-          setCompletedFixes(completedMap);
         }
       }
     } catch (err) {
@@ -600,8 +406,6 @@ export function DashboardClient({ user }: { user: User }) {
 
           if (matchingSite) {
             setSavedWebsiteId(matchingSite.id);
-            setGithubRepo(matchingSite.githubRepo || "");
-            setGithubPat(matchingSite.githubPat || "");
             localStorage.setItem(`last_website_${user.email}`, matchingSite.url);
 
             if (matchingSite.analyses && matchingSite.analyses.length > 0) {
@@ -637,8 +441,6 @@ export function DashboardClient({ user }: { user: User }) {
             if (saveRes.ok) {
               const website = await saveRes.json();
               setSavedWebsiteId(website.id);
-              setGithubRepo(website.githubRepo || "");
-              setGithubPat(website.githubPat || "");
               localStorage.setItem(`last_website_${user.email}`, website.url);
 
               if (initialResults) {
@@ -812,42 +614,12 @@ export function DashboardClient({ user }: { user: User }) {
                       <span className="text-[8px] font-extrabold bg-amber-500 text-white px-1.5 py-0.5 rounded-md uppercase tracking-wider leading-none">Soon</span>
                     </button>
                     <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 bg-slate-900 text-white font-medium text-[9px] rounded-lg shadow-lg opacity-0 pointer-events-none group-hover/buy:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                      Payment integration coming soon!
-                    </div>
+                    Payment integration coming soon!
                   </div>
                 </div>
               </div>
             </div>
-
-            {/* GitHub Indicator for Header */}
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 border rounded-lg text-xs font-bold transition-all cursor-pointer ${githubRepo
-                ? "bg-emerald-50 text-emerald-700 border-emerald-500 hover:bg-emerald-100/50"
-                : isGithubConnected
-                  ? "bg-amber-50 text-amber-700 border-amber-500 hover:bg-amber-100/50"
-                  : "bg-slate-50 hover:bg-slate-100 text-slate-650 border-border"
-                }`}
-            >
-              <HugeiconsIcon
-                icon={GithubIcon}
-                size={14}
-                className={
-                  githubRepo
-                    ? "text-emerald-600"
-                    : isGithubConnected
-                      ? "text-amber-600"
-                      : "text-slate-400"
-                }
-              />
-              <span className="max-w-[80px] sm:max-w-[120px] truncate">
-                {githubRepo
-                  ? githubRepo.split("/")[1]
-                  : isGithubConnected
-                    ? "Link Repo"
-                    : "Link GitHub"}
-              </span>
-            </button>
+          </div>
 
             {/* Clickable Profile Tab/Icon */}
             <button
@@ -1050,8 +822,8 @@ export function DashboardClient({ user }: { user: User }) {
 
             {/* Mobile/Tablet Scan Controls - Visible when Sidebar is Hidden */}
             <div className="md:hidden bg-card border border-border rounded-2xl p-5 shadow-sm space-y-4">
-              {/* Coins Balance Indicator & GitHub Settings Status (Mobile) */}
-              <div className="grid grid-cols-2 gap-3 pb-1">
+              {/* Coins Balance Indicator (Mobile) */}
+              <div className="grid grid-cols-1 gap-3 pb-1">
                 <div className="px-3.5 py-2 bg-gradient-to-r from-amber-50 to-yellow-100/50 border border-amber-200 rounded-xl flex items-center gap-2.5 shadow-sm select-none">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-amber-500 drop-shadow-xs">
                     <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v.818a3.987 3.987 0 00-1.847.751.75.75 0 10.96 1.15 2.487 2.487 0 011.387-.419V11.25H10.5a3.75 3.75 0 000 7.5h.75v.75a.75.75 0 001.5 0v-.75h.75a3.75 3.75 0 000-7.5h-.75V8.25h.75a2.487 2.487 0 011.387.419.75.75 0 00.96-1.15A3.987 3.987 0 0012.75 6.818V6zM9 15a2.25 2.25 0 002.25 2.25h.75v-4.5h-.75A2.25 2.25 0 009 15zm4.5 2.25V12.75h.75a2.25 2.25 0 010 4.5h-.75z" clipRule="evenodd" />
@@ -1063,34 +835,6 @@ export function DashboardClient({ user }: { user: User }) {
                     </span>
                   </div>
                 </div>
-                <button
-                  onClick={() => setIsSettingsOpen(true)}
-                  className={`flex items-center gap-2 px-3 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer ${githubRepo
-                    ? "bg-emerald-50 text-emerald-800 border-emerald-500 hover:bg-emerald-100/50"
-                    : isGithubConnected
-                      ? "bg-amber-50 text-amber-800 border-amber-500 hover:bg-amber-100/50"
-                      : "bg-slate-50 hover:bg-slate-100 text-slate-600 border-slate-200"
-                    }`}
-                >
-                  <HugeiconsIcon
-                    icon={GithubIcon}
-                    size={14}
-                    className={
-                      githubRepo
-                        ? "text-emerald-600"
-                        : isGithubConnected
-                          ? "text-amber-600"
-                          : "text-slate-400"
-                    }
-                  />
-                  <span className="truncate">
-                    {githubRepo
-                      ? githubRepo.split("/")[1]
-                      : isGithubConnected
-                        ? "Link Repo"
-                        : "Link GitHub"}
-                  </span>
-                </button>
               </div>
 
               {/* Dropdown Selector */}
@@ -1252,19 +996,8 @@ export function DashboardClient({ user }: { user: User }) {
                         analysis={analysis}
                         onRefresh={handleAnalyze}
                         isRefreshing={isAnalyzing}
-                        onFixIssue={handleFixIssue}
-                        isFixingMap={isFixingMap}
-                        fixingInBackgroundMap={fixingInBackground}
-                        completedFixesMap={completedFixes}
-                        isVerifyingMap={isVerifyingMap}
-                        onVerifyFix={handleVerifyFix}
-                        hasGithubLinked={!!githubRepo}
-                        onOpenGithubSettings={() => setIsSettingsOpen(true)}
-                        onFixAllIssues={handleFixAllIssues}
-                        isFixingAll={isFixingAll}
                         currentCoins={coins}
                         isDemoMode={user.email === "demo@seoboostr.io"}
-                        isGithubConnected={isGithubConnected}
                       />
                     ) : activeTab === "pagespeed" ? (
                       <PageSpeedTab
@@ -1272,14 +1005,6 @@ export function DashboardClient({ user }: { user: User }) {
                         websiteUrl={url}
                         initialResult={getModuleResult("pagespeed")}
                         onUpdateAnalysis={handleUpdateAnalysisModule}
-                        hasGithubLinked={!!githubRepo}
-                        onOpenGithubSettings={() => setIsSettingsOpen(true)}
-                        onFixIssue={handleFixIssue}
-                        isFixingMap={isFixingMap}
-                        fixingInBackgroundMap={fixingInBackground}
-                        completedFixesMap={completedFixes}
-                        isVerifyingMap={isVerifyingMap}
-                        onVerifyFix={handleVerifyFix}
                       />
                     ) : (
                       <ModuleTab
@@ -1287,18 +1012,10 @@ export function DashboardClient({ user }: { user: User }) {
                         moduleName={
                           TABS.find((t) => t.id === activeTab)?.label || activeTab
                         }
-                        onFixIssue={handleFixIssue}
-                        isFixingMap={isFixingMap}
-                        fixingInBackgroundMap={fixingInBackground}
-                        completedFixesMap={completedFixes}
-                        isVerifyingMap={isVerifyingMap}
-                        onVerifyFix={handleVerifyFix}
-                        hasGithubLinked={!!githubRepo}
-                        onOpenGithubSettings={() => setIsSettingsOpen(true)}
                         onRefreshModule={handleRefreshModule}
                         isRefreshing={isRefreshingModule}
                         currentCoins={coins}
-                        isDemoMode={isDemoMode}
+                        isDemoMode={user.email === "demo@seoboostr.io"}
                       />
                     )}
                   </div>
@@ -1399,20 +1116,12 @@ export function DashboardClient({ user }: { user: User }) {
                       <span className="text-slate-300">·</span>
                       <span>Parallel Analysis</span>
                       <span className="text-slate-300">·</span>
-                      <span>AI Auto-Fix</span>
+                      <span>Comprehensive Audits</span>
                     </div>
                   </div>
                 )}
               </>
             )}
-
-            <GithubSettingsModal
-              isOpen={isSettingsOpen}
-              onClose={() => setIsSettingsOpen(false)}
-              initialRepo={githubRepo}
-              initialPat={githubPat || websites.find((w: any) => !!w.githubPat)?.githubPat || ""}
-              onSave={handleSaveGithubSettings}
-            />
 
             <ProfileModal
               isOpen={isProfileOpen}
@@ -1431,36 +1140,14 @@ function OverviewTab({
   analysis,
   onRefresh,
   isRefreshing,
-  onFixIssue,
-  isFixingMap,
-  fixingInBackgroundMap = {},
-  completedFixesMap = {},
-  isVerifyingMap = {},
-  onVerifyFix,
-  hasGithubLinked,
-  onOpenGithubSettings,
-  onFixAllIssues,
-  isFixingAll,
   currentCoins,
   isDemoMode = false,
-  isGithubConnected = false,
 }: {
   analysis: AnalysisData;
   onRefresh: (options?: { resume?: boolean }) => void;
   isRefreshing: boolean;
-  onFixIssue?: (issue: any) => Promise<void>;
-  isFixingMap?: Record<string, boolean>;
-  fixingInBackgroundMap?: Record<string, boolean>;
-  completedFixesMap?: Record<string, boolean>;
-  isVerifyingMap?: Record<string, boolean>;
-  onVerifyFix?: (issue: any) => Promise<void>;
-  hasGithubLinked?: boolean;
-  onOpenGithubSettings?: () => void;
-  onFixAllIssues?: (severity: string) => Promise<void>;
-  isFixingAll?: boolean;
   currentCoins: number;
   isDemoMode?: boolean;
-  isGithubConnected?: boolean;
 }) {
   const [activeSeverityTab, setActiveSeverityTab] = useState<
     "all" | "critical" | "high" | "medium" | "low"
@@ -1773,67 +1460,8 @@ function OverviewTab({
           </div>
         </div>
 
-        {/* ── Bulk Severity Fix Action Bar ── */}
-        {activeSeverityTab !== "all" && onFixAllIssues && (
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-slate-50 to-slate-50/60 border border-slate-100 rounded-xl px-4 py-3">
-            <div className="flex items-center gap-2.5">
-              <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${severityDotColor[activeSeverityTab] ?? "bg-slate-400"}`} />
-              <span className="text-xs font-extrabold text-slate-700 capitalize">
-                {activeSeverityTab} Issues
-              </span>
-              <span className="text-[10px] font-bold text-slate-400 bg-white border border-slate-100 px-2 py-0.5 rounded-full">
-                {fixableForSeverity.length} fixable
-              </span>
-              {fixAllCost > 0 && (
-                <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
-                  {fixAllCost.toFixed(1)} cr total
-                </span>
-              )}
-            </div>
-
-            {fixableForSeverity.length > 0 ? (
-              hasGithubLinked ? (
-                <button
-                  disabled={true}
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400 text-xs font-bold border border-slate-200 rounded-xl cursor-not-allowed select-none"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5 shrink-0 text-slate-400">
-                    <path d="M11.644 1.706a1.05 1.05 0 0 1 1.78 0l2.03 4.3a1.05 1.05 0 0 0 .78.78l4.3 2.03a1.05 1.05 0 0 1 0 1.78l-4.3 2.03a1.05 1.05 0 0 0-.78.78l-2.03 4.3a1.05 1.05 0 0 1-1.78 0l-2.03-4.3a1.05 1.05 0 0 0-.78-.78L4.656 12.63a1.05 1.05 0 0 1 0-1.78l4.3-2.03a1.05 1.05 0 0 0 .78-.78l2.03-4.3Zm5.63 12.18a.5.5 0 0 1 .84 0l.96 2.04a.5.5 0 0 0 .36.36l2.04.96a.5.5 0 0 1 0 .84l-2.04.96a.5.5 0 0 0-.36.36l-.96 2.04a.5.5 0 0 1-.84 0l-.96-2.04a.5.5 0 0 0-.36-.36l-2.04-.96a.5.5 0 0 1 0-.84l2.04-.96a.5.5 0 0 0 .36-.36l.96-2.04Z" />
-                  </svg>
-                  <span>Fix All (Coming Soon)</span>
-                </button>
-              ) : (
-                <button
-                  onClick={onOpenGithubSettings}
-                  className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-xs font-bold shadow-xs cursor-pointer transition-all select-none ${isGithubConnected
-                    ? "border-amber-200 bg-amber-50/50 text-amber-700 hover:bg-amber-100/50 hover:border-amber-300"
-                    : "border-dashed border-slate-300 hover:border-slate-400 text-slate-600 hover:bg-slate-50"
-                    }`}
-                >
-                  <HugeiconsIcon
-                    icon={GithubIcon}
-                    size={13}
-                    className={isGithubConnected ? "text-amber-600" : "text-slate-400"}
-                  />
-                  <span>{isGithubConnected ? "Link Repo to Fix All" : "Link GitHub to Fix All"}</span>
-                </button>
-              )
-            ) : (
-              <span className="text-[10px] font-semibold text-slate-400 italic">No page-linked issues to fix automatically</span>
-            )}
-          </div>
-        )}
-
         <IssueList
           issues={displayIssues}
-          onFixIssue={onFixIssue}
-          isFixingMap={isFixingMap}
-          fixingInBackgroundMap={fixingInBackgroundMap}
-          completedFixesMap={completedFixesMap}
-          isVerifyingMap={isVerifyingMap}
-          onVerifyFix={onVerifyFix}
-          hasGithubLinked={hasGithubLinked}
-          onOpenGithubSettings={onOpenGithubSettings}
         />
       </div>
     </div>
@@ -1864,14 +1492,6 @@ function SummaryRow({
 function ModuleTab({
   result,
   moduleName,
-  onFixIssue,
-  isFixingMap,
-  fixingInBackgroundMap = {},
-  completedFixesMap = {},
-  isVerifyingMap = {},
-  onVerifyFix,
-  hasGithubLinked,
-  onOpenGithubSettings,
   onRefreshModule,
   isRefreshing,
   currentCoins,
@@ -1879,14 +1499,6 @@ function ModuleTab({
 }: {
   result: ModuleResult | undefined;
   moduleName: string;
-  onFixIssue?: (issue: any) => Promise<void>;
-  isFixingMap?: Record<string, boolean>;
-  fixingInBackgroundMap?: Record<string, boolean>;
-  completedFixesMap?: Record<string, boolean>;
-  isVerifyingMap?: Record<string, boolean>;
-  onVerifyFix?: (issue: any) => Promise<void>;
-  hasGithubLinked?: boolean;
-  onOpenGithubSettings?: () => void;
   onRefreshModule?: (moduleName: string) => Promise<void>;
   isRefreshing?: boolean;
   currentCoins?: number;
@@ -2131,14 +1743,6 @@ function ModuleTab({
 
         <IssueList
           issues={filteredIssues}
-          onFixIssue={onFixIssue}
-          isFixingMap={isFixingMap}
-          fixingInBackgroundMap={fixingInBackgroundMap}
-          completedFixesMap={completedFixesMap}
-          isVerifyingMap={isVerifyingMap}
-          onVerifyFix={onVerifyFix}
-          hasGithubLinked={hasGithubLinked}
-          onOpenGithubSettings={onOpenGithubSettings}
         />
       </div>
     </div>
