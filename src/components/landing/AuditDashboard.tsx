@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { MODULES, getScoreColor, type ScanResult } from "./moduleData";
+import { useSession } from "next-auth/react";
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -264,6 +265,8 @@ function ModuleCard({
 export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps) {
   const [moduleStatuses, setModuleStatuses] = useState<Record<string, ModuleStatus>>({});
   const [overallScore, setOverallScore] = useState(0);
+  const { data: session, status: authStatus } = useSession();
+  const isLoggedIn = authStatus === "authenticated";
 
   // Initialize all modules as waiting
   const resetModules = useCallback(() => {
@@ -419,11 +422,19 @@ export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps)
                 </div>
                 <button
                   onClick={() => {
-                    window.location.href = "/login";
+                    localStorage.setItem("seoboostr_last_scanned_url", url);
+                    if (scanResults) {
+                      localStorage.setItem("seoboostr_last_scanned_results", JSON.stringify(scanResults));
+                    }
+                    if (isLoggedIn) {
+                      window.location.href = "/dashboard";
+                    } else {
+                      window.location.href = "/login";
+                    }
                   }}
                   className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors cursor-pointer text-center"
                 >
-                  Login to see the detailed report →
+                  {isLoggedIn ? "Go to dashboard to see the detailed report" : "Login to see the detailed report →"}
                 </button>
               </div>
             </motion.div>

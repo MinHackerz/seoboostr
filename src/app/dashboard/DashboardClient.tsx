@@ -28,6 +28,11 @@ import {
   Refresh01Icon,
   GithubIcon,
   Alert01Icon,
+  Shield01Icon,
+  Link01Icon,
+  AccessibilityIcon,
+  Globe02Icon,
+  SmartphoneWifiIcon,
 } from "@hugeicons/core-free-icons";
 
 interface User {
@@ -51,7 +56,12 @@ type TabId =
   | "geo"
   | "sxo"
   | "performance"
-  | "pagespeed";
+  | "pagespeed"
+  | "security"
+  | "links"
+  | "accessibility"
+  | "international"
+  | "mobile";
 
 const TABS = [
   { id: "overview" as const, label: "Overview", icon: DashboardSquare01Icon },
@@ -69,6 +79,11 @@ const TABS = [
   { id: "sxo" as const, label: "SXO & UX Audit", icon: Target01Icon },
   { id: "performance" as const, label: "Performance & CWV", icon: FlashIcon },
   { id: "pagespeed" as const, label: "PageSpeed Insights", icon: ActivityIcon },
+  { id: "security" as const, label: "Security Headers", icon: Shield01Icon },
+  { id: "links" as const, label: "Link Health", icon: Link01Icon },
+  { id: "accessibility" as const, label: "Accessibility", icon: AccessibilityIcon },
+  { id: "international" as const, label: "International SEO", icon: Globe02Icon },
+  { id: "mobile" as const, label: "Mobile UX", icon: SmartphoneWifiIcon },
 ];
 
 interface AnalysisData {
@@ -90,7 +105,7 @@ export function DashboardClient({ user }: { user: User }) {
   const [websites, setWebsites] = useState<any[]>([]);
   const isGithubConnected = websites.some((w) => !!w.githubPat);
   const isDemoMode = user.email === "demo@seoboostr.io";
-  const canAddWebsite = !isDemoMode && websites.length === 0;
+  const canAddWebsite = !isDemoMode && websites.length < 10;
 
   // Coins & GitHub Integration States
   const [coins, setCoins] = useState<number>(user.coins);
@@ -140,6 +155,29 @@ export function DashboardClient({ user }: { user: User }) {
       console.error("Failed to fetch websites", err);
     }
   }, []);
+
+  const handleDeleteWebsite = useCallback(async (websiteId: string) => {
+    try {
+      const res = await fetch(`/api/websites?id=${websiteId}`, { method: "DELETE" });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(err.error || "Failed to delete website");
+        return;
+      }
+      // If the deleted website was selected, clear state
+      if (savedWebsiteId === websiteId) {
+        setSavedWebsiteId(null);
+        setUrl("");
+        setAnalysis(null);
+        setGithubRepo("");
+        setGithubPat("");
+      }
+      await fetchWebsites();
+    } catch (err) {
+      console.error("Failed to delete website", err);
+      alert("An error occurred while deleting the website.");
+    }
+  }, [savedWebsiteId, fetchWebsites]);
 
   const handleSaveGithubSettings = useCallback(async (repo: string, pat: string) => {
     if (!savedWebsiteId) {
@@ -643,6 +681,12 @@ export function DashboardClient({ user }: { user: User }) {
                 const errResult = await analyzeRes.json();
                 setError(errResult.error || "Analysis failed");
               }
+            } else {
+              const errResult = await saveRes.json();
+              setError(errResult.error || "Failed to save website");
+              localStorage.removeItem("seoboostr_last_scanned_results");
+              setIsAnalyzing(false);
+              return;
             }
           }
         }
@@ -847,9 +891,16 @@ export function DashboardClient({ user }: { user: User }) {
             {isSidebarExpanded && (
               <div className="px-3.5 mb-3 mt-1">
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
-                    Select Website
-                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                      Select Website
+                    </label>
+                    {websites.length > 0 && (
+                      <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md">
+                        {websites.length}/10
+                      </span>
+                    )}
+                  </div>
                   {websites.length > 0 && canAddWebsite && (
                     <button
                       onClick={() => {
@@ -870,6 +921,7 @@ export function DashboardClient({ user }: { user: User }) {
                     selectedId={savedWebsiteId}
                     onSelect={handleSelectWebsite}
                     onRenameSuccess={fetchWebsites}
+                    onDelete={handleDeleteWebsite}
                     isDemoMode={isDemoMode}
                   />
                 ) : (
@@ -1045,9 +1097,16 @@ export function DashboardClient({ user }: { user: User }) {
               {websites.length > 0 ? (
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
-                    <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
-                      Select Website
-                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
+                        Select Website
+                      </label>
+                      {websites.length > 0 && (
+                        <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md">
+                          {websites.length}/10
+                        </span>
+                      )}
+                    </div>
                     {canAddWebsite && (
                       <button
                         onClick={() => {
@@ -1066,6 +1125,7 @@ export function DashboardClient({ user }: { user: User }) {
                     selectedId={savedWebsiteId}
                     onSelect={handleSelectWebsite}
                     onRenameSuccess={fetchWebsites}
+                    onDelete={handleDeleteWebsite}
                     isDemoMode={isDemoMode}
                   />
                 </div>
@@ -1266,7 +1326,7 @@ export function DashboardClient({ user }: { user: User }) {
                           <span className="text-accent">SEO Health</span>
                         </h3>
                         <p className="text-[13px] text-slate-500 max-w-lg font-medium leading-relaxed mb-7">
-                          Run a comprehensive 10-module audit covering technical SEO, content quality, schema markup, Core Web Vitals, and more.
+                          Run a comprehensive 15-module audit covering technical SEO, content quality, schema markup, Core Web Vitals, security headers, accessibility, and more.
                         </p>
 
                         {/* URL Input Area */}
@@ -1334,7 +1394,7 @@ export function DashboardClient({ user }: { user: User }) {
                     <div className="flex items-center justify-center gap-6 mt-5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       <span className="flex items-center gap-1.5">
                         <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                        10 Audit Modules
+                        15 Audit Modules
                       </span>
                       <span className="text-slate-300">·</span>
                       <span>Parallel Analysis</span>

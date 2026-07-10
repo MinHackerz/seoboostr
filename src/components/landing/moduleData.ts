@@ -94,6 +94,46 @@ export const MODULES: Module[] = [
     iconPath: "M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z",
     demoScore: 85,
   },
+  {
+    id: "security",
+    name: "Security Headers",
+    shortName: "Security",
+    description: "HSTS, CSP, X-Frame-Options, Permissions-Policy, info leakage, and mixed content detection.",
+    iconPath: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+    demoScore: 76,
+  },
+  {
+    id: "links",
+    name: "Link Health",
+    shortName: "Links",
+    description: "Internal link equity, nofollow misuse, generic anchor text, and link structure analysis.",
+    iconPath: "M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71",
+    demoScore: 87,
+  },
+  {
+    id: "accessibility",
+    name: "Accessibility",
+    shortName: "A11y",
+    description: "ARIA landmarks, form labels, skip links, alt text, tabindex, and keyboard navigation.",
+    iconPath: "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM9 9h.01M15 9h.01M8 14s1.5 2 4 2 4-2 4-2",
+    demoScore: 79,
+  },
+  {
+    id: "international",
+    name: "International SEO",
+    shortName: "Intl SEO",
+    description: "Hreflang validation, self-referencing tags, x-default, language codes, and protocol consistency.",
+    iconPath: "M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zM2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z",
+    demoScore: 92,
+  },
+  {
+    id: "mobile",
+    name: "Mobile UX",
+    shortName: "Mobile",
+    description: "Viewport config, touch targets, zoom blocking, font sizing, and responsive layout analysis.",
+    iconPath: "M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z",
+    demoScore: 83,
+  },
 ];
 
 // ── Score utilities ──────────────────────────────────────────
@@ -147,6 +187,11 @@ export function generateMockScan(): ScanResult[] {
       sxo: [70, 95],
       performance: [45, 92],
       pagespeed: [50, 95],
+      security: [60, 95],
+      links: [65, 98],
+      accessibility: [50, 92],
+      international: [75, 100],
+      mobile: [55, 93],
     };
     const [min, max] = baseScores[mod.id] || [60, 95];
     const score = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -174,6 +219,16 @@ export function generateMockScan(): ScanResult[] {
       finding = score >= 90 ? "✓ LCP at 1.4s (Good). TTFB 120ms. Speed Index optimal." : "⚠️ LCP at 3.6s (Poor). 4 render-blocking scripts.";
     } else if (mod.id === "pagespeed") {
       finding = score >= 90 ? "✓ Lighthouse score 94. Main thread work < 1.2s." : "⚠️ Lighthouse performance 68. Excessive main thread work.";
+    } else if (mod.id === "security") {
+      finding = score >= 90 ? "✓ All security headers present. HSTS preload ready." : "⚠️ Missing CSP and Permissions-Policy. HSTS max-age too short.";
+    } else if (mod.id === "links") {
+      finding = score >= 90 ? "✓ Clean internal linking. No nofollow misuse." : "⚠️ 5 generic anchor texts. 2 nofollow internal links.";
+    } else if (mod.id === "accessibility") {
+      finding = score >= 90 ? "✓ All form inputs labeled. ARIA landmarks present." : "⚠️ 4 inputs missing labels. No skip navigation link.";
+    } else if (mod.id === "international") {
+      finding = score >= 90 ? "✓ Hreflang valid. Self-ref and x-default present." : "⚠️ Missing x-default hreflang. Invalid language codes.";
+    } else if (mod.id === "mobile") {
+      finding = score >= 90 ? "✓ Touch targets ≥48px. Viewport configured properly." : "⚠️ 3 small touch targets. Zoom disabled via viewport.";
     }
 
     // Staggered delays: 800ms - 3500ms to feel like parallel scans completing at different times

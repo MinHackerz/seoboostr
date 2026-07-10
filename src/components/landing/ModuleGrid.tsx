@@ -35,10 +35,10 @@ export function ModuleGrid({ scanResults, phase }: ModuleGridProps) {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M4 6h16M4 12h16M4 18h16" />
             </svg>
-            10 Modules
+            15 Modules
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-3">
-            One URL. Ten audits. One report.
+            One URL. Fifteen audits. One report.
           </h2>
           <p className="text-sm sm:text-base text-slate-500 max-w-lg mx-auto">
             Every module runs in parallel. No waiting around for sequential crawls.

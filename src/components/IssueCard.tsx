@@ -123,21 +123,28 @@ export function IssueCard({
             </span>
           )}
 
-          {/* Optional Page URL Badge */}
+          {/* Optional Page URL Badge — clickable link */}
           {issue.url && (
-            <span
-              className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 text-slate-600 border border-slate-200/60 font-mono truncate max-w-[120px] inline-block"
-              title={issue.url}
+            <a
+              href={issue.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-slate-100 text-slate-600 border border-slate-200/60 font-mono truncate max-w-[140px] inline-flex items-center gap-1 hover:bg-accent/10 hover:text-accent hover:border-accent/30 transition-colors duration-150 no-underline"
+              title={`Open ${issue.url} in new tab`}
             >
-              {(() => {
-                try {
-                  const u = new URL(issue.url);
-                  return u.pathname === "/" ? "Home (/)" : u.pathname;
-                } catch {
-                  return issue.url;
-                }
-              })()}
-            </span>
+              <span className="truncate">
+                {(() => {
+                  try {
+                    const u = new URL(issue.url);
+                    return u.pathname === "/" ? "Home (/)" : u.pathname;
+                  } catch {
+                    return issue.url;
+                  }
+                })()}
+              </span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-50"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            </a>
           )}
 
           {/* Action Trigger Chevron */}

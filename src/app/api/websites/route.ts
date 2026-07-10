@@ -41,12 +41,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 2. Enforce single website limit for normal users (if it's a new website URL)
+    // 2. Enforce max 10 websites per user
     const existingWebsite = await prisma.website.findUnique({
       where: {
         userId_url: {
           userId: session.user.id,
           url: normalizedUrl,
+        },
+      },
+      include: {
+        _count: {
+          select: { analyses: true },
         },
       },
     });
@@ -55,9 +60,28 @@ export async function POST(request: NextRequest) {
       const websiteCount = await prisma.website.count({
         where: { userId: session.user.id },
       });
-      if (websiteCount >= 1) {
+      if (websiteCount >= 10) {
         return Response.json(
-          { error: "You are restricted to scanning a single website only." },
+          { error: `You have reached the maximum limit of 10 websites. Remove an existing website to add a new one.` },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Check user's balance if initialResults are provided
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { coins: true },
+    });
+
+    const hasExistingAnalysis = existingWebsite ? existingWebsite._count.analyses > 0 : false;
+    const isInitialAudit = Array.isArray(initialResults) && initialResults.length > 0 && !hasExistingAnalysis;
+    const cost = 1.0; // 1-page homepage audit cost is 1.0 credit
+
+    if (isInitialAudit) {
+      if (!user || user.coins < cost) {
+        return Response.json(
+          { error: `Insufficient credits. You need at least ${cost.toFixed(1)} credits to save and import this website's report.` },
           { status: 400 }
         );
       }
@@ -71,7 +95,8 @@ export async function POST(request: NextRequest) {
         },
       },
       update: {
-        name: name || normalizedUrl,
+        // Only overwrite name if explicitly provided — preserve user's custom name
+        ...(name ? { name } : {}),
       },
       create: {
         url: normalizedUrl,
@@ -81,13 +106,27 @@ export async function POST(request: NextRequest) {
     });
 
     // Save initialResults if provided, and no analysis exists
-    if (Array.isArray(initialResults) && initialResults.length > 0) {
+    if (isInitialAudit) {
       const existingAnalysisCount = await prisma.analysis.count({
         where: { websiteId: website.id },
       });
 
       if (existingAnalysisCount === 0) {
         console.log(`[POST /api/websites] Saving ${initialResults.length} initial results for ${normalizedUrl}`);
+
+        // Deduct credits and log transaction
+        await prisma.user.update({
+          where: { id: session.user.id },
+          data: { coins: { decrement: cost } },
+        });
+
+        await prisma.coinTransaction.create({
+          data: {
+            userId: session.user.id,
+            amount: -cost,
+            description: `Imported Initial Audit: ${normalizedUrl}`,
+          },
+        });
         
         const formattedResults = initialResults.map((r: any) => ({
           module: r.moduleId === "ai" ? "geo" : r.moduleId,
@@ -207,3 +246,47 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
+export async function DELETE(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (session?.user?.email === "demo@seoboostr.io") {
+    return Response.json(
+      { error: "Deleting websites is disabled in demo mode." },
+      { status: 403 }
+    );
+  }
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return Response.json({ error: "Website ID is required" }, { status: 400 });
+    }
+
+    // Verify ownership before deleting
+    const website = await prisma.website.findFirst({
+      where: { id, userId: session.user.id },
+    });
+
+    if (!website) {
+      return Response.json({ error: "Website not found" }, { status: 404 });
+    }
+
+    // Cascading deletes handle analyses, results, and fixes via Prisma schema
+    await prisma.website.delete({
+      where: { id },
+    });
+
+    return Response.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting website:", error);
+    return Response.json(
+      { error: "Failed to delete website" },
+      { status: 500 }
+    );
+  }
+}

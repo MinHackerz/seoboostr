@@ -95,7 +95,7 @@ model Analysis {
 model AnalysisResult {
   id              String   @id @default(cuid())
   analysisId      String
-  module          String   // technical | onpage | content | schema | images | sitemap | geo | sxo | performance
+  module          String   // technical | onpage | content | schema | images | sitemap | geo | sxo | performance | security | links | accessibility | international | mobile
   status          String   @default("pending")
   score           Int?
   data            Json?

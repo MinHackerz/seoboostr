@@ -77,12 +77,22 @@ export const technicalAnalyzer: Analyzer = {
       const hasRobotsTxt = !!fetchResult.robotsTxt;
       data.hasRobotsTxt = hasRobotsTxt;
       if (!hasRobotsTxt) {
+        const isBlocked = fetchResult.statusCode === 429 || 
+                          (fetchResult.headers && (
+                            fetchResult.headers["x-vercel-mitigated"] || 
+                            fetchResult.headers["server"]?.toLowerCase().includes("cloudflare")
+                          ));
+
         issues.push({
           id: "tech-no-robots",
-          title: "Missing robots.txt",
-          description: "No robots.txt file found at the root of the site.",
-          severity: "high",
-          recommendation: "Create a robots.txt file to control search engine crawling.",
+          title: isBlocked ? "robots.txt blocked by Firewall" : "Missing robots.txt",
+          description: isBlocked 
+            ? "The request to fetch robots.txt was blocked by Vercel/Cloudflare Attack Mitigation (returned HTTP 429 Challenge)."
+            : "No robots.txt file found at the root of the site.",
+          severity: isBlocked ? "medium" : "high",
+          recommendation: isBlocked 
+            ? "Whitelist the SEOBoostr crawler User-Agent ('SEOBoostr/1.0') or configure your WAF to allow automated crawler requests."
+            : "Create a robots.txt file to control search engine crawling.",
         });
       } else {
         // Check for AI crawler rules

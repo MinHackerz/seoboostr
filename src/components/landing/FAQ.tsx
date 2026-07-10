@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const faqs = [
   {
     q: "Is this actually free?",
-    a: "Yes. Run unlimited audits, see your overall score and partial results — no card, no trial expiry. The full 10-module report with issue-level detail is behind a free account. We make money when agencies upgrade for team features and API access, not from gating your first scan.",
+    a: "Yes. Run unlimited audits, see your overall score and partial results — no card, no trial expiry. The full 15-module report with issue-level detail is behind a free account. We make money when agencies upgrade for team features and API access, not from gating your first scan.",
   },
   {
     q: "What data do you store?",
@@ -22,11 +22,11 @@ const faqs = [
   },
   {
     q: "How is this different from Lighthouse?",
-    a: "Lighthouse covers performance and accessibility. SEOBoostr runs 10 modules in parallel — technical SEO, schema markup, content E-E-A-T analysis, AI/GEO visibility, and more. You get a single, prioritized report instead of copy-pasting between five different tools.",
+    a: "Lighthouse covers performance and accessibility. SEOBoostr runs 15 modules in parallel — technical SEO, schema markup, content E-E-A-T analysis, AI/GEO visibility, security headers, accessibility, and more. You get a single, prioritized report instead of copy-pasting between five different tools.",
   },
   {
     q: "How fast is a scan?",
-    a: "Most scans complete in 8-15 seconds. All 10 modules run simultaneously — we're not queuing sequential requests. Complex sites with many resources may take up to 30 seconds.",
+    a: "Most scans complete in 8-15 seconds. All 15 modules run simultaneously — we're not queuing sequential requests. Complex sites with many resources may take up to 30 seconds.",
   },
 ];
 

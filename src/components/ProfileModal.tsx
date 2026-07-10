@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface Transaction {
   id: string;
@@ -71,19 +71,27 @@ export function ProfileModal({ isOpen, onClose, currentCoins }: ProfileModalProp
     fetchProfile(true);
   }, [isOpen, fetchProfile]);
 
+  // Track whether polling is needed via ref to avoid re-triggering the effect
+  const hasPendingFixesRef = useRef(false);
+
   useEffect(() => {
-    if (!isOpen || !profile) return;
+    if (profile) {
+      hasPendingFixesRef.current = profile.fixes.some((fix) => fix.status === "pending");
+    }
+  }, [profile]);
 
-    // Check if any fix is pending
-    const hasPending = profile.fixes.some((fix) => fix.status === "pending");
-    if (!hasPending) return;
+  useEffect(() => {
+    if (!isOpen) return;
 
+    // Only poll if there are pending fixes; check ref inside the interval callback
     const interval = setInterval(() => {
-      fetchProfile(false);
+      if (hasPendingFixesRef.current) {
+        fetchProfile(false);
+      }
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [isOpen, profile, fetchProfile]);
+  }, [isOpen, fetchProfile]);
 
   if (!isOpen) return null;
 

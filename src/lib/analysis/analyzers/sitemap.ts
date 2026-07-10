@@ -12,18 +12,28 @@ export const sitemapAnalyzer: Analyzer = {
     data.hasSitemap = hasSitemap;
 
     if (!hasSitemap) {
+      const isBlocked = fetchResult.statusCode === 429 || 
+                        (fetchResult.headers && (
+                          fetchResult.headers["x-vercel-mitigated"] || 
+                          fetchResult.headers["server"]?.toLowerCase().includes("cloudflare")
+                        ));
+
       issues.push({
         id: "sitemap-missing",
-        title: "No XML sitemap found",
-        description: "No sitemap.xml found at /sitemap.xml.",
-        severity: "high",
-        recommendation: "Create an XML sitemap and submit it to Google Search Console.",
+        title: isBlocked ? "Sitemap access blocked by Firewall" : "No XML sitemap found",
+        description: isBlocked 
+          ? "The request was blocked by Vercel/Cloudflare Attack Mitigation (returned HTTP 429 Challenge). The automated bot could not read the sitemap."
+          : "No sitemap.xml found at the standard location (/sitemap.xml).",
+        severity: isBlocked ? "medium" : "high",
+        recommendation: isBlocked 
+          ? "Whitelist the SEOBoostr crawler User-Agent ('SEOBoostr/1.0') or configure your WAF to allow automated crawler requests."
+          : "Create an XML sitemap and submit it to Google Search Console.",
       });
 
       return {
         module: "sitemap",
         status: "completed",
-        score: 30,
+        score: isBlocked ? 50 : 30, // Give slightly higher score if it exists but is just blocked by a firewall
         issues,
         data,
         executionTimeMs: Date.now() - startTime,

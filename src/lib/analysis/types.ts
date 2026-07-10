@@ -14,7 +14,12 @@ export type ModuleName =
   | 'geo'
   | 'sxo'
   | 'performance'
-  | 'pagespeed';
+  | 'pagespeed'
+  | 'security'
+  | 'links'
+  | 'accessibility'
+  | 'international'
+  | 'mobile';
 
 export interface Issue {
   id: string;

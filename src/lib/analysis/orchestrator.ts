@@ -10,6 +10,11 @@ import { sitemapAnalyzer } from "./analyzers/sitemap";
 import { geoAnalyzer } from "./analyzers/geo";
 import { sxoAnalyzer } from "./analyzers/sxo";
 import { performanceAnalyzer } from "./analyzers/performance";
+import { securityAnalyzer } from "./analyzers/security";
+import { linksAnalyzer } from "./analyzers/links";
+import { accessibilityAnalyzer } from "./analyzers/accessibility";
+import { internationalAnalyzer } from "./analyzers/international";
+import { mobileAnalyzer } from "./analyzers/mobile";
 
 const ALL_ANALYZERS = [
   technicalAnalyzer,
@@ -21,6 +26,11 @@ const ALL_ANALYZERS = [
   geoAnalyzer,
   sxoAnalyzer,
   performanceAnalyzer,
+  securityAnalyzer,
+  linksAnalyzer,
+  accessibilityAnalyzer,
+  internationalAnalyzer,
+  mobileAnalyzer,
 ];
 
 // Simple average scoring for overall SEO health

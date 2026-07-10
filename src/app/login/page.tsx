@@ -17,7 +17,7 @@ export default function LoginPage() {
           <p className="text-slate-500 text-sm font-semibold">
             Next-generation parallel SEO audits.
             <br />
-            10 modules. One clean report.
+            15 modules. One clean report.
           </p>
         </div>
 

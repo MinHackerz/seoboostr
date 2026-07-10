@@ -3,9 +3,9 @@ import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SEOBoostr — 10-Module Parallel SEO Audit in Seconds",
+  title: "SEOBoostr — 15-Module Parallel SEO Audit in Seconds",
   description:
-    "Run a free, instant SEO audit across 10 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, AI visibility, and more. One URL. One scored report.",
+    "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more. One URL. One scored report.",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",

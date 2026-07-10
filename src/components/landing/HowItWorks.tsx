@@ -23,7 +23,7 @@ const steps = [
   },
   {
     step: "02",
-    title: "10 modules scan in parallel",
+    title: "15 modules scan in parallel",
     description: "Not one after another — all at once. Technical SEO, content, schema, images, performance — done simultaneously.",
     visual: (
       <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm space-y-1.5">
