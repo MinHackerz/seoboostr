@@ -224,18 +224,22 @@ export function DashboardClient({ user }: { user: User }) {
 
 
 
-  const handleAnalyze = useCallback(async (options?: { resume?: boolean }) => {
-    if (!url.trim()) return;
+  const handleAnalyze = useCallback(async (options?: { resume?: boolean; targetUrl?: string }) => {
+    const urlToAnalyze = (options?.targetUrl ?? url).trim();
+    if (!urlToAnalyze) return;
     setError(null);
     setIsAnalyzing(true);
     setAnalysis(null);
+    if (options?.targetUrl) {
+      setUrl(options.targetUrl);
+    }
 
     try {
       // Step 1: Save website
       const saveRes = await fetch("/api/websites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim() }),
+        body: JSON.stringify({ url: urlToAnalyze }),
       });
 
       if (!saveRes.ok) {
@@ -673,19 +677,6 @@ export function DashboardClient({ user }: { user: User }) {
                       </span>
                     )}
                   </div>
-                  {websites.length > 0 && canAddWebsite && (
-                    <button
-                      onClick={() => {
-                        setSavedWebsiteId(null);
-                        setUrl("");
-                        setAnalysis(null);
-                      }}
-                      className="text-[10px] font-extrabold text-accent hover:text-accent-hover cursor-pointer bg-transparent border-0 select-none flex items-center gap-0.5"
-                      title="Add new website"
-                    >
-                      + Add New
-                    </button>
-                  )}
                 </div>
                 {websites.length > 0 ? (
                   <WebsiteDropdown
@@ -695,6 +686,10 @@ export function DashboardClient({ user }: { user: User }) {
                     onRenameSuccess={fetchWebsites}
                     onDelete={handleDeleteWebsite}
                     isDemoMode={isDemoMode}
+                    onAnalyze={async (targetUrl) => {
+                      await handleAnalyze({ targetUrl });
+                    }}
+                    isAnalyzing={isAnalyzing}
                   />
                 ) : (
                   !isDemoMode && (
@@ -851,18 +846,6 @@ export function DashboardClient({ user }: { user: User }) {
                         </span>
                       )}
                     </div>
-                    {canAddWebsite && (
-                      <button
-                        onClick={() => {
-                          setSavedWebsiteId(null);
-                          setUrl("");
-                          setAnalysis(null);
-                        }}
-                        className="text-[10px] font-extrabold text-accent hover:text-accent-hover cursor-pointer bg-transparent border-0 select-none"
-                      >
-                        + Add New
-                      </button>
-                    )}
                   </div>
                   <WebsiteDropdown
                     websites={websites}
@@ -871,6 +854,10 @@ export function DashboardClient({ user }: { user: User }) {
                     onRenameSuccess={fetchWebsites}
                     onDelete={handleDeleteWebsite}
                     isDemoMode={isDemoMode}
+                    onAnalyze={async (targetUrl) => {
+                      await handleAnalyze({ targetUrl });
+                    }}
+                    isAnalyzing={isAnalyzing}
                   />
                 </div>
               ) : (
@@ -893,32 +880,7 @@ export function DashboardClient({ user }: { user: User }) {
                 )
               )}
 
-              {/* URL Scanner */}
-              {canAddWebsite && (
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
-                    Scan New URL
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="url"
-                      value={url}
-                      onChange={(e) => setUrl(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
-                      placeholder="https://rasid.in"
-                      className="flex-1 bg-slate-50 border border-border rounded-xl text-xs font-semibold text-slate-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
-                      disabled={isAnalyzing}
-                    />
-                    <button
-                      onClick={() => handleAnalyze()}
-                      disabled={isAnalyzing || !url.trim()}
-                      className="px-4 py-2 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
-                    >
-                      {isAnalyzing ? "..." : "Scan"}
-                    </button>
-                  </div>
-                </div>
-              )}
+
 
               {error && (
                 <div className="text-xs text-danger bg-danger/5 border border-danger/20 rounded-xl px-3 py-2.5 font-semibold flex items-start gap-2">

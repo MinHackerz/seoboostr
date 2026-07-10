@@ -21,6 +21,8 @@ interface WebsiteDropdownProps {
   onRenameSuccess?: () => void;
   onDelete?: (websiteId: string) => void;
   isDemoMode?: boolean;
+  onAnalyze?: (url: string) => Promise<void>;
+  isAnalyzing?: boolean;
 }
 
 export function WebsiteDropdown({
@@ -30,11 +32,14 @@ export function WebsiteDropdown({
   onRenameSuccess,
   onDelete,
   isDemoMode = false,
+  onAnalyze,
+  isAnalyzing = false,
 }: WebsiteDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [newUrl, setNewUrl] = useState("");
   const modalRef = useRef<HTMLDivElement>(null);
 
   // Close modal on escape key
@@ -56,7 +61,6 @@ export function WebsiteDropdown({
   const selectedWebsite = websites.find((w) => w.id === selectedId);
 
   let selectedLabel = "Select Website";
-  let selectedUrl = "";
   if (selectedWebsite) {
     if (selectedWebsite.name) {
       selectedLabel = selectedWebsite.name;
@@ -67,7 +71,6 @@ export function WebsiteDropdown({
         selectedLabel = selectedWebsite.url;
       }
     }
-    selectedUrl = selectedWebsite.url;
   }
 
   // Get the latest score for the selected website
@@ -116,36 +119,30 @@ export function WebsiteDropdown({
     return name.includes(query) || url.includes(query);
   });
 
+  // Dynamically adjust font size based on name length to ensure visibility
+  const labelLength = selectedLabel.length;
+  let fontSizeClass = "text-[13px]";
+  if (labelLength > 25) {
+    fontSizeClass = "text-[10px]";
+  } else if (labelLength > 18) {
+    fontSizeClass = "text-[11px]";
+  } else if (labelLength > 14) {
+    fontSizeClass = "text-xs";
+  }
+
   return (
     <div className="w-full font-sans">
       {/* ─── Trigger Button ──────────────────────────────────────── */}
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 border rounded-2xl text-sm transition-all duration-200 focus:outline-none cursor-pointer select-none bg-gradient-to-b from-white to-slate-50/80 border-slate-200/80 hover:border-slate-350 hover:shadow-sm"
+        className="w-full flex items-center justify-between gap-3 px-4 py-2.5 border rounded-xl text-sm transition-all duration-200 focus:outline-none cursor-pointer select-none bg-white border-slate-200 hover:border-slate-350 hover:shadow-sm"
       >
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all ${
-            selectedWebsite
-              ? "bg-accent/10 border border-accent/20 text-accent"
-              : "bg-slate-100 border border-slate-200/60 text-slate-400"
-          }`}>
-            <HugeiconsIcon icon={CompassIcon} size={16} />
-          </div>
-
-          <div className="flex flex-col min-w-0 flex-1">
-            <span className={`truncate font-bold text-[13px] leading-tight ${
-              selectedWebsite ? "text-slate-800" : "text-slate-400"
-            }`}>
-              {selectedLabel}
-            </span>
-            {selectedUrl && (
-              <span className="text-[10px] text-slate-400 font-mono truncate mt-0.5 leading-tight">
-                {selectedUrl}
-              </span>
-            )}
-          </div>
-        </div>
+        <span className={`break-words whitespace-normal font-bold text-left min-w-0 flex-1 leading-tight ${fontSizeClass} ${
+          selectedWebsite ? "text-slate-800" : "text-slate-400"
+        }`}>
+          {selectedLabel}
+        </span>
 
         <div className="flex items-center gap-2 shrink-0">
           {selectedScore !== null && (
@@ -206,6 +203,46 @@ export function WebsiteDropdown({
                     placeholder="Search websites by name or URL..."
                     className="w-full bg-slate-50 border border-slate-200/80 rounded-2xl text-sm font-semibold text-slate-800 placeholder-slate-400 pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent/40 transition-all"
                   />
+                </div>
+              </div>
+            )}
+
+            {/* Scan New URL Section */}
+            {!isDemoMode && onAnalyze && (
+              <div className="px-6 py-4 border-b border-slate-100 bg-slate-50/30">
+                <label className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-2">
+                  Scan New URL
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    value={newUrl}
+                    onChange={(e) => setNewUrl(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newUrl.trim() && !isAnalyzing) {
+                        onAnalyze(newUrl.trim());
+                        setNewUrl("");
+                        setIsOpen(false);
+                      }
+                    }}
+                    placeholder="https://example.com"
+                    className="flex-1 bg-white border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-700 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent/40 transition-all hover:border-slate-350"
+                    disabled={isAnalyzing}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (newUrl.trim()) {
+                        onAnalyze(newUrl.trim());
+                        setNewUrl("");
+                        setIsOpen(false);
+                      }
+                    }}
+                    disabled={isAnalyzing || !newUrl.trim()}
+                    className="px-4 py-2.5 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl text-xs transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                  >
+                    {isAnalyzing ? "..." : "Scan"}
+                  </button>
                 </div>
               </div>
             )}
