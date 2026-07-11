@@ -106,6 +106,7 @@ export async function runAnalysis(
     userCoins?: number;
     previouslyScannedPages?: string[];
     previousModules?: ModuleResult[];
+    onModuleComplete?: (moduleResult: ModuleResult) => Promise<void>;
   }
 ): Promise<AnalysisResult & { pendingPages?: string[]; discoveredPages?: string[]; crawledInThisRun?: string[] }> {
   const startedAt = new Date().toISOString();
@@ -190,13 +191,17 @@ export async function runAnalysis(
               ...issue,
               url: homepageUrl,
             }));
-            return {
+            const res = {
               ...run,
               issues: issuesWithUrl,
             };
+            if (options?.onModuleComplete) {
+              await options.onModuleComplete(res);
+            }
+            return res;
           } catch (err) {
             console.error(`Site-wide analyzer ${analyzer.name} failed:`, err);
-            return {
+            const res = {
               module: analyzer.name,
               status: "failed" as const,
               score: 0,
@@ -204,6 +209,10 @@ export async function runAnalysis(
               data: { error: err instanceof Error ? err.message : "Unknown error" },
               executionTimeMs: 0,
             };
+            if (options?.onModuleComplete) {
+              await options.onModuleComplete(res);
+            }
+            return res;
           }
         } else {
           // Page-specific analyzer: execute on all pages crawled in this run
@@ -235,7 +244,7 @@ export async function runAnalysis(
 
           const successfulRuns = pageRuns.filter((r) => r.success);
           if (successfulRuns.length === 0) {
-            return {
+            const res = {
               module: analyzer.name,
               status: "failed" as const,
               score: 0,
@@ -243,6 +252,10 @@ export async function runAnalysis(
               data: { error: "Failed to execute analyzer on all pages" },
               executionTimeMs: Date.now() - startTime,
             };
+            if (options?.onModuleComplete) {
+              await options.onModuleComplete(res);
+            }
+            return res;
           }
 
           // Average score of pages crawled in this run
@@ -348,7 +361,7 @@ export async function runAnalysis(
             }
           }
 
-          return {
+          const res = {
             module: analyzer.name,
             status: "completed" as const,
             score: combinedScore,
@@ -356,6 +369,10 @@ export async function runAnalysis(
             data: nextAggregatedData,
             executionTimeMs: Date.now() - startTime,
           };
+          if (options?.onModuleComplete) {
+            await options.onModuleComplete(res);
+          }
+          return res;
         }
       })
     );

@@ -32,6 +32,7 @@ import {
   AccessibilityIcon,
   Globe02Icon,
   SmartphoneWifiIcon,
+  CheckmarkCircle02Icon,
 } from "@hugeicons/core-free-icons";
 
 interface User {
@@ -77,13 +78,15 @@ const TABS = [
   },
   { id: "sxo" as const, label: "SXO & UX Audit", icon: Target01Icon },
   { id: "performance" as const, label: "Performance & CWV", icon: FlashIcon },
-  { id: "pagespeed" as const, label: "PageSpeed Insights", icon: ActivityIcon },
   { id: "security" as const, label: "Security Headers", icon: Shield01Icon },
   { id: "links" as const, label: "Link Health", icon: Link01Icon },
   { id: "accessibility" as const, label: "Accessibility", icon: AccessibilityIcon },
   { id: "international" as const, label: "International SEO", icon: Globe02Icon },
   { id: "mobile" as const, label: "Mobile UX", icon: SmartphoneWifiIcon },
+  { id: "pagespeed" as const, label: "PageSpeed Insights", icon: ActivityIcon },
 ];
+
+const auditTabs = TABS.filter((t) => t.id !== "overview");
 
 interface AnalysisData {
   id: string;
@@ -96,6 +99,8 @@ export function DashboardClient({ user }: { user: User }) {
   const [url, setUrl] = useState("");
   const [activeTab, setActiveTab] = useState<TabId>("overview");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isWaitingForPageSpeed, setIsWaitingForPageSpeed] = useState(false);
+  const [realCompletedModules, setRealCompletedModules] = useState<string[]>([]);
   const [isRefreshingModule, setIsRefreshingModule] = useState(false);
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -122,6 +127,91 @@ export function DashboardClient({ user }: { user: User }) {
     const displayName = user.name || emailHandle || "User";
     document.title = `${displayName}'s Dashboard — SEOBoostr`;
   }, [user]);
+
+  useEffect(() => {
+    if (!isAnalyzing) {
+      setRealCompletedModules([]);
+      return;
+    }
+
+    let pollingInterval: NodeJS.Timeout | null = null;
+    let isActive = true;
+
+    const startPolling = async () => {
+      try {
+        // Wait a tiny bit for the website creation request to finish if needed
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        if (!isActive) return;
+
+        const res = await fetch(`/api/websites`);
+        if (!res.ok) return;
+        const list = await res.json();
+        
+        // Match the current website being analyzed
+        const currentUrlObj = new URL(url.startsWith("http") ? url : `https://${url}`);
+        const currentHostname = currentUrlObj.hostname.replace("www.", "");
+
+        const currentSite = list.find((w: any) => {
+          if (savedWebsiteId && w.id === savedWebsiteId) return true;
+          try {
+            const siteUrlObj = new URL(w.url);
+            return siteUrlObj.hostname.replace("www.", "") === currentHostname;
+          } catch {
+            return false;
+          }
+        });
+
+        if (!currentSite || !currentSite.analyses || currentSite.analyses.length === 0) {
+          // Retry starting the poll in 1.5 seconds if website/analysis is not created in DB yet
+          setTimeout(startPolling, 1500);
+          return;
+        }
+
+        const latestAnalysis = currentSite.analyses[0];
+        if (latestAnalysis.status !== "running") {
+          // If the analysis completed or failed already, update modules list immediately and return
+          const resultsRes = await fetch(`/api/results/${latestAnalysis.id}`);
+          if (resultsRes.ok) {
+            const data = await resultsRes.json();
+            const completedList = (data.modules || [])
+              .filter((m: any) => m.status === "completed")
+              .map((m: any) => m.module);
+            setRealCompletedModules(completedList);
+          }
+          return;
+        }
+
+        const analysisId = latestAnalysis.id;
+
+        // Start polling the individual modules for this active analysis
+        pollingInterval = setInterval(async () => {
+          if (!isActive) return;
+          try {
+            const resultsRes = await fetch(`/api/results/${analysisId}`);
+            if (resultsRes.ok) {
+              const data = await resultsRes.json();
+              const completedList = (data.modules || [])
+                .filter((m: any) => m.status === "completed")
+                .map((m: any) => m.module);
+              
+              setRealCompletedModules(completedList);
+            }
+          } catch (err) {
+            console.error("Polling results failed:", err);
+          }
+        }, 1200);
+      } catch (err) {
+        console.error("Failed to start analysis progress polling:", err);
+      }
+    };
+
+    startPolling();
+
+    return () => {
+      isActive = false;
+      if (pollingInterval) clearInterval(pollingInterval);
+    };
+  }, [isAnalyzing, savedWebsiteId, url]);
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
@@ -229,6 +319,7 @@ export function DashboardClient({ user }: { user: User }) {
     if (!urlToAnalyze) return;
     setError(null);
     setIsAnalyzing(true);
+    setIsWaitingForPageSpeed(true);
     setAnalysis(null);
     if (options?.targetUrl) {
       setUrl(options.targetUrl);
@@ -293,9 +384,12 @@ export function DashboardClient({ user }: { user: User }) {
         }
       } catch (err) {
         console.warn("[PageSpeed] Automatic background refresh failed:", err);
+      } finally {
+        setIsWaitingForPageSpeed(false);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
+      setIsWaitingForPageSpeed(false);
     } finally {
       setIsAnalyzing(false);
     }
@@ -326,6 +420,36 @@ export function DashboardClient({ user }: { user: User }) {
                 const fullAnalysis = await res.json();
                 setAnalysis(fullAnalysis);
                 setError(null);
+
+                const hasPageSpeed = (fullAnalysis.modules || []).some((m: any) => m.module === "pagespeed");
+                if (!hasPageSpeed) {
+                  setIsWaitingForPageSpeed(true);
+                  try {
+                    const pagespeedRes = await fetch("/api/pagespeed", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ analysisId: latest.id }),
+                    });
+                    if (pagespeedRes.ok) {
+                      const pagespeedModule = await pagespeedRes.json();
+                      setAnalysis((prev) => {
+                        if (!prev || prev.id !== latest.id) return prev;
+                        const exists = prev.modules.some((m) => m.module === "pagespeed");
+                        const newModules = exists
+                          ? prev.modules.map((m) => (m.module === "pagespeed" ? pagespeedModule : m))
+                          : [...prev.modules, pagespeedModule];
+                        return {
+                          ...prev,
+                          modules: newModules,
+                        };
+                      });
+                    }
+                  } catch (err) {
+                    console.warn("Failed to fetch pagespeed for existing analysis", err);
+                  } finally {
+                    setIsWaitingForPageSpeed(false);
+                  }
+                }
               }
             } catch (err) {
               console.error("Failed to load selected analysis", err);
@@ -419,7 +543,40 @@ export function DashboardClient({ user }: { user: User }) {
                 if (resultsRes.ok) {
                   const fullAnalysis = await resultsRes.json();
                   setAnalysis(fullAnalysis);
-                  setIsAnalyzing(false);
+                  
+                  const hasPageSpeed = (fullAnalysis.modules || []).some((m: any) => m.module === "pagespeed");
+                  if (!hasPageSpeed) {
+                    setIsAnalyzing(true);
+                    setIsWaitingForPageSpeed(true);
+                    try {
+                      const pagespeedRes = await fetch("/api/pagespeed", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ analysisId: latestAnalysis.id }),
+                      });
+                      if (pagespeedRes.ok) {
+                        const pagespeedModule = await pagespeedRes.json();
+                        setAnalysis((prev) => {
+                          if (!prev || prev.id !== latestAnalysis.id) return prev;
+                          const exists = prev.modules.some((m) => m.module === "pagespeed");
+                          const newModules = exists
+                            ? prev.modules.map((m) => (m.module === "pagespeed" ? pagespeedModule : m))
+                            : [...prev.modules, pagespeedModule];
+                          return {
+                            ...prev,
+                            modules: newModules,
+                          };
+                        });
+                      }
+                    } catch (err) {
+                      console.warn("Failed to fetch pagespeed on mount", err);
+                    } finally {
+                      setIsAnalyzing(false);
+                      setIsWaitingForPageSpeed(false);
+                    }
+                  } else {
+                    setIsAnalyzing(false);
+                  }
                   return;
                 }
               }
@@ -460,13 +617,47 @@ export function DashboardClient({ user }: { user: User }) {
                     if (resultsRes.ok) {
                       const fullAnalysis = await resultsRes.json();
                       setAnalysis(fullAnalysis);
-                      setIsAnalyzing(false);
+                      
+                      const hasPageSpeed = (fullAnalysis.modules || []).some((m: any) => m.module === "pagespeed");
+                      if (!hasPageSpeed) {
+                        setIsAnalyzing(true);
+                        setIsWaitingForPageSpeed(true);
+                        try {
+                          const pagespeedRes = await fetch("/api/pagespeed", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ analysisId: latestAnalysis.id }),
+                          });
+                          if (pagespeedRes.ok) {
+                            const pagespeedModule = await pagespeedRes.json();
+                            setAnalysis((prev) => {
+                              if (!prev || prev.id !== latestAnalysis.id) return prev;
+                              const exists = prev.modules.some((m) => m.module === "pagespeed");
+                              const newModules = exists
+                                ? prev.modules.map((m) => (m.module === "pagespeed" ? pagespeedModule : m))
+                                : [...prev.modules, pagespeedModule];
+                              return {
+                                ...prev,
+                                modules: newModules,
+                              };
+                            });
+                          }
+                        } catch (err) {
+                          console.warn("Failed to fetch pagespeed for imported site on mount", err);
+                        } finally {
+                          setIsAnalyzing(false);
+                          setIsWaitingForPageSpeed(false);
+                        }
+                      } else {
+                        setIsAnalyzing(false);
+                      }
                       return;
                     }
                   }
                 }
               }
 
+              setIsWaitingForPageSpeed(true);
               const analyzeRes = await fetch("/api/analyze", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -481,11 +672,40 @@ export function DashboardClient({ user }: { user: User }) {
                 if (updatedListRes.ok) {
                   setWebsites(await updatedListRes.json());
                 }
+
+                // Trigger PageSpeed Insights
+                try {
+                  const pagespeedRes = await fetch("/api/pagespeed", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ analysisId: result.id }),
+                  });
+                  if (pagespeedRes.ok) {
+                    const pagespeedModule = await pagespeedRes.json();
+                    setAnalysis((prev) => {
+                      if (!prev || prev.id !== result.id) return prev;
+                      const exists = prev.modules.some((m) => m.module === "pagespeed");
+                      const newModules = exists
+                        ? prev.modules.map((m) => (m.module === "pagespeed" ? pagespeedModule : m))
+                        : [...prev.modules, pagespeedModule];
+                      return {
+                        ...prev,
+                        modules: newModules,
+                      };
+                    });
+                  }
+                } catch (err) {
+                  console.warn("[PageSpeed] Mount refresh failed:", err);
+                } finally {
+                  setIsWaitingForPageSpeed(false);
+                }
+
                 setIsAnalyzing(false);
                 return;
               } else {
                 const errResult = await analyzeRes.json();
                 setError(errResult.error || "Analysis failed");
+                setIsWaitingForPageSpeed(false);
               }
             } else {
               const errResult = await saveRes.json();
@@ -506,10 +726,17 @@ export function DashboardClient({ user }: { user: User }) {
     loadInitialWebsite();
   }, [user.email, fetchWebsites]);
 
+  const isLoading = isAnalyzing || isWaitingForPageSpeed;
+
+  const activeScanningIndex = isLoading
+    ? Math.min(realCompletedModules.length, auditTabs.length - 1)
+    : 0;
+  const activeScanningTab = auditTabs[activeScanningIndex];
+
   return (
     <div className="h-screen flex flex-col bg-transparent text-foreground font-sans overflow-hidden">
       {/* Premium Header */}
-      <header className="border-b border-border bg-white/85 backdrop-blur-md shadow-sm shrink-0 z-50 flex items-center h-16 justify-between relative">
+      <header className="border-b border-border bg-white/85 backdrop-blur-md shrink-0 z-50 flex items-center h-16 justify-between relative">
         {/* Brand Container - Aligned with Left Sidebar width */}
         <div
           className={`h-full flex items-center px-4 md:px-6 md:border-r border-border shrink-0 transition-all duration-300 relative ${isSidebarExpanded ? "md:w-64" : "md:w-[68px] md:justify-center md:px-0"
@@ -689,7 +916,7 @@ export function DashboardClient({ user }: { user: User }) {
                     onAnalyze={async (targetUrl) => {
                       await handleAnalyze({ targetUrl });
                     }}
-                    isAnalyzing={isAnalyzing}
+                    isAnalyzing={isLoading}
                   />
                 ) : (
                   !isDemoMode && (
@@ -857,7 +1084,7 @@ export function DashboardClient({ user }: { user: User }) {
                     onAnalyze={async (targetUrl) => {
                       await handleAnalyze({ targetUrl });
                     }}
-                    isAnalyzing={isAnalyzing}
+                    isAnalyzing={isLoading}
                   />
                 </div>
               ) : (
@@ -903,44 +1130,112 @@ export function DashboardClient({ user }: { user: User }) {
             )}
 
             {/* Loading Progress State */}
-            {isAnalyzing && (
-              <div className="bg-card border border-border rounded-2xl p-10 text-center shadow-sm">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 text-accent mb-4 border border-accent/20">
-                  <svg
-                    className="animate-spin w-6 h-6"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                      className="opacity-20"
-                    />
-                    <path
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      fill="currentColor"
-                    />
-                  </svg>
+            {isLoading && (
+              <div className="bg-card border border-border rounded-2xl p-8 md:p-10 text-center relative overflow-hidden backdrop-blur-md bg-card/90">
+                {/* Concentric radar style scanning indicator */}
+                <div className="relative inline-flex items-center justify-center w-20 h-20 mb-5">
+                  {/* Ring 1: Pulse */}
+                  <div className="absolute inset-0 rounded-full bg-accent/5 border border-accent/15 animate-ping opacity-60" style={{ animationDuration: '3s' }} />
+                  {/* Ring 2: Spinning border */}
+                  <div className="absolute inset-1.5 rounded-full border border-dashed border-accent/20 animate-spin" style={{ animationDuration: '10s' }} />
+                  {/* Ring 3: Center background */}
+                  <div className="absolute inset-3.5 rounded-full bg-gradient-to-tr from-accent/10 to-teal-500/5 border border-accent/25 flex items-center justify-center">
+                    {activeScanningTab ? (
+                      <div key={activeScanningTab.id} className="animate-fade-in text-accent">
+                        <HugeiconsIcon icon={activeScanningTab.icon} size={22} />
+                      </div>
+                    ) : (
+                      <HugeiconsIcon icon={CompassIcon} size={20} className="text-accent animate-pulse" />
+                    )}
+                  </div>
                 </div>
-                <h3 className="text-lg font-bold text-slate-800 mb-1">
-                  Analyzing website SEO...
+
+                <h3 className="text-xl font-extrabold text-slate-800 mb-1.5 tracking-tight flex items-center justify-center gap-2">
+                  <span>Analyzing website SEO</span>
+                  <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-md font-mono font-bold">
+                    {Math.round((realCompletedModules.length / auditTabs.length) * 100)}%
+                  </span>
                 </h3>
-                <p className="text-slate-500 text-sm max-w-sm mx-auto mb-6 font-semibold">
+                
+                <p className="text-slate-500 text-sm max-w-md mx-auto mb-6 font-semibold">
                   Running sitemaps, schemas, metadata, images, and performance audits in parallel.
                 </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 max-w-3xl mx-auto">
-                  {TABS.filter((t) => t.id !== "overview").map((tab) => {
+
+                {/* Sleek gradient progress bar */}
+                <div className="w-full max-w-lg mx-auto bg-slate-100 dark:bg-slate-855 h-2 rounded-full overflow-hidden mb-8 border border-slate-200/40 dark:border-slate-800/40 relative">
+                  <div 
+                    className="h-full bg-gradient-to-r from-accent via-teal-500 to-indigo-500 rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${Math.round((realCompletedModules.length / auditTabs.length) * 100)}%` }}
+                  />
+                  <div 
+                    className="absolute top-0 bottom-0 bg-white/20 w-8 -skew-x-12 animate-pulse"
+                    style={{ left: `calc(${Math.round((realCompletedModules.length / auditTabs.length) * 100)}% - 32px)`, display: realCompletedModules.length > 0 ? 'block' : 'none' }}
+                  />
+                </div>
+
+                {/* Grid of audit categories */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-4xl mx-auto">
+                  {auditTabs.map((tab, idx) => {
                     const Icon = tab.icon;
+                    
+                    const isCompleted = realCompletedModules.includes(tab.id);
+                    const firstUncompleted = auditTabs.find((t) => !realCompletedModules.includes(t.id));
+                    const isActive = firstUncompleted?.id === tab.id;
+
+                    let status: "completed" | "active" | "pending" = "pending";
+                    if (isCompleted) {
+                      status = "completed";
+                    } else if (isActive) {
+                      status = "active";
+                    }
+
+                    let cardStyles = "";
+                    let iconStyles = "";
+                    let statusContent = null;
+
+                    if (status === "completed") {
+                      cardStyles = "bg-success-light border-success-light text-success";
+                      iconStyles = "text-success bg-success/10 border border-success-light";
+                      statusContent = (
+                        <div className="flex items-center gap-1 text-[10px] text-success font-extrabold animate-fade-in uppercase tracking-wider">
+                          <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} />
+                          <span className="hidden xs:inline">Done</span>
+                        </div>
+                      );
+                    } else if (status === "active") {
+                      cardStyles = "bg-accent-light border-accent text-accent scale-[1.01] ring-1 ring-accent/25 z-10";
+                      iconStyles = "text-accent bg-accent/10 border border-accent/20 animate-pulse";
+                      statusContent = (
+                        <div className="flex items-center gap-1.5">
+                          <span className="relative flex h-1.5 w-1.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent"></span>
+                          </span>
+                          <span className="text-[10px] text-accent font-extrabold uppercase tracking-wider animate-pulse">Running</span>
+                        </div>
+                      );
+                    } else {
+                      cardStyles = "bg-slate-50 border-slate-100 text-slate-450 opacity-60";
+                      iconStyles = "text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800";
+                      statusContent = (
+                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Pending</span>
+                      );
+                    }
+
                     return (
                       <div
                         key={tab.id}
-                        className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs text-slate-500 animate-pulse-soft flex items-center justify-center gap-2 font-bold"
+                        className={`border rounded-xl px-3.5 py-3 flex items-center justify-between gap-3 font-semibold transition-all duration-300 ${cardStyles}`}
                       >
-                        <HugeiconsIcon icon={Icon} size={16} />
-                        <span>{tab.label.split(" ")[0]}</span>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`p-1.5 rounded-lg shrink-0 ${iconStyles}`}>
+                            <HugeiconsIcon icon={Icon} size={15} />
+                          </div>
+                          <span className="text-xs font-bold truncate tracking-tight">{tab.label}</span>
+                        </div>
+                        <div className="shrink-0 flex items-center">
+                          {statusContent}
+                        </div>
                       </div>
                     );
                   })}
@@ -949,7 +1244,7 @@ export function DashboardClient({ user }: { user: User }) {
             )}
 
             {/* Content View */}
-            {!isAnalyzing && (
+            {!isLoading && (
               <>
                 {analysis ? (
                   <div className="animate-fade-in">
@@ -957,7 +1252,7 @@ export function DashboardClient({ user }: { user: User }) {
                       <OverviewTab
                         analysis={analysis}
                         onRefresh={handleAnalyze}
-                        isRefreshing={isAnalyzing}
+                        isRefreshing={isLoading}
                         currentCoins={coins}
                         isDemoMode={user.email === "demo@seoboostr.io"}
                       />
@@ -1022,15 +1317,15 @@ export function DashboardClient({ user }: { user: User }) {
                                 onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
                                 placeholder="https://example.com"
                                 className="w-full bg-white border border-slate-200/80 rounded-xl text-sm font-semibold text-slate-800 placeholder-slate-400 pl-11 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-accent/25 focus:border-accent/40 transition-all hover:border-slate-300"
-                                disabled={isAnalyzing || !canAddWebsite}
+                                disabled={isLoading || !canAddWebsite}
                               />
                             </div>
                             <button
                               onClick={() => handleAnalyze()}
-                              disabled={isAnalyzing || !url.trim()}
+                              disabled={isLoading || !url.trim()}
                               className="px-7 py-3.5 bg-accent hover:bg-accent-hover text-white font-extrabold rounded-xl text-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shrink-0 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 flex items-center gap-2"
                             >
-                              {isAnalyzing ? (
+                              {isLoading ? (
                                 <>
                                   <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -1212,9 +1507,9 @@ function OverviewTab({
                 ? `Insufficient coins. Requires at least ${minCoinsRequired.toFixed(1)} coins. Your balance: ${currentCoins.toFixed(1)} coins.`
                 : ""
           }
-          className={`flex items-center gap-1.5 px-4 py-2 bg-white text-slate-700 font-bold border rounded-xl shadow-sm transition-all text-xs shrink-0 border-slate-200 ${isDemoMode || isCoinsInsufficient || isRefreshing
+          className={`flex items-center gap-1.5 px-4 py-2 bg-white text-slate-700 font-bold border rounded-xl transition-all text-xs shrink-0 border-slate-200 ${isDemoMode || isCoinsInsufficient || isRefreshing
             ? "opacity-50 cursor-not-allowed pointer-events-none"
-            : "hover:bg-slate-50 hover:shadow cursor-pointer"
+            : "hover:bg-slate-50 cursor-pointer"
             }`}
         >
           <HugeiconsIcon
@@ -1233,7 +1528,7 @@ function OverviewTab({
       </div>
 
       {hasPending && (
-        <div className="bg-amber-50/85 border border-amber-200/60 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm animate-fade-in">
+        <div className="bg-amber-50/85 border border-amber-200/60 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center border border-amber-200 shrink-0">
               <HugeiconsIcon icon={Alert01Icon} size={20} className="text-amber-600" />
@@ -1256,7 +1551,7 @@ function OverviewTab({
               }}
               disabled={isDemoMode}
               title={isDemoMode ? "Resume audit is disabled in demo mode." : ""}
-              className={`px-4 py-2 text-white font-bold rounded-xl shadow transition-all text-xs shrink-0 ${isDemoMode
+              className={`px-4 py-2 text-white font-bold rounded-xl transition-all text-xs shrink-0 ${isDemoMode
                 ? "bg-amber-600/50 opacity-50 cursor-not-allowed pointer-events-none"
                 : "bg-amber-600 hover:bg-amber-700 cursor-pointer"
                 }`}
@@ -1274,7 +1569,7 @@ function OverviewTab({
       {/* Score + Summary Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Overall Score Card */}
-        <div className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center justify-center shadow-sm">
+        <div className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center justify-center">
           <ScoreGauge
             score={calculatedScore}
             size={150}
@@ -1283,7 +1578,7 @@ function OverviewTab({
         </div>
 
         {/* Issue Summary Card */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex flex-col justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 flex flex-col justify-between">
           <div>
             <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">
               Issue Distribution
@@ -1314,7 +1609,7 @@ function OverviewTab({
         </div>
 
         {/* Module Progress Scores */}
-        <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+        <div className="bg-card border border-border rounded-2xl p-6">
           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4">
             Performance Index
           </h3>
@@ -1348,7 +1643,7 @@ function OverviewTab({
       </div>
 
       {/* Top Issues Card */}
-      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+      <div className="bg-card border border-border rounded-2xl p-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 pb-3 border-b border-slate-100/60">
           <div>
             <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
@@ -1402,7 +1697,7 @@ function OverviewTab({
                     key={tab.id}
                     onClick={() => setActiveSeverityTab(tab.id as any)}
                     className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-1.5 shrink-0 select-none ${isActive
-                      ? "bg-white text-slate-800 shadow-sm border border-slate-100"
+                      ? "bg-white text-slate-800 border border-slate-100"
                       : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
                       }`}
                   >
@@ -1501,7 +1796,7 @@ function ModuleTab({
 
   if (!result) {
     return (
-      <div className="text-center py-12 bg-card border border-border rounded-2xl shadow-sm text-slate-500">
+      <div className="text-center py-12 bg-card border border-border rounded-2xl text-slate-500">
         <p className="font-bold">No data available for {moduleName}</p>
       </div>
     );
@@ -1529,7 +1824,7 @@ function ModuleTab({
     <div className="space-y-6">
       {/* Module Header Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        <div className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center justify-center shadow-sm relative">
+        <div className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center justify-center relative">
           <ScoreGauge score={result.score} size={110} label={moduleName} />
           {onRefreshModule && (
             <button
@@ -1548,9 +1843,9 @@ function ModuleTab({
                     ? `Insufficient coins. Requires ${estimatedCost.toFixed(2)} coins. Your balance: ${currentCoins?.toFixed(2)} coins.`
                     : `Refresh this section (costs ${estimatedCost.toFixed(2)} coins)`
               }
-              className={`mt-4 flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-700 font-bold border rounded-xl shadow-sm transition-all text-xs border-slate-200 ${isDemoMode || isRefreshing || isCoinsInsufficient
+              className={`mt-4 flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-700 font-bold border rounded-xl transition-all text-xs border-slate-200 ${isDemoMode || isRefreshing || isCoinsInsufficient
                 ? "opacity-50 cursor-not-allowed pointer-events-none"
-                : "hover:bg-slate-50 hover:shadow cursor-pointer"
+                : "hover:bg-slate-50 cursor-pointer"
                 }`}
             >
               <HugeiconsIcon
@@ -1563,7 +1858,7 @@ function ModuleTab({
           )}
         </div>
 
-        <div className="bg-card border border-border rounded-2xl p-6 sm:col-span-2 shadow-sm flex flex-col justify-between">
+        <div className="bg-card border border-border rounded-2xl p-6 sm:col-span-2 flex flex-col justify-between">
           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">
             {moduleName} Stats & Summary
           </h3>
@@ -1611,7 +1906,7 @@ function ModuleTab({
       )}
 
       {/* Module-Specific Issues List */}
-      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+      <div className="bg-card border border-border rounded-2xl p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-100/60">
           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             Module Issues ({filteredIssues.length})
@@ -1683,7 +1978,7 @@ function ModuleTab({
                     key={tab.id}
                     onClick={() => setActiveSeverityTab(tab.id as any)}
                     className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-1.5 shrink-0 select-none ${isActive
-                      ? "bg-white text-slate-800 shadow-sm border border-slate-100"
+                      ? "bg-white text-slate-800 border border-slate-100"
                       : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
                       }`}
                   >
@@ -1749,7 +2044,7 @@ function RenderDataValue({ label, value }: { label: string; value: any }) {
   // Boolean value formatting
   if (typeof value === "boolean") {
     return (
-      <div className="bg-card border border-border rounded-xl px-4 py-3.5 shadow-sm flex items-center justify-between">
+      <div className="bg-card border border-border rounded-xl px-4 py-3.5 flex items-center justify-between">
         <span className="text-xs font-bold text-slate-500 capitalize">
           {formattedLabel}
         </span>
@@ -1781,7 +2076,7 @@ function RenderDataValue({ label, value }: { label: string; value: any }) {
       const cols = Array.from(new Set(value.flatMap((item) => Object.keys(item))));
 
       return (
-        <div className="bg-card border border-border rounded-xl p-4 shadow-sm col-span-full">
+        <div className="bg-card border border-border rounded-xl p-4 col-span-full">
           <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 capitalize">
             {formattedLabel} ({value.length})
           </h4>
@@ -1827,7 +2122,7 @@ function RenderDataValue({ label, value }: { label: string; value: any }) {
     }
 
     return (
-      <div className="bg-card border border-border rounded-xl p-4 shadow-sm col-span-full">
+      <div className="bg-card border border-border rounded-xl p-4 col-span-full">
         <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 capitalize">
           {formattedLabel} ({value.length})
         </h4>
@@ -1857,7 +2152,7 @@ function RenderDataValue({ label, value }: { label: string; value: any }) {
     );
     if (entries.length === 0) return null;
     return (
-      <div className="bg-card border border-border rounded-xl p-4 shadow-sm col-span-full">
+      <div className="bg-card border border-border rounded-xl p-4 col-span-full">
         <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 capitalize">
           {formattedLabel}
         </h4>
@@ -1884,7 +2179,7 @@ function RenderDataValue({ label, value }: { label: string; value: any }) {
 
   // Fallback simple primitive values
   return (
-    <div className="bg-card border border-border rounded-xl px-4 py-3.5 shadow-sm flex items-center justify-between gap-4">
+    <div className="bg-card border border-border rounded-xl px-4 py-3.5 flex items-center justify-between gap-4">
       <span className="text-xs font-bold text-slate-500 capitalize shrink-0">
         {formattedLabel}
       </span>

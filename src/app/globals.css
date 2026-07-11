@@ -145,7 +145,7 @@
   color-scheme: dark;
   --color-background: #090d16;
   --color-foreground: #f8fafc;
-  --color-card: #111827;
+  --color-card: var(--color-background);
   --color-card-hover: #1f2937;
   --color-border: #1f2937;
   --color-border-hover: #374151;
@@ -176,7 +176,7 @@
     background-color: var(--color-card) !important;
   }
   .bg-white\/85 {
-    background-color: rgba(17, 24, 39, 0.85) !important;
+    background-color: rgba(9, 13, 22, 0.85) !important;
   }
   .bg-slate-50 {
     background-color: var(--color-background) !important;
@@ -211,10 +211,10 @@
     background-color: rgba(9, 13, 22, 0.2) !important;
   }
   .bg-white\/80 {
-    background-color: rgba(17, 24, 39, 0.8) !important;
+    background-color: rgba(9, 13, 22, 0.8) !important;
   }
   .bg-white\/95 {
-    background-color: rgba(17, 24, 39, 0.95) !important;
+    background-color: rgba(9, 13, 22, 0.95) !important;
   }
   .bg-teal-50\/20 {
     background-color: rgba(20, 184, 166, 0.1) !important;

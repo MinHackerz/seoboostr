@@ -102,7 +102,7 @@ export function PageSpeedTab({
   // 1. Missing API Key Setup Screen
   if (missingApiKey) {
     return (
-      <div className="bg-card border border-border rounded-2xl p-8 shadow-sm max-w-2xl mx-auto animate-fade-in">
+      <div className="bg-card border border-border rounded-2xl p-8 max-w-2xl mx-auto animate-fade-in">
         <div className="flex items-center gap-3 border-b border-slate-100 pb-4 mb-6">
           <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
             <HugeiconsIcon icon={Alert01Icon} size={22} />
@@ -148,7 +148,7 @@ export function PageSpeedTab({
           <div className="pt-4 border-t border-slate-100 flex justify-end">
             <button
               onClick={runAudit}
-              className="px-4 py-2 bg-accent hover:bg-accent-hover text-white text-xs font-bold rounded-xl shadow transition-all cursor-pointer flex items-center gap-1.5"
+              className="px-4 py-2 bg-accent hover:bg-accent-hover text-white text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5"
             >
               <HugeiconsIcon icon={Refresh01Icon} size={14} />
               <span>Retry Audit</span>
@@ -162,7 +162,7 @@ export function PageSpeedTab({
   // 2. Loading State
   if (isLoading) {
     return (
-      <div className="bg-card border border-border rounded-2xl p-12 text-center shadow-sm max-w-xl mx-auto animate-pulse-soft">
+      <div className="bg-card border border-border rounded-2xl p-12 text-center max-w-xl mx-auto animate-pulse-soft">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 text-accent mb-4 border border-accent/20">
           <svg className="animate-spin w-6 h-6" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
@@ -183,7 +183,7 @@ export function PageSpeedTab({
   // 3. No Result / Entry State
   if (!initialResult) {
     return (
-      <div className="text-center py-16 bg-card border border-border rounded-2xl shadow-sm flex flex-col items-center max-w-xl mx-auto">
+      <div className="text-center py-16 bg-card border border-border rounded-2xl flex flex-col items-center max-w-xl mx-auto">
         <div className="w-16 h-16 rounded-2xl bg-accent/5 border border-accent/10 flex items-center justify-center mb-4 text-accent">
           <HugeiconsIcon icon={FlashIcon} size={28} />
         </div>
@@ -201,7 +201,7 @@ export function PageSpeedTab({
 
         <button
           onClick={runAudit}
-          className="px-6 py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl text-sm transition-all shadow-md cursor-pointer flex items-center gap-2"
+          className="px-6 py-3 bg-accent hover:bg-accent-hover text-white font-bold rounded-xl text-sm transition-all cursor-pointer flex items-center gap-2"
         >
           <HugeiconsIcon icon={FlashIcon} size={16} />
           <span>Run PageSpeed Insights Audit</span>
@@ -326,7 +326,7 @@ export function PageSpeedTab({
               onClick={() => setStrategy("mobile")}
               className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 strategy === "mobile"
-                  ? "bg-white text-slate-850 shadow-sm border border-slate-200/20"
+                  ? "bg-white text-slate-850 border border-slate-200/20"
                   : "text-slate-500 hover:text-slate-850"
               }`}
             >
@@ -336,7 +336,7 @@ export function PageSpeedTab({
               onClick={() => setStrategy("desktop")}
               className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 strategy === "desktop"
-                  ? "bg-white text-slate-850 shadow-sm border border-slate-200/20"
+                  ? "bg-white text-slate-850 border border-slate-200/20"
                   : "text-slate-500 hover:text-slate-850"
               }`}
             >
@@ -347,7 +347,7 @@ export function PageSpeedTab({
       </div>
 
       {/* 4 Category Gauges */}
-      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+      <div className="bg-card border border-border rounded-2xl p-6">
         <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-6">
           Lighthouse Category Scores
         </h3>
@@ -371,7 +371,7 @@ export function PageSpeedTab({
             return (
               <div
                 key={key}
-                className={`group border rounded-2xl p-5 bg-gradient-to-br from-white to-slate-50/30 shadow-xs hover:shadow-md hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between relative overflow-hidden ${
+                className={`group border rounded-2xl p-5 bg-gradient-to-br from-white to-slate-50/30 hover:-translate-y-0.5 transition-all duration-300 flex flex-col justify-between relative overflow-hidden ${
                   m.score === null
                     ? "border-slate-100"
                     : m.score >= 0.9
@@ -402,17 +402,17 @@ export function PageSpeedTab({
                 <div className="mt-4 flex gap-1 h-1.5 w-full bg-slate-150/50 rounded-full overflow-hidden p-[1px]">
                   <div
                     className={`h-full rounded-full flex-1 transition-all duration-500 ${
-                      m.score !== null && m.score < 0.5 ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]" : "bg-slate-200/40"
+                      m.score !== null && m.score < 0.5 ? "bg-rose-500" : "bg-slate-200/40"
                     }`}
                   />
                   <div
                     className={`h-full rounded-full flex-1 transition-all duration-500 ${
-                      m.score !== null && m.score >= 0.5 && m.score < 0.9 ? "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]" : "bg-slate-200/40"
+                      m.score !== null && m.score >= 0.5 && m.score < 0.9 ? "bg-amber-500" : "bg-slate-200/40"
                     }`}
                   />
                   <div
                     className={`h-full rounded-full flex-1 transition-all duration-500 ${
-                      m.score !== null && m.score >= 0.9 ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" : "bg-slate-200/40"
+                      m.score !== null && m.score >= 0.9 ? "bg-emerald-500" : "bg-slate-200/40"
                     }`}
                   />
                 </div>
@@ -420,7 +420,7 @@ export function PageSpeedTab({
                 <div className="flex items-center justify-between gap-2 mt-4 pt-3.5 border-t border-slate-100/70">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Performance</span>
                   <div
-                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border shadow-xs transition-colors select-none ${
+                    className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-extrabold border transition-colors select-none ${
                       m.score === null
                         ? "text-slate-650 bg-slate-50 border-slate-200"
                         : m.score >= 0.9
@@ -469,7 +469,7 @@ export function PageSpeedTab({
       </div>
 
       {/* Opportunities/Issues List */}
-      <div className="bg-card border border-border rounded-2xl p-6 shadow-sm">
+      <div className="bg-card border border-border rounded-2xl p-6">
         <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-100/60 pb-3">
           PageSpeed Optimization Opportunities ({initialResult.issues?.length || 0})
         </h3>

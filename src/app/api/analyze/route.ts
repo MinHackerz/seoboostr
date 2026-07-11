@@ -121,6 +121,36 @@ export async function POST(request: NextRequest) {
         issues: (r.issues || []) as any,
         executionTimeMs: r.executionTimeMs ?? 0,
       })) : [],
+      onModuleComplete: async (mod) => {
+        try {
+          await prisma.analysisResult.upsert({
+            where: {
+              analysisId_module: {
+                analysisId: analysis.id,
+                module: mod.module,
+              },
+            },
+            update: {
+              status: mod.status,
+              score: mod.score,
+              data: mod.data as object,
+              issues: mod.issues as object[],
+              executionTimeMs: mod.executionTimeMs,
+            },
+            create: {
+              analysisId: analysis.id,
+              module: mod.module,
+              status: mod.status,
+              score: mod.score,
+              data: mod.data as object,
+              issues: mod.issues as object[],
+              executionTimeMs: mod.executionTimeMs,
+            },
+          });
+        } catch (err) {
+          console.error(`[Real-time Save] Failed to save module result for ${mod.module}:`, err);
+        }
+      },
     });
 
     // Calculate final coins cost based on pending vs refreshed pages crawled in this run
@@ -168,20 +198,6 @@ export async function POST(request: NextRequest) {
         completedAt: new Date(),
       },
     });
-    // Insert module results one at a time to stay well under connection limits
-    for (const mod of result.modules) {
-      await prisma.analysisResult.create({
-        data: {
-          analysisId: analysis.id,
-          module: mod.module,
-          status: mod.status,
-          score: mod.score,
-          data: mod.data as object,
-          issues: mod.issues as object[],
-          executionTimeMs: mod.executionTimeMs,
-        },
-      });
-    }
 
     // Fetch updated user coins balance
     const updatedUser = await prisma.user.findUnique({
