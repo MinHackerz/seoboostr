@@ -3,20 +3,18 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Sun01Icon, Moon01Icon } from "@hugeicons/core-free-icons";
+
 
 interface NavbarProps {
-  onRunAudit: () => void;
+  onRunAudit?: () => void;
   onStartScan?: (url: string) => void;
 }
 
 export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
   const { data: session, status } = useSession();
-  const isLoggedIn = status === "authenticated";
+  const isLoggedIn = status === "authenticated" && session?.user?.email !== "demo@seoboostr.io";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -24,43 +22,24 @@ export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Initialize theme
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    const initialTheme = savedTheme || systemTheme;
-    setTheme(initialTheme);
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  };
-
   const navLinks = [
-    { href: "#modules", label: "Features" },
-    { href: "#pricing", label: "Pricing" },
-    { href: "#faq", label: "FAQ" },
+    { href: "/#modules", label: "Features" },
+    { href: "/#pricing", label: "Pricing" },
+    { href: "/#faq", label: "FAQ" },
   ];
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-200 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "bg-white/80 backdrop-blur-xl shadow-sm border-b border-slate-200/60 dark:bg-slate-900/80 dark:border-slate-800/60"
+          ? "bg-slate-950/30 backdrop-blur-md shadow-lg shadow-black/10 border-b border-white/5"
           : "bg-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <a href="#" className="flex items-center gap-2.5 shrink-0">
+          <a href="/" className="flex items-center gap-2.5 shrink-0">
             <img
               src="/logo.png"
               alt="SEOBoostr"
@@ -68,7 +47,7 @@ export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
               width={32}
               height={32}
             />
-            <span className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white">
+            <span className="text-lg font-extrabold tracking-tight text-white">
               SEOBoostr
             </span>
           </a>
@@ -79,7 +58,7 @@ export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
               <a
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+                className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
               >
                 {link.label}
               </a>
@@ -88,58 +67,48 @@ export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Theme Toggle Button */}
-            <button
-              onClick={toggleTheme}
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors mr-1 cursor-pointer"
-              title={theme === "light" ? "Switch to Dark Mode" : "Switch to Light Mode"}
-            >
-              <HugeiconsIcon icon={theme === "light" ? Moon01Icon : Sun01Icon} size={16} />
-            </button>
-
             {isLoggedIn ? (
               <>
-                <button
-                  onClick={onRunAudit}
-                  className="px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors cursor-pointer"
-                >
-                  Run Free Audit
-                </button>
                 <a
                   href="/dashboard"
-                  className="px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-slate-300 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                  className="px-4 py-2 text-sm font-semibold text-slate-200 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 hover:border-white/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                 >
                   Dashboard
                 </a>
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
-                  className="px-4 py-2 text-sm font-semibold text-slate-550 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-transparent hover:border-rose-100 rounded-lg transition-colors cursor-pointer"
+                  className="px-4 py-2 text-sm font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 rounded-xl transition-colors cursor-pointer"
                 >
                   Logout
                 </button>
               </>
             ) : (
               <>
-                <a
-                  href="/login"
-                  className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors mr-1"
-                >
-                  Sign in
-                </a>
                 <button
                   onClick={() => signIn("credentials", { email: "demo@seoboostr.io", callbackUrl: "/dashboard" })}
-                  className="group flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-750 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-slate-300 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                  className="group flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-200 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 hover:border-white/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-teal-400 group-hover:text-teal-300 transition-colors" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="5 3 19 12 5 21 5 3" />
                   </svg>
                   View Demo
                 </button>
                 <button
-                  onClick={onRunAudit}
-                  className="px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors cursor-pointer"
+                  onClick={async () => {
+                    if (session?.user?.email === "demo@seoboostr.io") {
+                      await signOut({ redirect: false });
+                    }
+                    signIn("google", { callbackUrl: "/dashboard" });
+                  }}
+                  className="group flex items-center gap-2 px-4 py-2 text-sm font-semibold text-slate-200 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 hover:border-white/20 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
                 >
-                  Run Free Audit
+                  <svg width="14" height="14" viewBox="0 0 24 24" className="shrink-0">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  Sign in with Google
                 </button>
               </>
             )}
@@ -148,14 +117,8 @@ export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
           {/* Mobile menu button */}
           <div className="flex md:hidden items-center gap-2">
             <button
-              onClick={toggleTheme}
-              className="w-9 h-9 rounded-xl flex items-center justify-center bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 transition-colors cursor-pointer"
-            >
-              <HugeiconsIcon icon={theme === "light" ? Moon01Icon : Sun01Icon} size={16} />
-            </button>
-            <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="p-2 text-slate-500 dark:text-slate-400 cursor-pointer"
+              className="p-2 text-slate-400 hover:text-white cursor-pointer"
               aria-label="Toggle menu"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -184,7 +147,7 @@ export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="md:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60"
+            className="md:hidden bg-slate-950/95 backdrop-blur-xl border-b border-white/10"
           >
             <div className="px-4 py-4 space-y-3">
               {navLinks.map((link) => (
@@ -192,69 +155,63 @@ export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className="block text-sm font-medium text-slate-600 dark:text-slate-350 hover:text-teal-600 dark:hover:text-teal-400 transition-colors"
+                  className="block text-sm font-medium text-slate-400 hover:text-teal-400 transition-colors"
                 >
                   {link.label}
                 </a>
               ))}
-              <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800/60 space-y-2">
+              <div className="pt-3 border-t border-white/10 space-y-2.5">
                 {isLoggedIn ? (
                   <>
                     <a
                       href="/dashboard"
                       onClick={() => setMobileOpen(false)}
-                      className="block text-sm font-semibold text-slate-700 dark:text-slate-300 hover:text-teal-650 dark:hover:text-teal-400 mb-1"
+                      className="block text-sm font-semibold text-slate-200 hover:text-teal-400 mb-1"
                     >
                       Dashboard
                     </a>
-                    <button
-                      onClick={() => {
-                        setMobileOpen(false);
-                        onRunAudit();
-                      }}
-                      className="w-full px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors cursor-pointer"
-                    >
-                      Run Free Audit
-                    </button>
+
                     <button
                       onClick={() => {
                         setMobileOpen(false);
                         signOut({ callbackUrl: "/" });
                       }}
-                      className="w-full flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 dark:bg-rose-900/20 dark:hover:bg-rose-900/30 rounded-lg transition-all duration-200 cursor-pointer"
+                      className="w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 rounded-xl transition-all duration-200 cursor-pointer"
                     >
                       Logout
                     </button>
                   </>
                 ) : (
                   <>
-                    <a
-                      href="/login"
-                      onClick={() => setMobileOpen(false)}
-                      className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1"
-                    >
-                      Sign in
-                    </a>
                     <button
                       onClick={() => {
                         setMobileOpen(false);
                         signIn("credentials", { email: "demo@seoboostr.io", callbackUrl: "/dashboard" });
                       }}
-                      className="group w-full flex items-center justify-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-350 hover:text-slate-900 bg-white dark:bg-slate-850 hover:bg-slate-50 rounded-lg border border-slate-200 dark:border-slate-750 hover:border-slate-300 transition-all duration-200 cursor-pointer"
+                      className="group w-full flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-all duration-200 cursor-pointer"
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-slate-400 group-hover:text-slate-600 transition-colors" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-teal-400 group-hover:text-teal-300 transition-colors" strokeLinecap="round" strokeLinejoin="round">
                         <polygon points="5 3 19 12 5 21 5 3" />
                       </svg>
                       View Demo
                     </button>
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         setMobileOpen(false);
-                        onRunAudit();
+                        if (session?.user?.email === "demo@seoboostr.io") {
+                          await signOut({ redirect: false });
+                        }
+                        signIn("google", { callbackUrl: "/dashboard" });
                       }}
-                      className="w-full px-4 py-2 text-sm font-semibold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors cursor-pointer"
+                      className="group w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-200 hover:text-white bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-all duration-200 cursor-pointer"
                     >
-                      Run Free Audit
+                      <svg width="14" height="14" viewBox="0 0 24 24" className="shrink-0">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                      </svg>
+                      Sign in with Google
                     </button>
                   </>
                 )}

@@ -113,13 +113,21 @@ export function DashboardClient({ user }: { user: User }) {
   // Coins State
   const [coins, setCoins] = useState<number>(user.coins);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [theme, setTheme] = useState<"light" | "dark">("dark");
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
-    const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    const initialTheme = savedTheme || systemTheme;
+    const initialTheme = savedTheme || "dark";
     setTheme(initialTheme);
+    if (initialTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+
+    return () => {
+      document.documentElement.classList.remove("dark");
+    };
   }, []);
 
   useEffect(() => {
@@ -483,7 +491,7 @@ export function DashboardClient({ user }: { user: User }) {
 
   useEffect(() => {
     fetchUserProfileStatus();
-    const interval = setInterval(fetchUserProfileStatus, 8000);
+    const interval = setInterval(fetchUserProfileStatus, 30000); // Poll every 30 seconds
     return () => clearInterval(interval);
   }, [fetchUserProfileStatus]);
 

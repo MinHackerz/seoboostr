@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { MODULES, getScoreColor } from "./moduleData";
 
 interface SignupGateProps {
@@ -8,6 +10,8 @@ interface SignupGateProps {
 }
 
 export function SignupGate({ visible }: SignupGateProps) {
+  const { data: session } = useSession();
+  const [email, setEmail] = useState("");
   // Deterministic mock data — no Math.random() to avoid hydration mismatches
   const reportModules = MODULES.map((mod, i) => ({
     ...mod,
@@ -116,8 +120,11 @@ export function SignupGate({ visible }: SignupGateProps) {
 
               {/* Google OAuth */}
               <button
-                onClick={() => {
-                  window.location.href = "/login";
+                onClick={async () => {
+                  if (session?.user?.email === "demo@seoboostr.io") {
+                    await signOut({ redirect: false });
+                  }
+                  signIn("google", { callbackUrl: "/dashboard" });
                 }}
                 className="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-50 text-slate-800 font-bold py-3 px-4 rounded-xl border border-slate-200 shadow-sm hover:shadow transition-all cursor-pointer text-sm mb-3"
               >
@@ -138,13 +145,24 @@ export function SignupGate({ visible }: SignupGateProps) {
               </div>
 
               {/* Email signup */}
-              <form onSubmit={(e) => { e.preventDefault(); window.location.href = "/login"; }} className="space-y-3">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (email.trim()) {
+                    signIn("credentials", { email, callbackUrl: "/dashboard" });
+                  }
+                }}
+                className="space-y-3"
+              >
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@company.com"
                   className="w-full px-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-teal-500/50 focus:ring-2 focus:ring-teal-500/20 transition-all"
                   aria-label="Email address"
                   id="signup-email-input"
+                  required
                 />
                 <button
                   type="submit"

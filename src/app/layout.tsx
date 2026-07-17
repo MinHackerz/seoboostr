@@ -10,6 +10,69 @@ export const metadata: Metadata = {
     icon: "/logo.png",
     apple: "/logo.png",
   },
+  openGraph: {
+    title: "SEOBoostr — 15-Module Parallel SEO Audit in Seconds",
+    description: "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more.",
+    url: "https://seoboostr.io",
+    siteName: "SEOBoostr",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SEOBoostr — 15-Module Parallel SEO & GEO Audit",
+    description: "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more.",
+    creator: "@menajulm",
+  }
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://seoboostr.io/#software",
+      "name": "SEOBoostr",
+      "url": "https://seoboostr.io",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0.00",
+        "priceCurrency": "USD"
+      },
+      "description": "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more."
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://seoboostr.io/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is this actually free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Run unlimited audits, see your overall score and partial results — no card, no trial expiry. The full 15-module report with issue-level detail is behind a free account."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What data do you store?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The URL you submit, the audit results, and your account email if you sign up. We don't install trackers on your site, don't store your page content, and don't sell data."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I run it on client sites?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Absolutely. It only needs a public URL — no code access, no DNS changes, no JavaScript snippets. Run it on your clients' sites, competitors' sites, or that side project you haven't touched in months."
+          }
+        }
+      ]
+    }
+  ]
 };
 
 export default function RootLayout({
@@ -35,17 +98,24 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             try {
-              const savedTheme = localStorage.getItem('theme');
-              const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-              const theme = savedTheme || systemTheme;
-              if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
+              if (window.location.pathname.startsWith('/dashboard')) {
+                const savedTheme = localStorage.getItem('theme');
+                const theme = savedTheme || 'dark';
+                if (theme === 'dark') {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
               } else {
                 document.documentElement.classList.remove('dark');
               }
             } catch (e) {}
           })();
         `}} />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
       </head>
       <body className="min-h-screen bg-background text-foreground">
         <Providers>{children}</Providers>

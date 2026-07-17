@@ -35,37 +35,8 @@ export const technicalAnalyzer: Analyzer = {
       });
     }
 
-    // 2. Security headers
-    const securityHeaders = {
-      "content-security-policy": fetchResult.headers["content-security-policy"],
-      "strict-transport-security": fetchResult.headers["strict-transport-security"],
-      "x-frame-options": fetchResult.headers["x-frame-options"],
-      "x-content-type-options": fetchResult.headers["x-content-type-options"],
-      "referrer-policy": fetchResult.headers["referrer-policy"],
-    };
-    data.securityHeaders = securityHeaders;
-
-    const headerChecks = [
-      { key: "strict-transport-security", name: "HSTS", severity: "high" as const },
-      { key: "x-content-type-options", name: "X-Content-Type-Options", severity: "medium" as const },
-      { key: "x-frame-options", name: "X-Frame-Options", severity: "medium" as const },
-      { key: "content-security-policy", name: "Content-Security-Policy", severity: "medium" as const },
-      { key: "referrer-policy", name: "Referrer-Policy", severity: "low" as const },
-    ];
-
-    headerChecks.forEach(({ key, name, severity }) => {
-      if (!securityHeaders[key as keyof typeof securityHeaders]) {
-        issues.push({
-          id: `tech-missing-${key}`,
-          title: `Missing ${name} header`,
-          description: `The ${name} security header is not set.`,
-          severity,
-          recommendation: `Add the ${name} header to your server configuration.`,
-        });
-      }
-    });
-
-    // 3. Robots.txt (Only checked on site root/homepage)
+    // 2. Robots.txt (Only checked on site root/homepage)
+    // Note: Security headers are fully audited by the dedicated Security Headers module
     let isRoot = false;
     try {
       isRoot = new URL(fetchResult.url).pathname === "/";

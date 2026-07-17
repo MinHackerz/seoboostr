@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { MODULES, getScoreColor, type ScanResult } from "./moduleData";
-import { useSession } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -72,7 +72,7 @@ function RadialScore({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(15,23,42,0.06)"
+          stroke="rgba(255,255,255,0.08)"
           strokeWidth={strokeWidth}
         />
         <circle
@@ -89,7 +89,7 @@ function RadialScore({
         />
       </svg>
       <span
-        className="absolute inset-0 flex items-center justify-center font-mono text-sm font-bold tabular-nums"
+        className="absolute inset-0 flex items-center justify-center font-mono text-sm font-bold tabular-nums text-white"
         style={{ color, fontSize: size < 50 ? "0.7rem" : "0.85rem" }}
       >
         {displayScore}
@@ -140,7 +140,7 @@ function OverallScore({ score, phase, completedCount, totalCount }: { score: num
             cy={size / 2}
             r={radius}
             fill="none"
-            stroke="rgba(15,23,42,0.06)"
+            stroke="rgba(255,255,255,0.08)"
             strokeWidth={strokeWidth}
           />
           {phase === "complete" && (
@@ -154,12 +154,15 @@ function OverallScore({ score, phase, completedCount, totalCount }: { score: num
               strokeLinecap="round"
               strokeDasharray={circumference}
               strokeDashoffset={offset}
-              style={{ transition: "stroke-dashoffset 0.3s ease-out, stroke 0.3s ease" }}
+              style={{
+                transition: "stroke-dashoffset 0.3s ease-out, stroke 0.3s ease",
+                filter: `drop-shadow(0 0 6px ${color})`,
+              }}
             />
           )}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-mono text-3xl font-black tabular-nums text-slate-900">
+          <span className="font-mono text-3xl font-black tabular-nums text-white">
             {phase === "complete" ? displayScore : `${completedCount}/${totalCount}`}
           </span>
           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">
@@ -194,25 +197,25 @@ function ModuleCard({
       transition={{ duration: 0.3 }}
       className={`relative rounded-xl border px-4 py-3.5 flex items-center gap-3.5 transition-all duration-300 ${
         status.phase === "complete"
-          ? "border-slate-200 bg-white hover:border-slate-350"
+          ? "border-white/10 bg-white/5 hover:border-teal-500/40 hover:bg-white/10 shadow-[0_0_15px_rgba(0,0,0,0.2)]"
           : status.phase === "scanning"
-          ? "border-teal-500/30 bg-teal-50/20"
-          : "border-slate-200 bg-slate-50/50"
+          ? "border-teal-500/40 bg-teal-500/10 shadow-[0_0_20px_rgba(20,184,166,0.15)]"
+          : "border-white/5 bg-white/3"
       }`}
     >
       {/* Scan pulse */}
       {status.phase === "scanning" && (
-        <div className="absolute inset-0 rounded-xl border border-teal-500/20 animate-ping opacity-25 pointer-events-none" />
+        <div className="absolute inset-0 rounded-xl border border-teal-500/40 animate-ping opacity-25 pointer-events-none" />
       )}
 
       {/* Icon */}
       <div
         className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
           status.phase === "complete"
-            ? "bg-teal-50 text-teal-600"
+            ? "bg-teal-500/15 text-teal-400 border border-teal-500/20"
             : status.phase === "scanning"
-            ? "bg-teal-50/80 text-teal-600"
-            : "bg-slate-100 text-slate-400"
+            ? "bg-teal-500/25 text-teal-300 border border-teal-500/30"
+            : "bg-white/5 text-slate-500 border border-white/5"
         }`}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -222,14 +225,14 @@ function ModuleCard({
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className={`text-xs font-bold truncate ${isActive ? "text-slate-800" : "text-slate-400"}`}>
+        <p className={`text-xs font-bold truncate ${isActive ? "text-slate-100" : "text-slate-500"}`}>
           {module.shortName}
         </p>
         {status.phase === "scanning" && (
           <div className="flex items-center gap-1.5 mt-2">
-            <div className="h-1.5 flex-1 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-1.5 flex-1 bg-white/10 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-teal-500 rounded-full"
+                className="h-full bg-teal-400 rounded-full shadow-[0_0_8px_#2dd4bf]"
                 initial={{ width: "0%" }}
                 animate={{ width: "100%" }}
                 transition={{ duration: 2 + index * 0.3, ease: "easeInOut" }}
@@ -238,7 +241,7 @@ function ModuleCard({
           </div>
         )}
         {status.phase === "complete" && (
-          <p className="text-[10px] text-slate-500 mt-1 leading-relaxed">
+          <p className="text-[10px] text-slate-400 mt-1 leading-relaxed truncate">
             {status.finding}
           </p>
         )}
@@ -251,7 +254,7 @@ function ModuleCard({
       {status.phase === "scanning" && (
         <div className="w-10 h-10 flex items-center justify-center">
           <motion.div
-            className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full"
+            className="w-4 h-4 border-2 border-teal-400 border-t-transparent rounded-full"
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           />
@@ -266,7 +269,7 @@ export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps)
   const [moduleStatuses, setModuleStatuses] = useState<Record<string, ModuleStatus>>({});
   const [overallScore, setOverallScore] = useState(0);
   const { data: session, status: authStatus } = useSession();
-  const isLoggedIn = authStatus === "authenticated";
+  const isLoggedIn = authStatus === "authenticated" && session?.user?.email !== "demo@seoboostr.io";
 
   // Initialize all modules as waiting
   const resetModules = useCallback(() => {
@@ -333,31 +336,53 @@ export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps)
   const displayUrl = url || "yoursite.com";
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
-      {/* Dashboard frame (Safari browser mockup style - Light, Professional) */}
-      <div className="rounded-2xl border border-slate-200/80 bg-slate-50/90 backdrop-blur-md overflow-hidden">
-        {/* Top bar (Light macOS browser chrome) */}
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200/70 bg-slate-100/70">
-          <div className="flex gap-1.5 shrink-0">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-400/90" />
-            <div className="w-2.5 h-2.5 rounded-full bg-amber-400/90" />
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400/90" />
+    <div className="w-full max-w-5xl mx-auto relative group">
+      {/* Dynamic Aurora Glow Backdrop (looks like it is spreading the aurora outward) */}
+      <motion.div
+        animate={{
+          scale: [1, 1.02, 0.98, 1],
+          opacity: [0.3, 0.45, 0.35, 0.3],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        className="absolute -inset-2 bg-gradient-to-r from-teal-500 via-cyan-400 to-indigo-500 rounded-2xl blur-2xl pointer-events-none"
+      />
+      
+      {/* Sharp colored border outline */}
+      <div className="absolute -inset-px bg-gradient-to-r from-teal-500/40 via-cyan-400/40 to-indigo-500/40 rounded-2xl pointer-events-none" />
+
+      {/* Dashboard frame (Premium Dark macOS Safari Glass Mockup) */}
+      <div className="relative rounded-2xl border border-white/15 bg-slate-900/85 backdrop-blur-2xl overflow-hidden shadow-2xl shadow-teal-500/5">
+        {/* Top bar (macOS window chrome) */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-slate-950/80">
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="w-3 h-3 rounded-full bg-[#ff5f56] shadow-[0_0_6px_rgba(255,95,86,0.6)]" />
+            <div className="w-3 h-3 rounded-full bg-[#ffbd2e] shadow-[0_0_6px_rgba(255,189,46,0.6)]" />
+            <div className="w-3 h-3 rounded-full bg-[#27c93f] shadow-[0_0_6px_rgba(39,201,63,0.6)]" />
           </div>
           {/* URL Bar */}
-          <div className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 bg-white border border-slate-200/80 rounded-lg max-w-sm mx-auto">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-teal-600 shrink-0">
+          <div className="flex-1 flex items-center justify-center gap-2 py-1.5 px-4 bg-white/5 border border-white/10 rounded-xl max-w-md mx-auto shadow-inner">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-teal-400 shrink-0">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
               <path d="M7 11V7a5 5 0 0110 0v4" />
             </svg>
-            <span className="text-[10px] font-mono text-slate-500 select-none truncate">
+            <span className="text-xs font-mono text-slate-300 select-none truncate">
               https://{phase !== "idle" ? displayUrl : "seoboostr.io"}
             </span>
+            <span className="text-[10px] text-teal-400 font-bold px-1.5 py-0.5 bg-teal-500/10 rounded border border-teal-500/20 ml-auto hidden sm:inline">
+              15 checks
+            </span>
           </div>
-          <div className="w-12 shrink-0 md:block hidden" /> {/* Spacer for symmetry */}
+          <div className="w-16 shrink-0 md:flex hidden justify-end">
+            <span className="text-[11px] text-slate-500 font-mono">LIVE</span>
+          </div>
         </div>
 
         {/* Dashboard content */}
-        <div className="p-4 sm:p-6 bg-white">
+        <div className="p-4 sm:p-6 bg-slate-950/60">
           {/* Overall score */}
           <div className="flex justify-center mb-6">
             <OverallScore 
@@ -373,10 +398,10 @@ export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps)
             <motion.p
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-center text-xs font-mono text-slate-500 mb-5"
+              className="text-center text-xs font-mono text-slate-400 mb-5"
             >
               Auditing{" "}
-              <span className="text-teal-600 font-bold">{displayUrl}</span>
+              <span className="text-teal-400 font-bold">{displayUrl}</span>
               {phase === "scanning" && (
                 <span className="inline-flex ml-1">
                   <motion.span
@@ -408,20 +433,20 @@ export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps)
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="mt-5 p-4 rounded-xl border border-slate-200 bg-slate-50/50"
+              className="mt-5 p-4 rounded-xl border border-teal-500/20 bg-gradient-to-r from-teal-500/10 to-indigo-500/10"
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <p className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-                    <span className="inline-block w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-                    Scan Complete · Overall Score: <span className="font-mono font-bold text-teal-600">{overallScore}/100</span>
+                  <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full bg-teal-400 animate-pulse shadow-[0_0_8px_#2dd4bf]" />
+                    Scan Complete · Overall Score: <span className="font-mono font-bold text-teal-400">{overallScore}/100</span>
                   </p>
                   <p className="text-[10px] text-slate-400 font-mono mt-1">
-                    All parallel SEO check modules verified.
+                    All parallel SEO check modules verified against active ranking criteria.
                   </p>
                 </div>
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     localStorage.setItem("seoboostr_last_scanned_url", url);
                     if (scanResults) {
                       localStorage.setItem("seoboostr_last_scanned_results", JSON.stringify(scanResults));
@@ -429,12 +454,15 @@ export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps)
                     if (isLoggedIn) {
                       window.location.href = "/dashboard";
                     } else {
-                      window.location.href = "/login";
+                      if (session?.user?.email === "demo@seoboostr.io") {
+                        await signOut({ redirect: false });
+                      }
+                      signIn("google", { callbackUrl: "/dashboard" });
                     }
                   }}
-                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors cursor-pointer text-center"
+                  className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 rounded-lg transition-all shadow-lg shadow-teal-500/20 cursor-pointer text-center"
                 >
-                  {isLoggedIn ? "Go to dashboard to see the detailed report" : "Login to see the detailed report →"}
+                  {isLoggedIn ? "Go to dashboard for full report →" : "Login to view detailed report →"}
                 </button>
               </div>
             </motion.div>

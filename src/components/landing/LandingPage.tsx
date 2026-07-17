@@ -91,7 +91,7 @@ export function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-transparent text-foreground" ref={heroRef}>
+    <div className="min-h-screen bg-slate-950 text-slate-100" ref={heroRef}>
       <Navbar onRunAudit={handleNavAudit} onStartScan={handleStartScan} />
       <Hero
         scanPhase={scanPhase}

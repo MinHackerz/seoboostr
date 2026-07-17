@@ -7,7 +7,7 @@ export default async function DashboardPage() {
   const session = await auth();
 
   if (!session?.user?.id) {
-    redirect("/login");
+    redirect("/");
   }
 
   // Retrieve fresh user database fields
@@ -23,7 +23,7 @@ export default async function DashboardPage() {
   });
 
   if (!dbUser) {
-    redirect("/login");
+    redirect("/");
   }
 
   return <DashboardClient user={dbUser} />;

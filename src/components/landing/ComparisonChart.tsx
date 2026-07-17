@@ -15,20 +15,30 @@ import {
 const data = [
   { module: "Technical", before: 72, after: 96 },
   { module: "On-Page", before: 65, after: 91 },
-  { module: "Schema", before: 58, after: 94 },
-  { module: "Images", before: 51, after: 87 },
-  { module: "Performance", before: 63, after: 89 },
+  { module: "Content", before: 58, after: 84 },
+  { module: "Schema", before: 40, after: 97 },
+  { module: "Images", before: 51, after: 88 },
+  { module: "Sitemap", before: 60, after: 93 },
+  { module: "AI/GEO", before: 45, after: 78 },
+  { module: "SXO/UX", before: 68, after: 90 },
+  { module: "Performance", before: 55, after: 82 },
+  { module: "PageSpeed", before: 50, after: 85 },
+  { module: "Security", before: 35, after: 76 },
+  { module: "Links", before: 61, after: 87 },
+  { module: "A11y", before: 58, after: 79 },
+  { module: "Intl SEO", before: 70, after: 92 },
+  { module: "Mobile", before: 62, after: 83 },
 ];
 
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ value: number; dataKey: string }>; label?: string }) {
   if (!active || !payload) return null;
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2">
-      <p className="text-xs font-semibold text-white mb-1">{label}</p>
+    <div className="rounded-lg px-3.5 py-2.5 border border-white/15 bg-slate-950 shadow-2xl z-50">
+      <p className="text-xs font-bold text-white mb-1.5 border-b border-white/10 pb-1">{label}</p>
       {payload.map((p) => (
-        <p key={p.dataKey} className="text-[11px] font-mono tabular-nums text-slate-300">
-          <span className={p.dataKey === "after" ? "text-teal-400" : "text-slate-500"}>
-            {p.dataKey === "after" ? "After: " : "Before: "}
+        <p key={p.dataKey} className="text-xs font-mono tabular-nums text-slate-200">
+          <span className={p.dataKey === "after" ? "text-teal-400 font-bold" : "text-slate-400 font-medium"}>
+            {p.dataKey === "after" ? "After fixes: " : "Before scan: "}
           </span>
           {p.value}
         </p>
@@ -37,40 +47,79 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
   );
 }
 
+function AnimatedCounter({ value, suffix = "", prefix = "" }: { value: number; suffix?: string; prefix?: string }) {
+  return (
+    <motion.span
+      className="font-mono text-xl sm:text-2xl font-black tabular-nums text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+    >
+      {prefix}{value}
+      <span className="text-xs text-teal-400 font-bold">{suffix}</span>
+    </motion.span>
+  );
+}
+
 export function ComparisonChart() {
   return (
-    <section className="relative py-20 sm:py-28 bg-slate-50 overflow-hidden">
-      {/* Dot-grid background */}
+    <section className="relative py-20 sm:py-28 overflow-hidden">
+      {/* ── Dynamic Luminous Aurora Background ── */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{
+            x: [0, -50, 60, 0],
+            y: [0, 50, -40, 0],
+            scale: [1, 1.2, 0.85, 1],
+          }}
+          transition={{ duration: 17, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/4 right-[10%] w-[550px] h-[550px] rounded-full bg-gradient-to-tr from-teal-500/35 via-cyan-500/20 to-transparent blur-[120px]"
+        />
+        <motion.div
+          animate={{
+            x: [0, 70, -50, 0],
+            y: [0, -60, 40, 0],
+            scale: [1, 1.15, 0.9, 1],
+          }}
+          transition={{ duration: 21, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-1/4 left-[10%] w-[550px] h-[550px] rounded-full bg-gradient-to-bl from-purple-500/35 via-indigo-500/25 to-transparent blur-[120px]"
+        />
+      </div>
+
+      {/* ── Cyber Matrix Dot Grid Overlay ── */}
       <div
-        className="absolute inset-0 opacity-40 pointer-events-none"
+        className="absolute inset-0 opacity-25 pointer-events-none"
         style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, var(--dot-grid-color) 1px, transparent 0)",
+          backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)",
           backgroundSize: "24px 24px",
+          maskImage: "radial-gradient(ellipse 90% 70% at 50% 50%, black 40%, transparent 100%)",
+          WebkitMaskImage: "radial-gradient(ellipse 90% 70% at 50% 50%, black 40%, transparent 100%)",
         }}
       />
 
-      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Top & bottom glow divider lines */}
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-500/40 to-transparent pointer-events-none" />
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent pointer-events-none" />
+
+      <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-10 sm:mb-14"
+          className="text-center mb-12 sm:mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 border border-teal-200/60 text-teal-700 text-xs font-bold uppercase tracking-wider mb-4">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M13 7l5 5-5 5M6 7l5 5-5 5" />
-            </svg>
-            Real Impact
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-teal-500/25 to-indigo-500/25 border border-teal-500/30 text-teal-400 text-xs font-bold uppercase tracking-wider mb-5 shadow-lg shadow-teal-500/10">
+            Real Ranking Impact
           </div>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight mb-3">
-            Fix what matters. Watch scores climb.
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight mb-4">
+            Fix what matters. <span className="gradient-text">Watch scores climb.</span>
           </h2>
-          <p className="text-sm sm:text-base text-slate-500 max-w-lg mx-auto">
-            Sites that fix SEOBoostr-flagged issues see a{" "}
-            <span className="text-teal-600 font-bold font-mono tabular-nums">34%</span>{" "}
-            average score improvement across modules.
+          <p className="text-sm sm:text-base text-slate-300 max-w-lg mx-auto leading-relaxed">
+            Sites that address SEOBoostr-flagged issues see a{" "}
+            <span className="text-teal-400 font-bold font-mono tabular-nums px-1.5 py-0.5 bg-teal-500/10 border border-teal-500/20 rounded">34%</span>{" "}
+            average score improvement across all 15 audit modules.
           </p>
         </motion.div>
 
@@ -80,73 +129,72 @@ export function ComparisonChart() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-50px" }}
           transition={{ duration: 0.5, delay: 0.15 }}
-          className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-8"
+          className="glass-card rounded-2xl p-5 sm:p-8 border border-white/15 bg-slate-900/80 backdrop-blur-2xl shadow-2xl shadow-teal-500/10"
         >
           {/* Legend */}
-          <div className="flex items-center justify-end gap-4 mb-6">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: "var(--chart-bar-before)" }} />
-              <span className="text-[11px] text-slate-500 font-medium">Before</span>
+          <div className="flex items-center justify-end gap-5 mb-6 border-b border-white/10 pb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-slate-600 shadow-sm" />
+              <span className="text-xs text-slate-400 font-semibold">Before Audit</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm bg-accent" />
-              <span className="text-[11px] text-slate-500 font-medium">After fixes</span>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-teal-400 shadow-[0_0_8px_#2dd4bf]" />
+              <span className="text-xs text-teal-300 font-bold">After Automated Fixes</span>
             </div>
           </div>
 
-          <div className="h-64 sm:h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={data}
-                barGap={4}
-                barCategoryGap="20%"
-                margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
-              >
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  stroke="var(--chart-grid)"
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="module"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: "var(--color-muted)", fontFamily: "monospace" }}
-                />
-                <YAxis
-                  domain={[0, 100]}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fontSize: 11, fill: "var(--chart-bar-before)", fontFamily: "monospace" }}
-                />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--chart-cursor)" }} />
-                <Bar dataKey="before" radius={[4, 4, 0, 0]} maxBarSize={32}>
-                  {data.map((_, i) => (
-                    <Cell key={i} fill="var(--chart-bar-before)" />
-                  ))}
-                </Bar>
-                <Bar dataKey="after" radius={[4, 4, 0, 0]} maxBarSize={32}>
-                  {data.map((_, i) => (
-                    <Cell key={i} fill="var(--color-accent)" />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+            <div className="h-64 sm:h-80 min-w-[850px] lg:min-w-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={data}
+                  barGap={4}
+                  barCategoryGap="25%"
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="rgba(255,255,255,0.08)"
+                    vertical={false}
+                  />
+                  <XAxis
+                    dataKey="module"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 10, fill: "#94a3b8", fontFamily: "monospace", fontWeight: 600 }}
+                  />
+                  <YAxis
+                    domain={[0, 100]}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 11, fill: "#64748b", fontFamily: "monospace" }}
+                  />
+                  <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                  <Bar dataKey="before" radius={[4, 4, 0, 0]} maxBarSize={14}>
+                    {data.map((_, i) => (
+                      <Cell key={i} fill="#475569" />
+                    ))}
+                  </Bar>
+                  <Bar dataKey="after" radius={[4, 4, 0, 0]} maxBarSize={14}>
+                    {data.map((_, i) => (
+                      <Cell key={i} fill="#2dd4bf" />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           {/* Bottom stat callouts */}
-          <div className="grid grid-cols-3 gap-3 mt-6 pt-6 border-t border-slate-100">
+          <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-white/10">
             {[
-              { label: "Avg Before", value: "62", unit: "/100" },
-              { label: "Avg After", value: "91", unit: "/100" },
-              { label: "Improvement", value: "+34", unit: "%" },
+              { label: "Avg Before", value: 57, suffix: "/100", prefix: "" },
+              { label: "Avg After", value: 85, suffix: "/100", prefix: "" },
+              { label: "Net Improvement", value: 28, suffix: "%", prefix: "+" },
             ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="font-mono text-lg sm:text-xl font-black tabular-nums text-slate-900">
-                  {stat.value}
-                  <span className="text-xs text-slate-400">{stat.unit}</span>
-                </p>
-                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">
+              <div key={stat.label} className="text-center p-3 rounded-xl bg-white/5 border border-white/5 shadow-inner">
+                <AnimatedCounter value={stat.value} suffix={stat.suffix} prefix={stat.prefix} />
+                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mt-1">
                   {stat.label}
                 </p>
               </div>

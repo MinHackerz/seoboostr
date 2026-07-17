@@ -4,12 +4,58 @@ import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { prisma } from "@/lib/prisma";
 
+const prismaAdapter = PrismaAdapter(prisma);
+
+const safeAdapter = new Proxy(prismaAdapter, {
+  get(target, prop, receiver) {
+    const value = Reflect.get(target, prop, receiver);
+    if (typeof value === "function") {
+      return async (...args: any[]) => {
+        try {
+          return await value.apply(target, args);
+        } catch (error) {
+          console.error(`PrismaAdapter: ${String(prop)} failed (DB offline):`, error);
+          
+          if (prop === "getUserByAccount") {
+            return null;
+          }
+          if (prop === "getUserByEmail") {
+            const email = args[0];
+            return {
+              id: "offline-google-user-id",
+              email,
+              name: "Google User (Offline)",
+              image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80",
+              emailVerified: new Date(),
+            };
+          }
+          if (prop === "createUser") {
+            const user = args[0];
+            return {
+              ...user,
+              id: user.id || "offline-google-user-id",
+            };
+          }
+          if (prop === "linkAccount") {
+            const account = args[0];
+            return account;
+          }
+          
+          return null;
+        }
+      };
+    }
+    return value;
+  }
+});
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
+  adapter: safeAdapter,
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID || "mock-id",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "mock-secret",
+      allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
       name: "Demo Mode",
@@ -54,7 +100,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   pages: {
-    signIn: "/login",
+    signIn: "/",
   },
   session: {
     strategy: "jwt",

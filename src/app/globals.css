@@ -140,6 +140,117 @@
   animation: ai-shimmer 3.5s ease infinite;
 }
 
+/* ── Premium Landing Page Animations & Utilities ──────────── */
+
+/* Hero gradient mesh — slow-drifting aurora */
+@keyframes gradient-mesh {
+  0%, 100% { background-position: 0% 50%; }
+  25% { background-position: 50% 0%; }
+  50% { background-position: 100% 50%; }
+  75% { background-position: 50% 100%; }
+}
+
+.animate-gradient-mesh {
+  background-size: 400% 400%;
+  animation: gradient-mesh 20s ease infinite;
+}
+
+/* Floating particle drift */
+@keyframes float-particle {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -20px) scale(1.05); }
+  50% { transform: translate(-20px, -40px) scale(0.95); }
+  75% { transform: translate(-30px, 10px) scale(1.02); }
+}
+
+.animate-float {
+  animation: float-particle 12s ease-in-out infinite;
+}
+.animate-float-slow {
+  animation: float-particle 18s ease-in-out infinite;
+}
+.animate-float-fast {
+  animation: float-particle 8s ease-in-out infinite;
+}
+
+/* Card shine sweep on hover */
+@keyframes shine-sweep {
+  0% { left: -75%; }
+  100% { left: 125%; }
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(20, 184, 166, 0.25);
+  box-shadow: 0 0 30px rgba(20, 184, 166, 0.06), 0 0 60px rgba(20, 184, 166, 0.03);
+}
+
+/* Glass card with shine hover effect */
+.glass-card-shine {
+  position: relative;
+  overflow: hidden;
+}
+.glass-card-shine::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -75%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.04),
+    transparent
+  );
+  transform: skewX(-15deg);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.glass-card-shine:hover::after {
+  opacity: 1;
+  animation: shine-sweep 0.8s ease forwards;
+}
+
+/* Gradient text clip */
+.gradient-text {
+  background: linear-gradient(135deg, #2dd4bf, #06b6d4, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glow utilities */
+.glow-teal {
+  box-shadow: 0 0 20px rgba(20, 184, 166, 0.15), 0 0 60px rgba(20, 184, 166, 0.05);
+}
+.glow-teal-strong {
+  box-shadow: 0 0 30px rgba(20, 184, 166, 0.25), 0 0 80px rgba(20, 184, 166, 0.08);
+}
+.glow-indigo {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15), 0 0 60px rgba(99, 102, 241, 0.05);
+}
+
+/* Gradient divider line */
+.gradient-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(20, 184, 166, 0.4), rgba(99, 102, 241, 0.4), transparent);
+}
+
+/* Score ring glow on hover */
+.score-ring-glow {
+  filter: drop-shadow(0 0 6px currentColor);
+  transition: filter 0.3s ease;
+}
+
 /* Pleasant Dark Mode support */
 .dark {
   color-scheme: dark;
