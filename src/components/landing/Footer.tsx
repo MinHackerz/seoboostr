@@ -111,13 +111,13 @@ export function Footer() {
             <div className="flex items-center gap-2.5 mb-3">
               <img
                 src="/logo.png"
-                alt="SEO Optimized"
+                alt="SEO Optimised"
                 className="w-8 h-8 rounded-xl object-contain shadow-md"
                 width={32}
                 height={32}
               />
               <span className="text-lg font-black tracking-tight text-white">
-                SEO Optimized
+                SEO Optimised
               </span>
             </div>
             <p className="text-xs text-slate-400 max-w-xs leading-relaxed font-medium">
@@ -139,7 +139,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-400 font-medium">
-            © {new Date().getFullYear()} SEO Optimized. All rights reserved. Made with high-performance parallel processing.
+            © {new Date().getFullYear()} SEO Optimised. All rights reserved. Made with high-performance parallel processing.
           </p>
           <div className="flex items-center gap-6">
             <a href="/privacy" className="text-xs font-semibold text-slate-400 hover:text-white transition-colors">Privacy Policy</a>

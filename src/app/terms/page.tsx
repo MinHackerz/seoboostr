@@ -3,10 +3,10 @@ import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | SEO Optimized",
+  title: "Terms of Service | SEO Optimised",
   description: "Read our Terms of Service to understand standard usage guidelines, credit consumption policies, and warranty disclaimers.",
   openGraph: {
-    title: "Terms of Service | SEO Optimized",
+    title: "Terms of Service | SEO Optimised",
     description: "Read our Terms of Service to understand standard usage guidelines, credit consumption policies, and warranty disclaimers.",
     url: "https://seoptimised.com/terms",
     type: "website",
@@ -30,12 +30,12 @@ export default function TermsPage() {
             <p>Last updated: July 17, 2026</p>
             
             <p>
-              Welcome to SEO Optimized! By accessing our website and using our parallel audit platform, you agree to comply with and be bound by the following Terms of Service.
+              Welcome to SEO Optimised! By accessing our website and using our parallel audit platform, you agree to comply with and be bound by the following Terms of Service.
             </p>
 
             <h2 className="text-xl font-bold text-white mt-8 mb-3">1. Acceptable Use</h2>
             <p>
-              You agree to use SEO Optimized only to run public audits and optimize your website performance. You must not:
+              You agree to use SEO Optimised only to run public audits and optimize your website performance. You must not:
             </p>
             <ul className="list-disc pl-5 space-y-2">
               <li>Attempt to scrape, reverse-engineer, or exploit our orchestrator code.</li>
@@ -50,12 +50,12 @@ export default function TermsPage() {
 
             <h2 className="text-xl font-bold text-white mt-8 mb-3">3. Disclaimer of Warranties</h2>
             <p>
-              SEO Optimized is provided &quot;as is&quot; without any warranty of any kind. We do not guarantee that our automated audits or suggestions will instantly improve search engine rankings.
+              SEO Optimised is provided &quot;as is&quot; without any warranty of any kind. We do not guarantee that our automated audits or suggestions will instantly improve search engine rankings.
             </p>
 
             <h2 className="text-xl font-bold text-white mt-8 mb-3">4. Limitation of Liability</h2>
             <p>
-              In no event shall SEO Optimized be liable for any damages arising out of the use or inability to use our tools, reports, or audits.
+              In no event shall SEO Optimised be liable for any damages arising out of the use or inability to use our tools, reports, or audits.
             </p>
           </div>
         </div>

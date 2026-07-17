@@ -12,9 +12,10 @@ interface HeroProps {
   scanResults: ScanResult[] | null;
   scanUrl: string;
   onStartScan: (url: string) => void;
+  onClearScan?: () => void;
 }
 
-export function Hero({ scanPhase, scanResults, scanUrl, onStartScan }: HeroProps) {
+export function Hero({ scanPhase, scanResults, scanUrl, onStartScan, onClearScan }: HeroProps) {
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const { data: session, status } = useSession();
@@ -228,7 +229,7 @@ export function Hero({ scanPhase, scanResults, scanUrl, onStartScan }: HeroProps
           transition={{ duration: 0.7, delay: 0.3 }}
         >
           <IPadMockup>
-            <AuditDashboard phase={scanPhase} scanResults={scanResults} url={scanUrl} />
+            <AuditDashboard phase={scanPhase} scanResults={scanResults} url={scanUrl} onClearScan={onClearScan} />
           </IPadMockup>
         </motion.div>
       </div>

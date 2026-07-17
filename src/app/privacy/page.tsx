@@ -3,11 +3,11 @@ import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | SEO Optimized",
-  description: "Learn how SEO Optimized handles your data, privacy, and account information with our detailed privacy statement.",
+  title: "Privacy Policy | SEO Optimised",
+  description: "Learn how SEO Optimised handles your data, privacy, and account information with our detailed privacy statement.",
   openGraph: {
-    title: "Privacy Policy | SEO Optimized",
-    description: "Learn how SEO Optimized handles your data, privacy, and account information.",
+    title: "Privacy Policy | SEO Optimised",
+    description: "Learn how SEO Optimised handles your data, privacy, and account information.",
     url: "https://seoptimised.com/privacy",
     type: "website",
   },
@@ -30,7 +30,7 @@ export default function PrivacyPage() {
             <p>Last updated: July 17, 2026</p>
             
             <p>
-              At SEO Optimized, accessible from seoptimised.com, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by SEO Optimized and how we use it.
+              At SEO Optimised, accessible from seoptimised.com, one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by SEO Optimised and how we use it.
             </p>
 
             <h2 className="text-xl font-bold text-white mt-8 mb-3">1. Information We Collect</h2>
@@ -55,7 +55,7 @@ export default function PrivacyPage() {
 
             <h2 className="text-xl font-bold text-white mt-8 mb-3">3. Cookies and Log Files</h2>
             <p>
-              SEO Optimized follows standard logging procedures. These logs record visitors when they visit websites. NextAuth and Google OAuth use cookies to maintain secure user sessions.
+              SEO Optimised follows standard logging procedures. These logs record visitors when they visit websites. NextAuth and Google OAuth use cookies to maintain secure user sessions.
             </p>
 
             <h2 className="text-xl font-bold text-white mt-8 mb-3">4. Data Deletion</h2>

@@ -42,14 +42,14 @@ export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
             <div className="relative">
               <img
                 src="/logo.png"
-                alt="SEO Optimized"
+                alt="SEO Optimised"
                 className="w-8 h-8 rounded-xl object-contain border border-white/10 group-hover/logo:border-teal-500/30 transition-all duration-300"
                 width={32}
                 height={32}
               />
             </div>
             <span className="text-lg font-black tracking-tight text-white group-hover/logo:text-teal-400 transition-colors font-sans">
-              SEO Optimized
+              SEO Optimised
             </span>
           </a>
 

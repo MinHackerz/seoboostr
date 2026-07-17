@@ -172,7 +172,7 @@ export function ComparisonChart() {
             Fix what matters. <span className="gradient-text">Watch scores climb.</span>
           </h2>
           <p className="text-sm sm:text-base text-slate-300 max-w-lg mx-auto leading-relaxed">
-            Sites that address SEO Optimized-flagged issues see an{" "}
+            Sites that address SEO Optimised-flagged issues see an{" "}
             <span className="text-teal-400 font-extrabold font-mono px-2 py-0.5 bg-teal-500/10 border border-teal-500/25 rounded-md shadow-[0_0_10px_rgba(20,184,166,0.15)] select-none">38%</span>{" "}
             average score improvement across all 15 audit modules.
           </p>

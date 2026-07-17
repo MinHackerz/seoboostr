@@ -90,6 +90,16 @@ export function LandingPage() {
     }, 500);
   }, []);
 
+  const handleClearScan = useCallback(() => {
+    setScanPhase("idle");
+    setScanResults(null);
+    setScanUrl("");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("seoptimised_last_scanned_url");
+      localStorage.removeItem("seoptimised_last_scanned_results");
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100" ref={heroRef}>
       <Navbar onRunAudit={handleNavAudit} onStartScan={handleStartScan} />
@@ -98,6 +108,7 @@ export function LandingPage() {
         scanResults={scanResults}
         scanUrl={scanUrl}
         onStartScan={handleStartScan}
+        onClearScan={handleClearScan}
       />
       <LiveTicker />
       <ModuleGrid scanResults={scanResults} phase={scanPhase} />

@@ -20,6 +20,7 @@ interface AuditDashboardProps {
   phase: ScanPhase;
   scanResults: ScanResult[] | null;
   url: string;
+  onClearScan?: () => void;
 }
 
 // ── Radial Score Ring ────────────────────────────────────────
@@ -265,7 +266,7 @@ function ModuleCard({
 }
 
 // Calculate overall score when all modules complete
-export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps) {
+export function AuditDashboard({ phase, scanResults, url, onClearScan }: AuditDashboardProps) {
   const [moduleStatuses, setModuleStatuses] = useState<Record<string, ModuleStatus>>({});
   const [overallScore, setOverallScore] = useState(0);
   const { data: session, status: authStatus } = useSession();
@@ -418,12 +419,25 @@ export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps)
               </span>
             </div>
 
-            {/* Refresh/Reload Button */}
-            <button className="text-slate-400 hover:text-white cursor-pointer" aria-label="Reload">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+            {/* Refresh/Reload or Clear Button */}
+            {phase !== "idle" && onClearScan ? (
+              <button 
+                onClick={onClearScan}
+                className="text-slate-400 hover:text-rose-450 cursor-pointer transition-colors p-0.5 rounded"
+                title="Clear Output & Reset"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            ) : (
+              <button className="text-slate-400 hover:text-white cursor-pointer" aria-label="Reload">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 11-.57-8.38l5.67-5.67" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
           </div>
 
           {/* Right: Actions */}
@@ -455,8 +469,18 @@ export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps)
           {/* Active Tab */}
           <div className="flex items-center gap-1.5 px-3.5 py-1 bg-slate-950 border-x border-t border-white/10 rounded-t-lg h-full text-white font-medium">
             <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse shadow-[0_0_4px_#2dd4bf]" />
-            <span className="max-w-[120px] truncate">SEO Audit Report</span>
-            <button className="ml-1 opacity-60 hover:opacity-100 font-bold" aria-label="Close tab">×</button>
+            <span className="max-w-[120px] truncate font-sans">SEO Audit Report</span>
+            {phase !== "idle" && onClearScan ? (
+              <button 
+                onClick={onClearScan}
+                className="ml-1 opacity-60 hover:opacity-100 font-bold cursor-pointer font-sans" 
+                aria-label="Clear scan"
+              >
+                ×
+              </button>
+            ) : (
+              <button className="ml-1 opacity-60 hover:opacity-100 font-bold" aria-label="Close tab">×</button>
+            )}
           </div>
           {/* Inactive Tab */}
           <div className="flex items-center gap-1.5 px-3 py-1 hover:bg-slate-950/20 border border-transparent rounded-t-lg h-full ml-1 opacity-70">

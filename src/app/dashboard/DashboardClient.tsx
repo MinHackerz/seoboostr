@@ -129,7 +129,7 @@ export function DashboardClient({ user }: { user: User }) {
   useEffect(() => {
     const emailHandle = user.email ? user.email.split("@")[0] : "";
     const displayName = user.name || emailHandle || "User";
-    document.title = `${displayName}'s Dashboard — SEO Optimized`;
+    document.title = `${displayName}'s Dashboard — SEO Optimised`;
   }, [user]);
 
   useEffect(() => {
@@ -747,10 +747,10 @@ export function DashboardClient({ user }: { user: User }) {
             } w-auto`}
         >
           <div className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="SEO Optimized" className="w-9 h-9 rounded-xl shrink-0 object-contain" />
+            <img src="/logo.png" alt="SEO Optimised" className="w-9 h-9 rounded-xl shrink-0 object-contain" />
             {isSidebarExpanded && (
               <span className="text-xl font-black tracking-tight text-slate-800 animate-fade-in whitespace-nowrap hidden md:inline">
-                SEO Optimized
+                SEO Optimised
               </span>
             )}
           </div>
@@ -1275,7 +1275,7 @@ export function DashboardClient({ user }: { user: User }) {
                       <div className="relative z-10 px-8 pt-10 pb-9 sm:px-12">
                         {/* Badge + Title */}
                         <div className="flex items-center gap-2.5 mb-3">
-                          <img src="/logo.png" alt="SEO Optimized" className="w-9 h-9 rounded-xl object-contain" />
+                          <img src="/logo.png" alt="SEO Optimised" className="w-9 h-9 rounded-xl object-contain" />
                           <span className="text-[9px] font-black text-accent uppercase tracking-[0.18em] bg-accent/5 border border-accent/10 px-2.5 py-1 rounded-full">SEO Analyzer</span>
                         </div>
                         <h3 className="text-2xl sm:text-[28px] font-black text-slate-850 mb-2 tracking-tight leading-tight">
@@ -1750,7 +1750,7 @@ function ModuleTab({
 
   const handleCopyIssues = async () => {
     if (!result || !result.issues) return;
-    const header = `# SEO Optimized Audit Issues - ${moduleName}\n` +
+    const header = `# SEO Optimised Audit Issues - ${moduleName}\n` +
       `**Target Page**: ${selectedPage === "all" ? "All scanned pages" : selectedPage}\n\n` +
       `Below is a detailed list of technical issues found on the website. Use these as a context prompt in your AI-powered IDE (e.g. Cursor, Copilot, Gemini) to fix them directly in your codebase.\n\n`;
 

@@ -3,7 +3,7 @@ import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SEO Optimized — 15-Module Parallel SEO Audit in Seconds",
+  title: "SEO Optimised — 15-Module Parallel SEO Audit in Seconds",
   description:
     "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more. One URL. One scored report.",
   icons: {
@@ -11,15 +11,15 @@ export const metadata: Metadata = {
     apple: "/logo.png",
   },
   openGraph: {
-    title: "SEO Optimized — 15-Module Parallel SEO Audit in Seconds",
+    title: "SEO Optimised — 15-Module Parallel SEO Audit in Seconds",
     description: "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more.",
     url: "https://seoptimised.com",
-    siteName: "SEO Optimized",
+    siteName: "SEO Optimised",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SEO Optimized — 15-Module Parallel SEO & GEO Audit",
+    title: "SEO Optimised — 15-Module Parallel SEO & GEO Audit",
     description: "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more.",
     creator: "@menajulm",
   }
@@ -31,7 +31,7 @@ const jsonLd = {
     {
       "@type": "SoftwareApplication",
       "@id": "https://seoptimised.com/#software",
-      "name": "SEO Optimized",
+      "name": "SEO Optimised",
       "url": "https://seoptimised.com",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "All",
