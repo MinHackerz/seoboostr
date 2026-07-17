@@ -98,14 +98,10 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             try {
-              if (window.location.pathname.startsWith('/dashboard')) {
-                const savedTheme = localStorage.getItem('theme');
-                const theme = savedTheme || 'dark';
-                if (theme === 'dark') {
-                  document.documentElement.classList.add('dark');
-                } else {
-                  document.documentElement.classList.remove('dark');
-                }
+              const savedTheme = localStorage.getItem('theme');
+              const theme = savedTheme || 'dark';
+              if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
               } else {
                 document.documentElement.classList.remove('dark');
               }

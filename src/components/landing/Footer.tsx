@@ -1,10 +1,24 @@
 "use client";
 
+import { useRef } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
-import { motion } from "framer-motion";
+import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
 
 export function Footer() {
   const { data: session } = useSession();
+
+  // Mouse tracking for CTA Card
+  const cardRef = useRef<HTMLDivElement>(null);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    mouseX.set(e.clientX - rect.left);
+    mouseY.set(e.clientY - rect.top);
+  };
+
   return (
     <footer className="relative overflow-hidden">
       {/* ── Dynamic Luminous Aurora Background ── */}
@@ -36,35 +50,54 @@ export function Footer() {
 
       {/* CTA Banner inside Glass Container */}
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-22 pb-12 sm:pb-16 text-center">
-        <div className="rounded-3xl p-8 sm:p-12 border border-white/20 bg-slate-900/80 backdrop-blur-2xl shadow-2xl shadow-teal-500/15 relative overflow-hidden group">
+        <motion.div
+          ref={cardRef}
+          onMouseMove={handleMouseMove}
+          className="group rounded-3xl p-8 sm:p-12 border border-white/10 bg-slate-950/40 backdrop-blur-2xl shadow-2xl hover:border-teal-500/35 shadow-teal-500/5 transition-all duration-300 relative overflow-hidden"
+        >
+          {/* Spotlight Hover Glow */}
+          <motion.div
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-0"
+            style={{
+              background: useMotionTemplate`
+                radial-gradient(
+                  240px circle at ${mouseX}px ${mouseY}px,
+                  rgba(20, 184, 166, 0.15),
+                  transparent 80%
+                )
+              `,
+            }}
+          />
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-teal-400 to-transparent" />
           
-          <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight mb-4">
-            Ready to <span className="gradient-text">boost your SEO?</span>
-          </h3>
-          <p className="text-sm sm:text-base text-slate-300 max-w-lg mx-auto mb-8 font-medium leading-relaxed">
-            Join thousands of developers and marketers who audit smarter, ship faster, and rank higher. Zero setup required.
-          </p>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <button
-              onClick={async () => {
-                if (session?.user?.email === "demo@seoboostr.io") {
-                  await signOut({ redirect: false });
-                }
-                signIn("google", { callbackUrl: "/dashboard" });
-              }}
-              className="px-8 py-4 text-base font-extrabold text-white bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 rounded-2xl transition-all duration-200 cursor-pointer shadow-xl shadow-teal-500/30 hover:shadow-teal-500/40 hover:-translate-y-0.5 active:translate-y-0"
-            >
-              Get Started Free Today
-            </button>
-            <button
-              onClick={() => signIn("credentials", { email: "demo@seoboostr.io", callbackUrl: "/dashboard" })}
-              className="px-8 py-4 text-base font-bold text-slate-200 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 rounded-2xl transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 shadow-lg"
-            >
-              Launch Instant Demo
-            </button>
+          <div className="relative z-10">
+            <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight mb-4 leading-tight">
+              Ready to <span className="gradient-text">boost your SEO?</span>
+            </h3>
+            <p className="text-sm sm:text-base text-slate-300 max-w-lg mx-auto mb-8 font-medium leading-relaxed">
+              Join thousands of developers and marketers who audit smarter, ship faster, and rank higher. Zero setup required.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              <button
+                onClick={async () => {
+                  if (session?.user?.email === "demo@seoboostr.io") {
+                    await signOut({ redirect: false });
+                  }
+                  signIn("google", { callbackUrl: "/dashboard" });
+                }}
+                className="px-8 py-4 text-base font-extrabold text-white bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 rounded-2xl transition-all duration-200 cursor-pointer shadow-xl shadow-teal-500/30 hover:shadow-teal-500/40 hover:-translate-y-0.5 active:translate-y-0"
+              >
+                Get Started Free Today
+              </button>
+              <button
+                onClick={() => signIn("credentials", { email: "demo@seoboostr.io", callbackUrl: "/dashboard" })}
+                className="px-8 py-4 text-base font-bold text-slate-200 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 rounded-2xl transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 shadow-lg"
+              >
+                Launch Instant Demo
+              </button>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Divider */}

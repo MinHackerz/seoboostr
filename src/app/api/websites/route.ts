@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
 
     const hasExistingAnalysis = existingWebsite ? existingWebsite._count.analyses > 0 : false;
     const isInitialAudit = Array.isArray(initialResults) && initialResults.length > 0 && !hasExistingAnalysis;
-    const cost = 1.0; // 1-page homepage audit cost is 1.0 credit
+    const cost = 2.0; // 1-page homepage audit cost is 2.0 credits
 
     if (isInitialAudit) {
       if (!user || user.coins < cost) {

@@ -124,10 +124,6 @@ export function DashboardClient({ user }: { user: User }) {
     } else {
       document.documentElement.classList.remove("dark");
     }
-
-    return () => {
-      document.documentElement.classList.remove("dark");
-    };
   }, []);
 
   useEffect(() => {
@@ -813,49 +809,28 @@ export function DashboardClient({ user }: { user: User }) {
                 </div>
                 <div className="space-y-1.5">
                   <div className="flex justify-between">
-                    <span className="text-slate-500 font-medium">Page Scan</span>
+                    <span className="text-slate-500 font-medium">First-Time Scan</span>
+                    <span className="font-semibold text-slate-800">2.0 cr / page</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-500 font-medium">Full Website Rescan</span>
                     <span className="font-semibold text-slate-800">1.0 cr / page</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-500 font-medium">Refresh Audit</span>
-                    <span className="font-semibold text-slate-800">0.5 cr / scan</span>
-                  </div>
-                  <div className="pt-2 mt-1 border-t border-dashed border-slate-100">
-                    <span className="block font-bold text-slate-400 text-[10px] uppercase tracking-wider mb-1">AI Auto-Fixes</span>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-slate-500 font-medium">Critical Issue</span>
-                        <span className="font-semibold text-red-600">1.5 cr</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500 font-medium">High Issue</span>
-                        <span className="font-semibold text-orange-600">1.0 cr</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500 font-medium">Medium Issue</span>
-                        <span className="font-semibold text-amber-600">.75 cr</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-500 font-medium">Low Issue</span>
-                        <span className="font-semibold text-sky-600">0.5 cr</span>
-                      </div>
-                    </div>
+                    <span className="text-slate-500 font-medium">Single Module Rescan</span>
+                    <span className="font-semibold text-slate-800">1.0 cr / page</span>
                   </div>
 
                   {/* Buy Credits option in tooltip */}
-                  <div className="pt-3 mt-3 border-t border-slate-100 relative group/buy text-left">
+                  <div className="pt-3 mt-3 border-t border-slate-100 text-left">
                     <button
                       type="button"
-                      disabled
-                      className="w-full py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-800 text-[10px] font-extrabold rounded-lg transition-all cursor-not-allowed border border-amber-200/50 flex items-center justify-center gap-1.5"
+                      onClick={() => setIsProfileOpen(true)}
+                      className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-extrabold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm shadow-amber-500/20"
                     >
                       Buy Credits
-                      <span className="text-[8px] font-extrabold bg-amber-500 text-white px-1.5 py-0.5 rounded-md uppercase tracking-wider leading-none">Soon</span>
                     </button>
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2.5 py-1.5 bg-slate-900 text-white font-medium text-[9px] rounded-lg shadow-lg opacity-0 pointer-events-none group-hover/buy:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                    Payment integration coming soon!
                   </div>
-                </div>
               </div>
             </div>
           </div>

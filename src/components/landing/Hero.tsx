@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuditDashboard, type ScanPhase } from "./AuditDashboard";
+import { IPadMockup } from "./IPadMockup";
 import { type ScanResult } from "./moduleData";
 import { signIn, useSession } from "next-auth/react";
 
@@ -220,13 +221,15 @@ export function Hero({ scanPhase, scanResults, scanUrl, onStartScan }: HeroProps
           </button>
         </motion.div>
 
-        {/* ── Dashboard Visual (Dark macOS Glass Window) ── */}
+        {/* ── Dashboard Visual (Dark macOS Glass Window wrapped in iPad 3D Mockup) ── */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.3 }}
         >
-          <AuditDashboard phase={scanPhase} scanResults={scanResults} url={scanUrl} />
+          <IPadMockup>
+            <AuditDashboard phase={scanPhase} scanResults={scanResults} url={scanUrl} />
+          </IPadMockup>
         </motion.div>
       </div>
     </section>

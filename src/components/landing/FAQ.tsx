@@ -5,28 +5,32 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const faqs = [
   {
-    q: "Is this actually free?",
-    a: "Yes. Run unlimited audits, see your overall score and partial results — no card, no trial expiry. The full 15-module report with issue-level detail is behind a free account. We make money when agencies upgrade for team features and API access, not from gating your first scan.",
+    q: "Is SEOBoostr actually free to start?",
+    a: "Yes. You can sign up for a free account instantly—no credit card required—and receive 100.0 credits. This is enough to run audits on up to 50 pages. You can scan your site, inspect detailed issue-level reports, and view scores across all 15 audit modules entirely within the free credits quota.",
   },
   {
-    q: "What data do you store?",
-    a: "The URL you submit, the audit results, and your account email if you sign up. We don't install trackers on your site, don't store your page content, and don't sell data. Audit results are tied to your account and deletable anytime.",
+    q: "How does the pay-as-you-go credit model work?",
+    a: "We charge purely based on usage, with no recurring monthly subscriptions or hidden lock-ins. First-time page scans consume 2.0 credits per page, while subsequent full website rescans cost 1.0 credit per page. Updating a single audit module (e.g. testing if you fixed a Schema issue) costs 1.0 credit per page scan. Flat credit top-ups start at just $2.50.",
   },
   {
-    q: "Can I run it on client sites?",
-    a: "Absolutely. It only needs a public URL — no code access, no DNS changes, no JavaScript snippets. Run it on your clients' sites, competitors' sites, or that side project you haven't touched in months.",
+    q: "What audit modules are included in a scan?",
+    a: "SEOBoostr executes 15 specialized audits in parallel. This covers Core Web Vitals performance parameters, Schema JSON-LD structured data validation, content E-E-A-T indicators (Trust/Authority), AI & Search Engine Visibility factors (GEO), image optimization, sitemaps, link integrity, security headers, accessibility guidelines, mobile layouts, and international targeting.",
   },
   {
-    q: "How do automated AI Code Fixes work?",
-    a: "When critical or high priority issues are found (such as missing schema tags or broken security headers), our AI system generates exact pull-request-ready code patches tailored specifically to your website's markup using your credits.",
+    q: "How is this different from Google Lighthouse?",
+    a: "Lighthouse is great for local page performance and base accessibility. SEOBoostr goes deeper into search engine rank factors: we inspect your actual JSON-LD Schema structures, run crawls to detect broken internal links, analyze page copy for content E-E-A-T signals, target international search setups, and verify security headers—all run in parallel across your site's pages rather than a single local view.",
   },
   {
-    q: "How is this different from Lighthouse?",
-    a: "Lighthouse covers performance and accessibility. SEOBoostr runs 15 modules in parallel — technical SEO, schema markup, content E-E-A-T analysis, AI/GEO visibility, security headers, accessibility, and more. You get a single, prioritized report instead of copy-pasting between five different tools.",
+    q: "Can I audit competitor or client sites?",
+    a: "Yes! Because SEOBoostr only requires a public URL to run, you do not need code access, DNS modifications, or tracker installations. You can scan competitors' sites to analyze their performance gaps, or scan prospective clients' sites to output high-value audit reports before pitch meetings.",
   },
   {
-    q: "How fast is a scan?",
-    a: "Most scans complete in 8-15 seconds. All 15 modules run simultaneously — we're not queuing sequential requests. Complex sites with many resources may take up to 30 seconds.",
+    q: "Do purchased credits expire?",
+    a: "No. Any top-up credits you buy (Starter, Professional, or Agency packs) roll over forever. They remain in your account balance and will never expire, allowing you to scan pages whenever your dev cycle requires it.",
+  },
+  {
+    q: "Can I export white-label reports for clients?",
+    a: "Absolutely. All report summaries and full 15-module sheets are exportable as clean, client-ready documents. Agencies upgrading to our high-volume tiers can apply white-label branding, custom logos, and host audit reports on their own custom domains.",
   },
 ];
 
@@ -84,16 +88,16 @@ export function FAQ() {
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-teal-500/25 to-indigo-500/25 border border-teal-500/30 text-teal-400 text-xs font-bold uppercase tracking-wider mb-5 shadow-lg shadow-teal-500/10">
             Frequently Asked Questions
           </div>
-          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-3">
+          <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight mb-3 leading-tight">
             Questions you&apos;d <span className="gradient-text">actually ask</span>
           </h2>
-          <p className="text-sm sm:text-base text-slate-300">
-            No &quot;How do I revolutionize my SEO strategy?&quot; fluff here. Straight technical answers.
+          <p className="text-sm sm:text-base text-slate-300 font-medium leading-relaxed max-w-lg mx-auto">
+            No &quot;How do I revolutionize my SEO strategy?&quot; fluff here. Straight technical and commercial answers.
           </p>
         </motion.div>
 
-        {/* FAQ items */}
-        <div className="space-y-4">
+        {/* FAQ items Accordion list */}
+        <div className="space-y-4 relative z-10">
           {faqs.map((faq, i) => {
             const isOpen = openIndex === i;
             return (
@@ -106,17 +110,17 @@ export function FAQ() {
               >
                 <button
                   onClick={() => setOpenIndex(isOpen ? null : i)}
-                  className={`w-full flex items-center justify-between gap-4 px-6 py-5 rounded-2xl text-left border transition-all duration-300 cursor-pointer group backdrop-blur-xl ${
+                  className={`w-full flex items-center justify-between gap-4 px-6 py-5 rounded-2xl text-left border transition-all duration-350 cursor-pointer group backdrop-blur-xl ${
                     isOpen
-                      ? "bg-white/10 border-teal-400/50 shadow-xl shadow-teal-500/15"
-                      : "bg-white/5 border-white/15 hover:border-white/25 hover:bg-white/10 shadow-lg"
+                      ? "bg-slate-950/60 border-teal-500/30 shadow-[0_0_20px_rgba(20,184,166,0.06)]"
+                      : "bg-slate-950/40 border-white/10 hover:border-teal-500/35 hover:bg-slate-900/40 shadow-lg"
                   }`}
                   aria-expanded={isOpen}
                 >
-                  <span className="text-base font-bold text-slate-100 group-hover:text-teal-300 transition-colors">
+                  <span className={`text-sm sm:text-base font-extrabold transition-colors duration-255 font-sans ${isOpen ? "text-teal-300" : "text-slate-100 group-hover:text-teal-400"}`}>
                     {faq.q}
                   </span>
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-all duration-300 shrink-0 ${
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center border transition-all duration-350 shrink-0 ${
                     isOpen ? "bg-teal-500/20 border-teal-400/40 text-teal-300 rotate-45 shadow-[0_0_10px_rgba(20,184,166,0.3)]" : "bg-white/5 border-white/10 text-slate-400 group-hover:text-white"
                   }`}>
                     <svg
@@ -139,10 +143,10 @@ export function FAQ() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25 }}
+                      transition={{ duration: 0.25, ease: "easeInOut" }}
                       className="overflow-hidden"
                     >
-                      <div className="px-6 py-5 mt-2 rounded-2xl bg-slate-900/80 border border-white/10 text-sm sm:text-base text-slate-300 leading-relaxed shadow-inner font-medium">
+                      <div className="px-6 py-5 mt-2 rounded-2xl bg-slate-950/60 border-l-2 border-l-teal-500/40 border-y border-r border-white/5 text-xs sm:text-sm text-slate-350 leading-relaxed font-semibold shadow-inner">
                         {faq.a}
                       </div>
                     </motion.div>

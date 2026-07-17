@@ -122,7 +122,7 @@ export async function runAnalysis(
     const discovered = discoverAllPages(homepageFetch.finalUrl, homepageParsed, homepageFetch.sitemapXml);
 
     const previouslyScanned = options?.previouslyScannedPages || [];
-    const userCoins = options?.userCoins ?? 200.0;
+    const userCoins = options?.userCoins ?? 100.0;
 
     // Filter discovered pages to find the actual list of pending pages
     const currentPending = discovered.filter((p) => !previouslyScanned.includes(p));
@@ -132,12 +132,12 @@ export async function runAnalysis(
     let nextScanned: string[] = [];
 
     const isHomepageScanned = previouslyScanned.includes(homepageUrl);
-    const homepageCost = isHomepageScanned ? 0.2 : 1.0;
+    const homepageCost = isHomepageScanned ? 1.0 : 2.0;
 
     if (currentPending.length > 0) {
       // Prioritize pending pages
       const remainingCoins = userCoins - homepageCost;
-      const allowedPendingCount = Math.max(0, Math.floor(remainingCoins));
+      const allowedPendingCount = Math.max(0, Math.floor(remainingCoins / 2.0));
       
       const pendingSubpages = currentPending.filter((p) => p !== homepageUrl);
       const subpagesToCrawl = pendingSubpages.slice(0, allowedPendingCount);
@@ -146,8 +146,8 @@ export async function runAnalysis(
       nextPending = currentPending.filter((p) => !crawledInThisRun.includes(p));
       nextScanned = Array.from(new Set([...previouslyScanned, ...crawledInThisRun]));
     } else {
-      // Full refresh mode
-      const maxRefresh = Math.max(1, Math.floor(userCoins / 0.2));
+      // Full rescan mode (1.0 credit per page)
+      const maxRefresh = Math.max(1, Math.floor(userCoins / 1.0));
       const pagesToCrawl = discovered.slice(0, maxRefresh);
       const subpagesToCrawl = pagesToCrawl.filter((p) => p !== homepageUrl);
 

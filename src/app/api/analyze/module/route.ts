@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
       previouslyScanned = [analysis.website.url];
     }
 
-    // Cost: 0.05 coins per page
+    // Cost: 1.0 credit per page
     const pageCount = previouslyScanned.length;
-    const rate = 0.05;
+    const rate = 1.0;
     const cost = pageCount * rate;
 
     // Check user coins balance
@@ -65,9 +65,9 @@ export async function POST(request: NextRequest) {
     if (!user || user.coins < cost) {
       return Response.json(
         {
-          error: `Insufficient coins. This module refresh requires at least ${cost.toFixed(2)} coins. Your balance: ${
+          error: `Insufficient credits. This module refresh requires at least ${cost.toFixed(2)} credits. Your balance: ${
             user?.coins ?? 0
-          } coins.`,
+          } credits.`,
         },
         { status: 400 }
       );

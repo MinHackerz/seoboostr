@@ -160,15 +160,15 @@ export async function POST(request: NextRequest) {
     let newlyCrawledRefreshedCount = 0;
 
     if (isResume) {
-      const resumeRate = completedCount > 1 ? 0.2 : 1.0;
+      const resumeRate = completedCount > 1 ? 1.0 : 2.0;
       const newlyCrawledPending = crawled.filter((p: string) => !previouslyScanned.includes(p));
       const newlyCrawledRefreshed = crawled.filter((p: string) => previouslyScanned.includes(p));
       newlyCrawledPendingCount = newlyCrawledPending.length;
       newlyCrawledRefreshedCount = newlyCrawledRefreshed.length;
-      cost = newlyCrawledPendingCount * resumeRate + newlyCrawledRefreshedCount * 0.2;
+      cost = newlyCrawledPendingCount * resumeRate + newlyCrawledRefreshedCount * 1.0;
     } else {
-      // Starting from scratch: rate is 0.2 for refresh session, 1.0 for first audit
-      const rate = isRefreshSession ? 0.2 : 1.0;
+      // Starting from scratch: rate is 1.0 for refresh session, 2.0 for first audit
+      const rate = isRefreshSession ? 1.0 : 2.0;
       cost = crawled.length * rate;
       if (isRefreshSession) {
         newlyCrawledRefreshedCount = crawled.length;
