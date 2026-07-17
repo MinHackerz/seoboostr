@@ -29,6 +29,12 @@ export function Hero({ scanPhase, scanResults, scanUrl, onStartScan, onClearScan
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (scanPhase === "idle") {
+      setInputValue("");
+    }
+  }, [scanPhase]);
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const url = inputValue.trim();
