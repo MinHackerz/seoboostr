@@ -39,7 +39,7 @@ export function LandingPage() {
     setScanUrl(cleanUrl);
     setScanPhase("scanning");
     if (typeof window !== "undefined") {
-      localStorage.setItem("seoboostr_last_scanned_url", cleanUrl);
+      localStorage.setItem("seoptimised_last_scanned_url", cleanUrl);
     }
 
     try {
@@ -59,7 +59,7 @@ export function LandingPage() {
         
         setScanResults(results);
         if (typeof window !== "undefined") {
-          localStorage.setItem("seoboostr_last_scanned_results", JSON.stringify(results));
+          localStorage.setItem("seoptimised_last_scanned_results", JSON.stringify(results));
         }
         
         const maxDelay = Math.max(...results.map((r: any) => r.delay));

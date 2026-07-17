@@ -107,7 +107,7 @@ export function DashboardClient({ user }: { user: User }) {
   const [savedWebsiteId, setSavedWebsiteId] = useState<string | null>(null);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
   const [websites, setWebsites] = useState<any[]>([]);
-  const isDemoMode = user.email === "demo@seoboostr.io";
+  const isDemoMode = user.email === "demo@seoptimised.com";
   const canAddWebsite = !isDemoMode && websites.length < 10;
 
   // Coins State
@@ -129,7 +129,7 @@ export function DashboardClient({ user }: { user: User }) {
   useEffect(() => {
     const emailHandle = user.email ? user.email.split("@")[0] : "";
     const displayName = user.name || emailHandle || "User";
-    document.title = `${displayName}'s Dashboard — SEOBoostr`;
+    document.title = `${displayName}'s Dashboard — SEO Optimized`;
   }, [user]);
 
   useEffect(() => {
@@ -498,15 +498,15 @@ export function DashboardClient({ user }: { user: User }) {
   // Fetch initial websites and load initial/last-selected target on mount
   useEffect(() => {
     const loadInitialWebsite = async () => {
-      const landingScannedUrl = localStorage.getItem("seoboostr_last_scanned_url");
+      const landingScannedUrl = localStorage.getItem("seoptimised_last_scanned_url");
       let targetUrl = landingScannedUrl || localStorage.getItem(`last_website_${user.email}`);
       
-      if (!targetUrl && user.email === "demo@seoboostr.io") {
+      if (!targetUrl && user.email === "demo@seoptimised.com") {
         targetUrl = "https://rasid.in";
       }
 
       if (landingScannedUrl) {
-        localStorage.removeItem("seoboostr_last_scanned_url");
+        localStorage.removeItem("seoptimised_last_scanned_url");
       }
 
       if (targetUrl) {
@@ -587,7 +587,7 @@ export function DashboardClient({ user }: { user: User }) {
             }
           } else {
             // Auto-register and run crawl for the scanned URL if not registered
-            const localResultsStr = localStorage.getItem("seoboostr_last_scanned_results");
+            const localResultsStr = localStorage.getItem("seoptimised_last_scanned_results");
             let initialResults = null;
             if (localResultsStr) {
               try {
@@ -609,7 +609,7 @@ export function DashboardClient({ user }: { user: User }) {
               localStorage.setItem(`last_website_${user.email}`, website.url);
 
               if (initialResults) {
-                localStorage.removeItem("seoboostr_last_scanned_results");
+                localStorage.removeItem("seoptimised_last_scanned_results");
                 const updatedListRes = await fetch("/api/websites");
                 if (updatedListRes.ok) {
                   const newList = await updatedListRes.json();
@@ -714,7 +714,7 @@ export function DashboardClient({ user }: { user: User }) {
             } else {
               const errResult = await saveRes.json();
               setError(errResult.error || "Failed to save website");
-              localStorage.removeItem("seoboostr_last_scanned_results");
+              localStorage.removeItem("seoptimised_last_scanned_results");
               setIsAnalyzing(false);
               return;
             }
@@ -747,10 +747,10 @@ export function DashboardClient({ user }: { user: User }) {
             } w-auto`}
         >
           <div className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="SEOBoostr" className="w-9 h-9 rounded-xl shrink-0 object-contain" />
+            <img src="/logo.png" alt="SEO Optimized" className="w-9 h-9 rounded-xl shrink-0 object-contain" />
             {isSidebarExpanded && (
               <span className="text-xl font-black tracking-tight text-slate-800 animate-fade-in whitespace-nowrap hidden md:inline">
-                SEOBoostr
+                SEO Optimized
               </span>
             )}
           </div>
@@ -1237,7 +1237,7 @@ export function DashboardClient({ user }: { user: User }) {
                         onRefresh={handleAnalyze}
                         isRefreshing={isLoading}
                         currentCoins={coins}
-                        isDemoMode={user.email === "demo@seoboostr.io"}
+                        isDemoMode={user.email === "demo@seoptimised.com"}
                       />
                     ) : activeTab === "pagespeed" ? (
                       <PageSpeedTab
@@ -1255,7 +1255,7 @@ export function DashboardClient({ user }: { user: User }) {
                         onRefreshModule={handleRefreshModule}
                         isRefreshing={isRefreshingModule}
                         currentCoins={coins}
-                        isDemoMode={user.email === "demo@seoboostr.io"}
+                        isDemoMode={user.email === "demo@seoptimised.com"}
                       />
                     )}
                   </div>
@@ -1275,7 +1275,7 @@ export function DashboardClient({ user }: { user: User }) {
                       <div className="relative z-10 px-8 pt-10 pb-9 sm:px-12">
                         {/* Badge + Title */}
                         <div className="flex items-center gap-2.5 mb-3">
-                          <img src="/logo.png" alt="SEOBoostr" className="w-9 h-9 rounded-xl object-contain" />
+                          <img src="/logo.png" alt="SEO Optimized" className="w-9 h-9 rounded-xl object-contain" />
                           <span className="text-[9px] font-black text-accent uppercase tracking-[0.18em] bg-accent/5 border border-accent/10 px-2.5 py-1 rounded-full">SEO Analyzer</span>
                         </div>
                         <h3 className="text-2xl sm:text-[28px] font-black text-slate-850 mb-2 tracking-tight leading-tight">
@@ -1750,7 +1750,7 @@ function ModuleTab({
 
   const handleCopyIssues = async () => {
     if (!result || !result.issues) return;
-    const header = `# SEOBoostr Audit Issues - ${moduleName}\n` +
+    const header = `# SEO Optimized Audit Issues - ${moduleName}\n` +
       `**Target Page**: ${selectedPage === "all" ? "All scanned pages" : selectedPage}\n\n` +
       `Below is a detailed list of technical issues found on the website. Use these as a context prompt in your AI-powered IDE (e.g. Cursor, Copilot, Gemini) to fix them directly in your codebase.\n\n`;
 

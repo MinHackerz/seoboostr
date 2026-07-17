@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const faqs = [
   {
-    q: "Is SEOBoostr actually free to start?",
+    q: "Is SEO Optimized actually free to start?",
     a: "Yes. You can sign up for a free account instantly—no credit card required—and receive 100.0 credits. This is enough to run audits on up to 50 pages. You can scan your site, inspect detailed issue-level reports, and view scores across all 15 audit modules entirely within the free credits quota.",
   },
   {
@@ -14,15 +14,15 @@ const faqs = [
   },
   {
     q: "What audit modules are included in a scan?",
-    a: "SEOBoostr executes 15 specialized audits in parallel. This covers Core Web Vitals performance parameters, Schema JSON-LD structured data validation, content E-E-A-T indicators (Trust/Authority), AI & Search Engine Visibility factors (GEO), image optimization, sitemaps, link integrity, security headers, accessibility guidelines, mobile layouts, and international targeting.",
+    a: "SEO Optimized executes 15 specialized audits in parallel. This covers Core Web Vitals performance parameters, Schema JSON-LD structured data validation, content E-E-A-T indicators (Trust/Authority), AI & Search Engine Visibility factors (GEO), image optimization, sitemaps, link integrity, security headers, accessibility guidelines, mobile layouts, and international targeting.",
   },
   {
     q: "How is this different from Google Lighthouse?",
-    a: "Lighthouse is great for local page performance and base accessibility. SEOBoostr goes deeper into search engine rank factors: we inspect your actual JSON-LD Schema structures, run crawls to detect broken internal links, analyze page copy for content E-E-A-T signals, target international search setups, and verify security headers—all run in parallel across your site's pages rather than a single local view.",
+    a: "Lighthouse is great for local page performance and base accessibility. SEO Optimized goes deeper into search engine rank factors: we inspect your actual JSON-LD Schema structures, run crawls to detect broken internal links, analyze page copy for content E-E-A-T signals, target international search setups, and verify security headers—all run in parallel across your site's pages rather than a single local view.",
   },
   {
     q: "Can I audit competitor or client sites?",
-    a: "Yes! Because SEOBoostr only requires a public URL to run, you do not need code access, DNS modifications, or tracker installations. You can scan competitors' sites to analyze their performance gaps, or scan prospective clients' sites to output high-value audit reports before pitch meetings.",
+    a: "Yes! Because SEO Optimized only requires a public URL to run, you do not need code access, DNS modifications, or tracker installations. You can scan competitors' sites to analyze their performance gaps, or scan prospective clients' sites to output high-value audit reports before pitch meetings.",
   },
   {
     q: "Do purchased credits expire?",

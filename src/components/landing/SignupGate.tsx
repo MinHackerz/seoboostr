@@ -121,7 +121,7 @@ export function SignupGate({ visible }: SignupGateProps) {
               {/* Google OAuth */}
               <button
                 onClick={async () => {
-                  if (session?.user?.email === "demo@seoboostr.io") {
+                  if (session?.user?.email === "demo@seoptimised.com") {
                     await signOut({ redirect: false });
                   }
                   signIn("google", { callbackUrl: "/dashboard" });

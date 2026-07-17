@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
   try {
     // 1. Enforce demo mode restriction
-    if (session.user.email === "demo@seoboostr.io" && normalizedUrl !== "https://rasid.in/") {
+    if (session.user.email === "demo@seoptimised.com" && normalizedUrl !== "https://rasid.in/") {
       return Response.json(
         { error: "Demo mode is restricted to rasid.in only." },
         { status: 400 }
@@ -211,7 +211,7 @@ export async function PATCH(request: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session?.user?.email === "demo@seoboostr.io") {
+  if (session?.user?.email === "demo@seoptimised.com") {
     return Response.json(
       { error: "Website name editing is disabled in demo mode." },
       { status: 403 }
@@ -252,7 +252,7 @@ export async function DELETE(request: NextRequest) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session?.user?.email === "demo@seoboostr.io") {
+  if (session?.user?.email === "demo@seoptimised.com") {
     return Response.json(
       { error: "Deleting websites is disabled in demo mode." },
       { status: 403 }

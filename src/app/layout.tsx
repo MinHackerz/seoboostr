@@ -3,7 +3,7 @@ import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SEOBoostr — 15-Module Parallel SEO Audit in Seconds",
+  title: "SEO Optimized — 15-Module Parallel SEO Audit in Seconds",
   description:
     "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more. One URL. One scored report.",
   icons: {
@@ -11,15 +11,15 @@ export const metadata: Metadata = {
     apple: "/logo.png",
   },
   openGraph: {
-    title: "SEOBoostr — 15-Module Parallel SEO Audit in Seconds",
+    title: "SEO Optimized — 15-Module Parallel SEO Audit in Seconds",
     description: "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more.",
-    url: "https://seoboostr.io",
-    siteName: "SEOBoostr",
+    url: "https://seoptimised.com",
+    siteName: "SEO Optimized",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "SEOBoostr — 15-Module Parallel SEO & GEO Audit",
+    title: "SEO Optimized — 15-Module Parallel SEO & GEO Audit",
     description: "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more.",
     creator: "@menajulm",
   }
@@ -30,9 +30,9 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "SoftwareApplication",
-      "@id": "https://seoboostr.io/#software",
-      "name": "SEOBoostr",
-      "url": "https://seoboostr.io",
+      "@id": "https://seoptimised.com/#software",
+      "name": "SEO Optimized",
+      "url": "https://seoptimised.com",
       "applicationCategory": "BusinessApplication",
       "operatingSystem": "All",
       "offers": {
@@ -44,7 +44,7 @@ const jsonLd = {
     },
     {
       "@type": "FAQPage",
-      "@id": "https://seoboostr.io/#faq",
+      "@id": "https://seoptimised.com/#faq",
       "mainEntity": [
         {
           "@type": "Question",

@@ -60,10 +60,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       name: "Demo Mode",
       credentials: {
-        email: { label: "Email", type: "email", placeholder: "demo@seoboostr.io" },
+        email: { label: "Email", type: "email", placeholder: "demo@seoptimised.com" },
       },
       async authorize(credentials) {
-        const email = (credentials?.email as string) || "demo@seoboostr.io";
+        const email = (credentials?.email as string) || "demo@seoptimised.com";
         
         try {
           let user = await prisma.user.findUnique({

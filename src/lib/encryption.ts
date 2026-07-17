@@ -1,7 +1,7 @@
 import crypto from "crypto";
 
 // Use ENCRYPTION_KEY from environment, fallback to NEXTAUTH_SECRET, or a default fallback secret
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || "default-secret-key-32-chars-long-seoboostr";
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || process.env.NEXTAUTH_SECRET || "default-secret-key-32-chars-long-seoptimised";
 const ALGORITHM = "aes-256-cbc";
 
 // Helper to ensure key is exactly 32 bytes (256 bits)

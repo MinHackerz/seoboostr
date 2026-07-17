@@ -18,7 +18,7 @@ export function Hero({ scanPhase, scanResults, scanUrl, onStartScan }: HeroProps
   const [inputValue, setInputValue] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const { data: session, status } = useSession();
-  const isLoggedIn = status === "authenticated" && session?.user?.email !== "demo@seoboostr.io";
+  const isLoggedIn = status === "authenticated" && session?.user?.email !== "demo@seoptimised.com";
   const [mode, setMode] = useState<"SEO" | "GEO">("SEO");
 
   useEffect(() => {
@@ -214,7 +214,7 @@ export function Hero({ scanPhase, scanResults, scanUrl, onStartScan }: HeroProps
           <span className="text-slate-700">|</span>
           <button
             type="button"
-            onClick={() => signIn("credentials", { email: "demo@seoboostr.io", callbackUrl: "/dashboard" })}
+            onClick={() => signIn("credentials", { email: "demo@seoptimised.com", callbackUrl: "/dashboard" })}
             className="text-teal-400 hover:text-teal-300 font-semibold hover:underline flex items-center gap-0.5 cursor-pointer text-xs transition-colors"
           >
             Launch Demo Mode →

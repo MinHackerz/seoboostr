@@ -17,7 +17,7 @@ export const technicalAnalyzer: Analyzer = {
         title: "Crawler Blocked by Security Firewall",
         description: `The website hosting provider returned status ${fetchResult.statusCode} ("${page.title}"). Firewall bot mitigation is preventing crawling.`,
         severity: "critical",
-        recommendation: "Allow the SEOBoostr User-Agent (SEOBoostr/1.0) in your hosting firewall (Vercel / Cloudflare) to enable full audits.",
+        recommendation: "Allow the SEO Optimized User-Agent (SEOOptimized/1.0) in your hosting firewall (Vercel / Cloudflare) to enable full audits.",
         value: `Status ${fetchResult.statusCode}: ${page.title}`,
       });
     }
@@ -62,7 +62,7 @@ export const technicalAnalyzer: Analyzer = {
             : "No robots.txt file found at the root of the site.",
           severity: isBlocked ? "medium" : "high",
           recommendation: isBlocked 
-            ? "Whitelist the SEOBoostr crawler User-Agent ('SEOBoostr/1.0') or configure your WAF to allow automated crawler requests."
+            ? "Whitelist the SEO Optimized crawler User-Agent ('SEOOptimized/1.0') or configure your WAF to allow automated crawler requests."
             : "Create a robots.txt file to control search engine crawling.",
         });
       } else {

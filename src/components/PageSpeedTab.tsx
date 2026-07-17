@@ -217,7 +217,7 @@ export function PageSpeedTab({
   const metrics = speedData.metrics;
 
   const handleCopyMetrics = async () => {
-    const header = `# SEOBoostr Audit - Google PageSpeed Insights (${strategy.toUpperCase()})\n` +
+    const header = `# SEO Optimized Audit - Google PageSpeed Insights (${strategy.toUpperCase()})\n` +
       `**Target Website**: ${websiteUrl}\n\n` +
       `Below is a summary of the Core Web Vitals and Lighthouse metrics. Paste this into your AI-powered IDE to prompt optimization changes.\n\n` +
       `## Category Scores\n` +

@@ -26,7 +26,7 @@ export const sitemapAnalyzer: Analyzer = {
           : "No sitemap.xml found at the standard location (/sitemap.xml).",
         severity: isBlocked ? "medium" : "high",
         recommendation: isBlocked 
-          ? "Whitelist the SEOBoostr crawler User-Agent ('SEOBoostr/1.0') or configure your WAF to allow automated crawler requests."
+          ? "Whitelist the SEO Optimized crawler User-Agent ('SEOOptimized/1.0') or configure your WAF to allow automated crawler requests."
           : "Create an XML sitemap and submit it to Google Search Console.",
       });
 

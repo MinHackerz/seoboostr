@@ -467,12 +467,12 @@ function SectionVisualizer({ type }: { type: string }) {
             
             <div className="flex-grow flex flex-col justify-center space-y-1">
               <div className="flex items-center gap-1 text-[9px] text-slate-450 font-bold">
-                <span>https://seoboostr.com</span>
+                <span>https://seoptimised.com</span>
                 <span>&gt;</span>
                 <span>audit</span>
               </div>
               <h4 className="text-sky-400 hover:underline font-extrabold text-xs leading-tight">
-                SEO Boostr - Professional Parallel SEO Audit Engine
+                SEO Optimized - Professional Parallel SEO Audit Engine
               </h4>
               <p className="text-slate-400 text-[9.5px] leading-relaxed">
                 Verify website metadata, audit schemas, track redirect loops, inspect response headers, and check visibility in ChatGPT and Gemini immediately.
@@ -657,7 +657,7 @@ function SectionVisualizer({ type }: { type: string }) {
               <div>{"{"}</div>
               <div className="pl-3.5"><span className="text-purple-400">&quot;@context&quot;</span>: <span className="text-teal-400">&quot;https://schema.org&quot;</span>,</div>
               <div className="pl-3.5"><span className="text-purple-400">&quot;@type&quot;</span>: <span className="text-teal-400">&quot;Product&quot;</span>,</div>
-              <div className="pl-3.5"><span className="text-purple-400">&quot;name&quot;</span>: <span className="text-white font-medium">&quot;SEOBoostr Enterprise&quot;</span>,</div>
+              <div className="pl-3.5"><span className="text-purple-400">&quot;name&quot;</span>: <span className="text-white font-medium">&quot;SEO Optimized Enterprise&quot;</span>,</div>
               <div className="pl-3.5"><span className="text-purple-400">&quot;aggregateRating&quot;</span>: {"{"}</div>
               <div className="pl-7"><span className="text-purple-400">&quot;ratingValue&quot;</span>: <span className="text-amber-400">&quot;4.9&quot;</span>,</div>
               <div className="pl-7"><span className="text-purple-400">&quot;reviewCount&quot;</span>: <span className="text-amber-400">&quot;184&quot;</span></div>

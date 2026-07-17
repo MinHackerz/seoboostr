@@ -269,7 +269,7 @@ export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps)
   const [moduleStatuses, setModuleStatuses] = useState<Record<string, ModuleStatus>>({});
   const [overallScore, setOverallScore] = useState(0);
   const { data: session, status: authStatus } = useSession();
-  const isLoggedIn = authStatus === "authenticated" && session?.user?.email !== "demo@seoboostr.io";
+  const isLoggedIn = authStatus === "authenticated" && session?.user?.email !== "demo@seoptimised.com";
 
   // Dynamic status bar clock to show the user's exact local time (safe from hydration errors)
   const [timeStr, setTimeStr] = useState("9:41 AM");
@@ -414,7 +414,7 @@ export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps)
                 <path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
               <span className="text-[11px] font-sans text-slate-200 truncate font-normal">
-                https://{phase !== "idle" ? displayUrl : "seoboostr.io"}
+                https://{phase !== "idle" ? displayUrl : "seoptimised.com"}
               </span>
             </div>
 
@@ -460,7 +460,7 @@ export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps)
           </div>
           {/* Inactive Tab */}
           <div className="flex items-center gap-1.5 px-3 py-1 hover:bg-slate-950/20 border border-transparent rounded-t-lg h-full ml-1 opacity-70">
-            <span className="max-w-[100px] truncate">seoboostr.io</span>
+            <span className="max-w-[100px] truncate">seoptimised.com</span>
             <button className="ml-1 opacity-40 hover:opacity-100" aria-label="Close tab">×</button>
           </div>
         </div>
@@ -532,14 +532,14 @@ export function AuditDashboard({ phase, scanResults, url }: AuditDashboardProps)
               </div>
               <button
                 onClick={async () => {
-                  localStorage.setItem("seoboostr_last_scanned_url", url);
+                  localStorage.setItem("seoptimised_last_scanned_url", url);
                   if (scanResults) {
-                    localStorage.setItem("seoboostr_last_scanned_results", JSON.stringify(scanResults));
+                    localStorage.setItem("seoptimised_last_scanned_results", JSON.stringify(scanResults));
                   }
                   if (isLoggedIn) {
                     window.location.href = "/dashboard";
                   } else {
-                    if (session?.user?.email === "demo@seoboostr.io") {
+                    if (session?.user?.email === "demo@seoptimised.com") {
                       await signOut({ redirect: false });
                     }
                     signIn("google", { callbackUrl: "/dashboard" });

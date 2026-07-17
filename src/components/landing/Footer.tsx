@@ -80,7 +80,7 @@ export function Footer() {
             <div className="flex flex-wrap items-center justify-center gap-4">
               <button
                 onClick={async () => {
-                  if (session?.user?.email === "demo@seoboostr.io") {
+                  if (session?.user?.email === "demo@seoptimised.com") {
                     await signOut({ redirect: false });
                   }
                   signIn("google", { callbackUrl: "/dashboard" });
@@ -90,7 +90,7 @@ export function Footer() {
                 Get Started Free Today
               </button>
               <button
-                onClick={() => signIn("credentials", { email: "demo@seoboostr.io", callbackUrl: "/dashboard" })}
+                onClick={() => signIn("credentials", { email: "demo@seoptimised.com", callbackUrl: "/dashboard" })}
                 className="px-8 py-4 text-base font-bold text-slate-200 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 rounded-2xl transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 shadow-lg"
               >
                 Launch Instant Demo
@@ -111,13 +111,13 @@ export function Footer() {
             <div className="flex items-center gap-2.5 mb-3">
               <img
                 src="/logo.png"
-                alt="SEOBoostr"
+                alt="SEO Optimized"
                 className="w-8 h-8 rounded-xl object-contain shadow-md"
                 width={32}
                 height={32}
               />
               <span className="text-lg font-black tracking-tight text-white">
-                SEOBoostr
+                SEO Optimized
               </span>
             </div>
             <p className="text-xs text-slate-400 max-w-xs leading-relaxed font-medium">
@@ -139,7 +139,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-400 font-medium">
-            © {new Date().getFullYear()} SEOBoostr. All rights reserved. Made with high-performance parallel processing.
+            © {new Date().getFullYear()} SEO Optimized. All rights reserved. Made with high-performance parallel processing.
           </p>
           <div className="flex items-center gap-6">
             <a href="/privacy" className="text-xs font-semibold text-slate-400 hover:text-white transition-colors">Privacy Policy</a>
