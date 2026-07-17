@@ -110,6 +110,15 @@ export function DashboardClient({ user }: { user: User }) {
   const isDemoMode = user.email === "demo@seoptimised.com";
   const canAddWebsite = !isDemoMode && websites.length < 10;
 
+  const currentActiveScore = (() => {
+    if (!analysis) return null;
+    const completedModules = (analysis.modules || []).filter((m) => m.status === "completed");
+    if (completedModules.length === 0) return analysis.overallScore ?? 0;
+
+    const sum = completedModules.reduce((acc, m) => acc + m.score, 0);
+    return Math.round(sum / completedModules.length);
+  })();
+
   // Coins State
   const [coins, setCoins] = useState<number>(user.coins);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -900,6 +909,7 @@ export function DashboardClient({ user }: { user: User }) {
                       await handleAnalyze({ targetUrl });
                     }}
                     isAnalyzing={isLoading}
+                    currentScore={currentActiveScore}
                   />
                 ) : (
                   !isDemoMode && (
@@ -1068,6 +1078,7 @@ export function DashboardClient({ user }: { user: User }) {
                       await handleAnalyze({ targetUrl });
                     }}
                     isAnalyzing={isLoading}
+                    currentScore={currentActiveScore}
                   />
                 </div>
               ) : (
@@ -1511,14 +1522,14 @@ function OverviewTab({
       </div>
 
       {hasPending && (
-        <div className="bg-amber-50/85 border border-amber-200/60 dark:bg-amber-950/20 dark:border-amber-500/20 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
+        <div className="bg-warning-light border border-warning/20 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/10 flex items-center justify-center border border-amber-200 dark:border-amber-500/20 shrink-0">
-              <HugeiconsIcon icon={Alert01Icon} size={20} className="text-amber-600 dark:text-amber-400" />
+            <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center border border-warning/25 shrink-0">
+              <HugeiconsIcon icon={Alert01Icon} size={20} className="text-warning" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-amber-900 dark:text-amber-300">Audit Partially Completed</h4>
-              <p className="text-xs text-amber-700 dark:text-amber-400/90 font-medium mt-0.5">
+              <h4 className="text-sm font-bold text-warning">Audit Partially Completed</h4>
+              <p className="text-xs text-muted-foreground font-medium mt-0.5">
                 {scannedCount} of {totalCount} pages were successfully analyzed. {pendingCount} page{pendingCount > 1 ? "s" : ""} are currently pending due to insufficient coins.
               </p>
             </div>
@@ -1535,14 +1546,14 @@ function OverviewTab({
               disabled={isDemoMode}
               title={isDemoMode ? "Resume audit is disabled in demo mode." : ""}
               className={`px-4 py-2 text-white font-bold rounded-xl transition-all text-xs shrink-0 ${isDemoMode
-                ? "bg-amber-600/50 dark:bg-amber-600/30 opacity-50 cursor-not-allowed pointer-events-none"
-                : "bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500 cursor-pointer"
+                ? "bg-warning/50 opacity-50 cursor-not-allowed pointer-events-none"
+                : "bg-warning hover:opacity-90 cursor-pointer"
                 }`}
             >
               Resume Audit ({Math.min(pendingCount, Math.floor(currentCoins))} pages)
             </button>
           ) : (
-            <div className="text-xs font-bold text-amber-600 dark:text-amber-400 bg-amber-100/60 dark:bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-500/20 text-center">
+            <div className="text-xs font-bold text-warning bg-warning-light px-3 py-1.5 rounded-lg border border-warning/20 text-center">
               Add coins to resume
             </div>
           )}

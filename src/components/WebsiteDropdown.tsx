@@ -23,6 +23,7 @@ interface WebsiteDropdownProps {
   isDemoMode?: boolean;
   onAnalyze?: (url: string) => Promise<void>;
   isAnalyzing?: boolean;
+  currentScore?: number | null;
 }
 
 export function WebsiteDropdown({
@@ -34,6 +35,7 @@ export function WebsiteDropdown({
   isDemoMode = false,
   onAnalyze,
   isAnalyzing = false,
+  currentScore = null,
 }: WebsiteDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,8 +78,10 @@ export function WebsiteDropdown({
   // Get the latest score for the selected website
   const selectedAnalysis = selectedWebsite?.analyses?.[0];
   const selectedScore =
-    selectedAnalysis?.status === "completed" &&
-    typeof selectedAnalysis?.overallScore === "number"
+    currentScore !== null
+      ? currentScore
+      : selectedAnalysis?.status === "completed" &&
+        typeof selectedAnalysis?.overallScore === "number"
       ? selectedAnalysis.overallScore
       : null;
 
@@ -277,11 +281,13 @@ export function WebsiteDropdown({
 
                     const latestAnalysis = w.analyses && w.analyses[0];
                     const scoreValue =
-                      latestAnalysis &&
-                      latestAnalysis.status === "completed" &&
-                      typeof latestAnalysis.overallScore === "number"
-                        ? latestAnalysis.overallScore
-                        : null;
+                      isSelected && currentScore !== null
+                        ? currentScore
+                        : latestAnalysis &&
+                          latestAnalysis.status === "completed" &&
+                          typeof latestAnalysis.overallScore === "number"
+                            ? latestAnalysis.overallScore
+                            : null;
                     const scoreStyle = scoreValue !== null ? getScoreColor(scoreValue) : null;
 
                     const lastScanned = latestAnalysis?.completedAt
