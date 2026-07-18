@@ -16,12 +16,21 @@ export const metadata: Metadata = {
     url: "https://seoptimised.com",
     siteName: "SEO Optimised",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "SEO Optimised — 15-Module Parallel SEO Audit in Seconds. Run free technical SEO, Core Web Vitals, Schema markup, and Content E-E-A-T audits.",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "SEO Optimised — 15-Module Parallel SEO & GEO Audit",
     description: "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more.",
     creator: "@menajulm",
+    images: ["/og-image.png"],
   }
 };
 
