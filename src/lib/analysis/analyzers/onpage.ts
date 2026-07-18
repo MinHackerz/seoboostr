@@ -18,6 +18,13 @@ export const onpageAnalyzer: Analyzer = {
         description: "No title tag found on the page.",
         severity: "critical",
         recommendation: "Add a unique, descriptive title tag (50-60 characters).",
+        impact: "The title tag is the single most important on-page SEO element. Missing titles result in Google auto-generating one, often poorly.",
+        codeSnippet: {
+          language: "html",
+          label: "Add a descriptive title tag inside your <head>:",
+          code: `<title>Your Primary Keyword — Brand Name</title>`,
+        },
+        learnMoreUrl: "https://developers.google.com/search/docs/appearance/title-link",
       });
     } else {
       if (page.title.length < 30) {
@@ -28,6 +35,7 @@ export const onpageAnalyzer: Analyzer = {
           severity: "medium",
           recommendation: "Expand your title to 50-60 characters for better SEO.",
           value: page.title,
+          impact: "Short titles miss keyword opportunities and have lower click-through rates in search results.",
         });
       } else if (page.title.length > 60) {
         issues.push({
@@ -37,6 +45,7 @@ export const onpageAnalyzer: Analyzer = {
           severity: "medium",
           recommendation: "Shorten your title to 50-60 characters.",
           value: page.title,
+          impact: "Titles over 60 characters get truncated in Google SERPs with '...', reducing click-through rates.",
         });
       }
     }
@@ -52,6 +61,13 @@ export const onpageAnalyzer: Analyzer = {
         description: "No meta description tag found.",
         severity: "high",
         recommendation: "Add a compelling meta description (150-160 characters).",
+        impact: "Google uses meta descriptions as snippet text. Without one, Google auto-generates a snippet that may not be compelling.",
+        codeSnippet: {
+          language: "html",
+          label: "Add a meta description inside your <head>:",
+          code: `<meta name="description" content="A compelling 150-160 character description that includes your target keywords and a clear value proposition to encourage clicks." />`,
+        },
+        learnMoreUrl: "https://developers.google.com/search/docs/appearance/snippet",
       });
     } else {
       if (page.metaDescription.length < 120) {
@@ -62,6 +78,7 @@ export const onpageAnalyzer: Analyzer = {
           severity: "low",
           recommendation: "Expand your meta description to 150-160 characters.",
           value: page.metaDescription,
+          impact: "Longer meta descriptions fill more SERP space, increasing visibility and click-through rates.",
         });
       } else if (page.metaDescription.length > 160) {
         issues.push({
@@ -87,6 +104,12 @@ export const onpageAnalyzer: Analyzer = {
         description: "No H1 heading found on the page.",
         severity: "critical",
         recommendation: "Add exactly one H1 tag that describes the main topic of the page.",
+        impact: "The H1 is the primary heading signal for search engines. Missing it weakens topical relevance.",
+        codeSnippet: {
+          language: "html",
+          label: "Add a single H1 heading with your primary keyword:",
+          code: `<h1>Your Primary Keyword or Page Topic</h1>`,
+        },
       });
     } else if (h1s.length > 1) {
       issues.push({
@@ -96,6 +119,8 @@ export const onpageAnalyzer: Analyzer = {
         severity: "medium",
         recommendation: "Use only one H1 tag per page. Convert extras to H2.",
         value: h1s.map((h) => h.text).join(", "),
+        affectedItems: h1s.map((h) => `H1: "${h.text}"`),
+        impact: "Multiple H1s dilute the primary heading signal, making it harder for search engines to determine the page's main topic.",
       });
     }
 
@@ -111,6 +136,7 @@ export const onpageAnalyzer: Analyzer = {
           severity: "medium",
           recommendation: "Use a logical heading hierarchy without skipping levels (H1→H2→H3).",
           value: `H${previousLevel} → H${heading.level}: "${heading.text}"`,
+          impact: "Broken heading hierarchy confuses screen readers and weakens content structure signals for SEO.",
         });
         break; // Only flag once
       }
@@ -130,6 +156,7 @@ export const onpageAnalyzer: Analyzer = {
         description: `Only ${internalLinks.length} internal links found.`,
         severity: "medium",
         recommendation: "Add more internal links (3-5 per 1000 words) to related content.",
+        impact: "Internal links distribute PageRank and help search engines discover and understand your site structure.",
       });
     }
 
@@ -142,6 +169,7 @@ export const onpageAnalyzer: Analyzer = {
         description: `${emptyAnchors.length} links have no anchor text.`,
         severity: "medium",
         recommendation: "Add descriptive anchor text to all links for accessibility and SEO.",
+        affectedItems: emptyAnchors.slice(0, 5).map((l) => l.href || "(empty href)"),
       });
     }
 
@@ -159,6 +187,22 @@ export const onpageAnalyzer: Analyzer = {
         severity: "medium",
         recommendation: "Add all required Open Graph tags for better social media sharing.",
         value: missingOg.join(", "),
+        impact: "Pages shared on Facebook, LinkedIn, and other platforms will show generic previews instead of rich cards.",
+        codeSnippet: {
+          language: "html",
+          label: "Add these Open Graph meta tags inside your <head>:",
+          code: missingOg.map((tag) => {
+            const prop = tag.replace("og:", "");
+            const examples: Record<string, string> = {
+              title: page.title || "Your Page Title",
+              description: page.metaDescription || "A compelling description of your page content",
+              image: "https://yourdomain.com/images/og-image.jpg",
+              url: page.url || "https://yourdomain.com/page",
+            };
+            return `<meta property="${tag}" content="${examples[prop] || ""}" />`;
+          }).join("\n"),
+        },
+        learnMoreUrl: "https://ogp.me/",
       });
     }
 
@@ -175,6 +219,11 @@ export const onpageAnalyzer: Analyzer = {
         severity: "low",
         recommendation: "Add Twitter Card meta tags for better Twitter/X sharing previews.",
         value: missingTwitter.join(", "),
+        codeSnippet: {
+          language: "html",
+          label: "Add these Twitter Card meta tags inside your <head>:",
+          code: `<meta name="twitter:card" content="summary_large_image" />\n<meta name="twitter:title" content="${page.title || "Your Page Title"}" />\n<meta name="twitter:description" content="${page.metaDescription || "Page description"}" />\n<meta name="twitter:image" content="https://yourdomain.com/images/twitter-card.jpg" />`,
+        },
       });
     }
 
@@ -187,6 +236,11 @@ export const onpageAnalyzer: Analyzer = {
         description: "No favicon link element found.",
         severity: "low",
         recommendation: "Add a favicon for brand recognition in browser tabs and bookmarks.",
+        codeSnippet: {
+          language: "html",
+          label: "Add a favicon link inside your <head>:",
+          code: `<link rel="icon" href="/favicon.ico" sizes="32x32" />\n<link rel="icon" href="/icon.svg" type="image/svg+xml" />\n<link rel="apple-touch-icon" href="/apple-touch-icon.png" />`,
+        },
       });
     }
 

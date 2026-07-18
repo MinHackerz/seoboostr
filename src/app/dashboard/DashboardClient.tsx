@@ -25,7 +25,6 @@ import {
   ArrowLeft01Icon,
   ArrowRight01Icon,
   Refresh01Icon,
-  GithubIcon,
   Alert01Icon,
   Shield01Icon,
   Link01Icon,
@@ -34,6 +33,17 @@ import {
   SmartphoneWifiIcon,
   CheckmarkCircle02Icon,
 } from "@hugeicons/core-free-icons";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
+
 
 interface User {
   id: string;
@@ -147,7 +157,12 @@ export function DashboardClient({ user }: { user: User }) {
       return;
     }
 
+    // Capture the exact timestamp when this scan session started
+    const scanStartTime = Date.now();
+    setRealCompletedModules([]);
+
     let pollingInterval: NodeJS.Timeout | null = null;
+    let pollingTimeout: NodeJS.Timeout | null = null;
     let isActive = true;
 
     const startPolling = async () => {
@@ -176,11 +191,24 @@ export function DashboardClient({ user }: { user: User }) {
 
         if (!currentSite || !currentSite.analyses || currentSite.analyses.length === 0) {
           // Retry starting the poll in 1.5 seconds if website/analysis is not created in DB yet
-          setTimeout(startPolling, 1500);
+          if (isActive) {
+            pollingTimeout = setTimeout(startPolling, 1500);
+          }
           return;
         }
 
         const latestAnalysis = currentSite.analyses[0];
+        
+        // Race condition check: If this analysis started in the database BEFORE our scan start time,
+        // it belongs to a previous scan. We must wait until the new analysis is registered.
+        const analysisStartTime = new Date(latestAnalysis.startedAt).getTime();
+        if (analysisStartTime < scanStartTime - 3000) {
+          if (isActive) {
+            pollingTimeout = setTimeout(startPolling, 1000);
+          }
+          return;
+        }
+
         if (latestAnalysis.status !== "running") {
           // If the analysis completed or failed already, update modules list immediately and return
           const resultsRes = await fetch(`/api/results/${latestAnalysis.id}`);
@@ -223,6 +251,7 @@ export function DashboardClient({ user }: { user: User }) {
     return () => {
       isActive = false;
       if (pollingInterval) clearInterval(pollingInterval);
+      if (pollingTimeout) clearTimeout(pollingTimeout);
     };
   }, [isAnalyzing, savedWebsiteId, url]);
 
@@ -823,11 +852,16 @@ export function DashboardClient({ user }: { user: User }) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500 font-medium">Full Website Rescan</span>
-                    <span className="font-semibold text-slate-800">1.0 cr / page</span>
+                    <span className="font-semibold text-slate-800">3.75 cr / page</span>
                   </div>
-                  <div className="flex justify-between">
+                  <div className="flex justify-between flex-col mt-0.5 pt-0.5 border-t border-slate-100">
+                    <span className="text-[10px] text-slate-450 font-semibold leading-tight">
+                      (Rescan runs 15 modules at 0.25 cr/page per module)
+                    </span>
+                  </div>
+                  <div className="flex justify-between mt-1 pt-1 border-t border-slate-100">
                     <span className="text-slate-500 font-medium">Single Module Rescan</span>
-                    <span className="font-semibold text-slate-800">1.0 cr / page</span>
+                    <span className="font-semibold text-slate-800">0.5 cr / page</span>
                   </div>
 
                   {/* Buy Credits option in tooltip */}
@@ -1125,21 +1159,62 @@ export function DashboardClient({ user }: { user: User }) {
 
             {/* Loading Progress State */}
             {isLoading && (
-              <div className="bg-card border border-border rounded-2xl p-8 md:p-10 text-center relative overflow-hidden backdrop-blur-md bg-card/90">
-                {/* Concentric radar style scanning indicator */}
-                <div className="relative inline-flex items-center justify-center w-20 h-20 mb-5">
-                  {/* Ring 1: Pulse */}
-                  <div className="absolute inset-0 rounded-full bg-accent/5 border border-accent/15 animate-ping opacity-60" style={{ animationDuration: '3s' }} />
-                  {/* Ring 2: Spinning border */}
-                  <div className="absolute inset-1.5 rounded-full border border-dashed border-accent/20 animate-spin" style={{ animationDuration: '10s' }} />
-                  {/* Ring 3: Center background */}
-                  <div className="absolute inset-3.5 rounded-full bg-gradient-to-tr from-accent/10 to-teal-500/5 border border-accent/25 flex items-center justify-center">
+              <div className="p-8 md:p-10 text-center relative overflow-hidden">
+                {/* Concentric premium orbital scanning indicator */}
+                <div className="relative inline-flex items-center justify-center w-36 h-36 mb-6">
+                  {/* Glowing Backdrop Ring */}
+                  <div className="absolute inset-0 rounded-full bg-accent/5 dark:bg-accent/10 blur-2xl animate-pulse-soft" />
+
+                  {/* Sonar waves/ripples */}
+                  <div className="absolute inset-0 rounded-full border border-accent/25 animate-radar-ripple" />
+                  <div className="absolute inset-0 rounded-full border border-accent/10 animate-radar-ripple [animation-delay:1.25s]" />
+
+                  {/* Holographic Radar Waves (Rippling SVG circles with satellite and sweep segments) */}
+                  <svg className="absolute inset-0 w-full h-full opacity-70" viewBox="0 0 100 100">
+                    <defs>
+                      <linearGradient id="scanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="var(--color-accent)" stopOpacity="0.8" />
+                        <stop offset="50%" stopColor="#10b981" stopOpacity="0.3" />
+                        <stop offset="100%" stopColor="transparent" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
+                    
+                    {/* Outer Track */}
+                    <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" className="text-slate-200/20 dark:text-slate-800/30" strokeWidth="0.5" />
+                    
+                    {/* Outer Rotating Segment */}
+                    <g className="animate-spin-clockwise" style={{ transformOrigin: '50px 50px' }}>
+                      <circle cx="50" cy="50" r="46" fill="none" stroke="url(#scanGradient)" strokeWidth="1.5" strokeDasharray="35 150" strokeLinecap="round" />
+                    </g>
+                    
+                    {/* Middle Track (Fine Dash) */}
+                    <circle cx="50" cy="50" r="38" fill="none" stroke="currentColor" className="text-slate-300/30 dark:text-slate-700/20" strokeWidth="0.5" strokeDasharray="1 3" />
+                    
+                    {/* Orbiting Satellite Dot */}
+                    <g className="animate-spin-counter-clockwise" style={{ transformOrigin: '50px 50px', animationDuration: '4.5s' }}>
+                      <circle cx="50" cy="4" r="2.5" className="fill-accent" filter="drop-shadow(0 0 4px var(--color-accent))" />
+                    </g>
+
+                    {/* Inner Track */}
+                    <circle cx="50" cy="50" r="30" fill="none" stroke="currentColor" className="text-slate-250/25 dark:text-slate-800/20" strokeWidth="0.5" />
+                  </svg>
+
+                  {/* Conic Radar Sweep */}
+                  <div className="absolute inset-4 rounded-full radar-sweep-conic animate-radar" />
+
+                  {/* Siri-style morphing core backdrop */}
+                  <div className="absolute inset-8 bg-gradient-to-tr from-accent/30 via-emerald-500/20 to-indigo-500/30 rounded-full blur-xs animate-fluid-morph opacity-75" />
+
+                  {/* Center Orb: Solid glassmorphic circle with custom animation */}
+                  <div className="absolute inset-[34px] rounded-full bg-gradient-to-tr from-accent to-emerald-600 shadow-[0_0_20px_rgba(15,118,110,0.4)] flex items-center justify-center z-10 border border-white/20 dark:border-white/10 backdrop-blur-md animate-pulse-glow">
                     {activeScanningTab ? (
-                      <div key={activeScanningTab.id} className="animate-fade-in text-accent">
+                      <div key={activeScanningTab.id} className="animate-icon-zoom text-white">
                         <HugeiconsIcon icon={activeScanningTab.icon} size={22} />
                       </div>
                     ) : (
-                      <HugeiconsIcon icon={CompassIcon} size={20} className="text-accent animate-pulse" />
+                      <div className="animate-icon-zoom text-white">
+                        <HugeiconsIcon icon={CompassIcon} size={20} />
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1168,8 +1243,8 @@ export function DashboardClient({ user }: { user: User }) {
                 </div>
 
                 {/* Grid of audit categories */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-4xl mx-auto">
-                  {auditTabs.map((tab, idx) => {
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 max-w-5xl mx-auto">
+                  {auditTabs.map((tab) => {
                     const Icon = tab.icon;
                     
                     const isCompleted = realCompletedModules.includes(tab.id);
@@ -1191,8 +1266,8 @@ export function DashboardClient({ user }: { user: User }) {
                       cardStyles = "bg-success-light border-success-light text-success";
                       iconStyles = "text-success bg-success/10 border border-success-light";
                       statusContent = (
-                        <div className="flex items-center gap-1 text-[10px] text-success font-extrabold animate-fade-in uppercase tracking-wider">
-                          <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} />
+                        <div className="flex items-center gap-0.5 text-[9px] text-success font-extrabold animate-fade-in uppercase tracking-wider">
+                          <HugeiconsIcon icon={CheckmarkCircle02Icon} size={11} />
                           <span className="hidden xs:inline">Done</span>
                         </div>
                       );
@@ -1200,32 +1275,32 @@ export function DashboardClient({ user }: { user: User }) {
                       cardStyles = "bg-accent-light border-accent text-accent scale-[1.01] ring-1 ring-accent/25 z-10";
                       iconStyles = "text-accent bg-accent/10 border border-accent/20 animate-pulse";
                       statusContent = (
-                        <div className="flex items-center gap-1.5">
-                          <span className="relative flex h-1.5 w-1.5">
+                        <div className="flex items-center gap-1">
+                          <span className="relative flex h-1 w-1">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent"></span>
+                            <span className="relative inline-flex rounded-full h-1 w-1 bg-accent"></span>
                           </span>
-                          <span className="text-[10px] text-accent font-extrabold uppercase tracking-wider animate-pulse">Running</span>
+                          <span className="text-[9px] text-accent font-extrabold uppercase tracking-wider animate-pulse">Running</span>
                         </div>
                       );
                     } else {
                       cardStyles = "bg-slate-50 border-slate-100 text-slate-450 opacity-60";
                       iconStyles = "text-slate-400 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800";
                       statusContent = (
-                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Pending</span>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider">Wait</span>
                       );
                     }
 
                     return (
                       <div
                         key={tab.id}
-                        className={`border rounded-xl px-3.5 py-3 flex items-center justify-between gap-3 font-semibold transition-all duration-300 ${cardStyles}`}
+                        className={`border rounded-xl px-2.5 py-2.5 flex items-center justify-between gap-1.5 font-semibold transition-all duration-300 ${cardStyles}`}
                       >
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <div className={`p-1.5 rounded-lg shrink-0 ${iconStyles}`}>
-                            <HugeiconsIcon icon={Icon} size={15} />
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div className={`p-1 rounded-md shrink-0 ${iconStyles}`}>
+                            <HugeiconsIcon icon={Icon} size={13} />
                           </div>
-                          <span className="text-xs font-bold truncate tracking-tight">{tab.label}</span>
+                          <span className="text-[10.5px] font-bold truncate tracking-tight">{tab.label}</span>
                         </div>
                         <div className="shrink-0 flex items-center">
                           {statusContent}
@@ -1386,6 +1461,27 @@ export function DashboardClient({ user }: { user: User }) {
   );
 }
 
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    const severityLabel = data.severity.charAt(0).toUpperCase() + data.severity.slice(1);
+    return (
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-lg text-[10px] font-bold">
+        <p className="text-slate-800 dark:text-slate-100 font-extrabold mb-1">{data.name}</p>
+        <div className="flex items-center gap-1.5 mt-1">
+          <span className="text-slate-400 dark:text-slate-500">Occurrences:</span>
+          <span className="text-slate-800 dark:text-slate-200 font-extrabold">{data.pages} page(s)</span>
+        </div>
+        <div className="flex items-center gap-1.5 mt-1">
+          <span className="text-slate-400 dark:text-slate-550">Severity:</span>
+          <span style={{ color: data.color }} className="font-extrabold">{severityLabel}</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 /* ---------- Overview Tab ---------- */
 function OverviewTab({
   analysis,
@@ -1404,6 +1500,63 @@ function OverviewTab({
     "all" | "critical" | "high" | "medium" | "low"
   >("all");
   const [selectedPage, setSelectedPage] = useState<string>("all");
+  const [selectedIssueId, setSelectedIssueId] = useState<string>("all");
+  const [copied, setCopied] = useState<boolean>(false);
+
+  const allIssues = (analysis.modules || []).flatMap((m) =>
+    (m.issues || []).map((i) => ({ ...i, moduleName: m.module }))
+  );
+
+  const activeIssues = allIssues.filter((i) => i.severity !== "info");
+
+  const scannedPages = Array.from(
+    new Set(activeIssues.map((i) => i.url).filter(Boolean))
+  ) as string[];
+
+  // All unique issue types (title & id) in all modules
+  const uniqueIssueTypes = Array.from(
+    new Map(
+      activeIssues.map((i) => [
+        i.id || i.title,
+        { id: i.id || i.title, title: i.title }
+      ])
+    ).values()
+  );
+
+  // Reset issue filter when page changes
+  useEffect(() => {
+    setSelectedIssueId("all");
+  }, [selectedPage]);
+
+  // Validate and reset filters when severity changes to avoid deadlocks
+  useEffect(() => {
+    const validPages = Array.from(
+      new Set(
+        activeIssues
+          .filter((i) => {
+            if (activeSeverityTab !== "all" && i.severity !== activeSeverityTab) return false;
+            return true;
+          })
+          .map((i) => i.url)
+          .filter(Boolean)
+      )
+    ) as string[];
+
+    const validIssues = uniqueIssueTypes.filter((type) =>
+      activeIssues.some((i) => {
+        if (activeSeverityTab !== "all" && i.severity !== activeSeverityTab) return false;
+        return (i.id || i.title) === type.id;
+      })
+    );
+
+    if (selectedPage !== "all" && !validPages.includes(selectedPage)) {
+      setSelectedPage("all");
+    }
+    if (selectedIssueId !== "all" && !validIssues.some((opt) => opt.id === selectedIssueId)) {
+      setSelectedIssueId("all");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSeverityTab]);
 
   const calculatedScore = (() => {
     const completedModules = (analysis.modules || []).filter((m) => m.status === "completed");
@@ -1413,20 +1566,35 @@ function OverviewTab({
     return Math.round(sum / completedModules.length);
   })();
 
-  const allIssues = (analysis.modules || []).flatMap((m) =>
-    (m.issues || []).map((i) => ({ ...i, moduleName: m.module }))
-  );
-
-  const scannedPages = Array.from(
-    new Set(allIssues.map((i) => i.url).filter(Boolean))
+  // Filter pages select options based on selected issue type & active severity
+  const pageFilterOptions = Array.from(
+    new Set(
+      activeIssues
+        .filter((i) => {
+          if (selectedIssueId !== "all" && (i.id || i.title) !== selectedIssueId) return false;
+          if (activeSeverityTab !== "all" && i.severity !== activeSeverityTab) return false;
+          return true;
+        })
+        .map((i) => i.url)
+        .filter(Boolean)
+    )
   ) as string[];
 
-  const criticalCount = allIssues.filter(
+  // Filter issue select options based on selected page & active severity
+  const issueFilterOptions = uniqueIssueTypes.filter((type) =>
+    activeIssues.some((i) => {
+      if (selectedPage !== "all" && i.url !== selectedPage) return false;
+      if (activeSeverityTab !== "all" && i.severity !== activeSeverityTab) return false;
+      return (i.id || i.title) === type.id;
+    })
+  );
+
+  const criticalCount = activeIssues.filter(
     (i) => i.severity === "critical"
   ).length;
-  const highCount = allIssues.filter((i) => i.severity === "high").length;
-  const mediumCount = allIssues.filter((i) => i.severity === "medium").length;
-  const lowCount = allIssues.filter((i) => i.severity === "low").length;
+  const highCount = activeIssues.filter((i) => i.severity === "high").length;
+  const mediumCount = activeIssues.filter((i) => i.severity === "medium").length;
+  const lowCount = activeIssues.filter((i) => i.severity === "low").length;
 
   const techResult = analysis.modules?.find((m) => m.module === "technical");
   const scannedCount = (techResult?.data as any)?.scannedPages?.length || scannedPages.length || 0;
@@ -1434,46 +1602,120 @@ function OverviewTab({
   const totalCount = (techResult?.data as any)?.discoveredPages?.length || scannedCount + pendingCount || 0;
   const hasPending = pendingCount > 0;
 
-  const minCoinsRequired = hasPending ? 1.0 : (scannedCount > 0 ? 0.2 * scannedCount : 1.0);
+  const minCoinsRequired = hasPending ? (2.0 * pendingCount) : (scannedCount > 0 ? 3.75 * scannedCount : 3.75);
   const isCoinsInsufficient = currentCoins < minCoinsRequired || currentCoins <= 0;
 
-  const filteredIssues = allIssues.filter((issue) => {
-    if (issue.severity === "info") return false;
-    if (activeSeverityTab === "all") return true;
-    return issue.severity === activeSeverityTab;
+  // Filter raw issues by active filters (Page, Issue Type, Severity)
+  const rawFilteredIssues = activeIssues.filter((issue) => {
+    if (selectedPage !== "all" && issue.url !== selectedPage) return false;
+    if (selectedIssueId !== "all" && (issue.id || issue.title) !== selectedIssueId) return false;
+    if (activeSeverityTab !== "all" && issue.severity !== activeSeverityTab) return false;
+    return true;
   });
 
-  const pageFilteredIssues = filteredIssues.filter((issue) => {
-    if (selectedPage === "all") return true;
-    return issue.url === selectedPage;
+  // Group the filtered issues by type (title/id)
+  const groupedIssuesMap = new Map<string, any>();
+  rawFilteredIssues.forEach((issue) => {
+    const key = issue.id || issue.title;
+    if (!groupedIssuesMap.has(key)) {
+      groupedIssuesMap.set(key, {
+        ...issue,
+        affectedPages: issue.url ? [issue.url] : [],
+        affectedItems: issue.affectedItems ? [...issue.affectedItems] : [],
+      });
+    } else {
+      const existing = groupedIssuesMap.get(key)!;
+      if (issue.url && !existing.affectedPages.includes(issue.url)) {
+        existing.affectedPages.push(issue.url);
+      }
+      if (issue.affectedItems && issue.affectedItems.length > 0) {
+        issue.affectedItems.forEach((item: string) => {
+          if (!existing.affectedItems.includes(item)) {
+            existing.affectedItems.push(item);
+          }
+        });
+      }
+    }
   });
 
-  const displayIssues = activeSeverityTab === "all" && selectedPage === "all"
-    ? pageFilteredIssues.slice(0, 10)
-    : pageFilteredIssues;
+  const displayIssues = activeSeverityTab === "all" && selectedPage === "all" && selectedIssueId === "all"
+    ? Array.from(groupedIssuesMap.values()).slice(0, 10)
+    : Array.from(groupedIssuesMap.values());
 
-  // ── Bulk-fix helpers ──────────────────────────────────────────────────────
-  const severityCostMap = { critical: 1.5, high: 1.0, medium: 0.75, low: 0.5 } as const;
-  const fixableForSeverity = activeSeverityTab !== "all"
-    ? allIssues.filter((i) => i.severity === activeSeverityTab && !!i.url)
-    : [];
-  const fixAllCost = fixableForSeverity.reduce(
-    (acc, i) => acc + (severityCostMap[i.severity as keyof typeof severityCostMap] ?? 0.5),
-    0
-  );
-  const severityDotColor: Record<string, string> = {
-    critical: "bg-red-500",
-    high: "bg-orange-500",
-    medium: "bg-amber-500",
-    low: "bg-sky-500",
+  const handleCopyIssues = async () => {
+    const header = `# SEO Boostr Priority Action Items\n` +
+      `**Target Page**: ${selectedPage === "all" ? "All scanned pages" : selectedPage}\n\n` +
+      `Below is a detailed list of priority action items found on the website. Use these as a context prompt in your AI-powered IDE (e.g. Cursor, Copilot, Gemini) to fix them directly in your codebase.\n\n`;
+
+    const formattedIssues = displayIssues.map((issue, idx) => {
+      return `### ${idx + 1}. [${issue.severity.toUpperCase()}] ${issue.title} (Module: ${issue.moduleName || "General"})\n` +
+        `- **Description**: ${issue.description}\n` +
+        `- **Recommendation**: ${issue.recommendation}\n` +
+        `- **Target Pages**: ${issue.affectedPages?.join(", ") || issue.url || "Site-wide"}\n` +
+        (issue.element ? `- **HTML Element/Selector**: \`${issue.element}\`\n` : "") +
+        (issue.value ? `- **Current Value**: \`${issue.value}\`\n` : "");
+    }).join("\n");
+
+    const promptContext = `\n---\n*AI IDE Instructions*: Please fix the listed SEO issues in the target project files. Retain all existing features and comments while applying the recommendations.`;
+
+    const fullText = header + formattedIssues + promptContext;
+
+    try {
+      await navigator.clipboard.writeText(fullText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy issues:", err);
+      alert("Could not copy issues automatically. Please try again.");
+    }
   };
-  const severityBtnGradient: Record<string, string> = {
-    critical: "from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-red-500/25 hover:shadow-red-500/40",
-    high: "from-orange-600 to-amber-600 hover:from-orange-700 hover:to-amber-700 shadow-orange-500/25 hover:shadow-orange-500/40",
-    medium: "from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 shadow-amber-500/25 hover:shadow-amber-500/40",
-    low: "from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 shadow-sky-500/25 hover:shadow-sky-500/40",
+
+
+
+  // Compute top 10 issues by page count/occurrences
+  const severityColors = {
+    critical: "#f43f5e",
+    high: "#f97316",
+    medium: "#f59e0b",
+    low: "#38bdf8",
   };
-  // ─────────────────────────────────────────────────────────────────────────
+
+  const chartData = (() => {
+    // Group all active issues (excluding info) by title/id
+    const countMap = new Map<string, { name: string; pages: number; severity: string }>();
+    activeIssues.forEach((issue) => {
+      const key = issue.id || issue.title;
+      const existing = countMap.get(key);
+      if (existing) {
+        existing.pages += 1;
+      } else {
+        countMap.set(key, {
+          name: issue.title,
+          pages: 1,
+          severity: issue.severity,
+        });
+      }
+    });
+
+    return Array.from(countMap.values())
+      .sort((a, b) => b.pages - a.pages)
+      .slice(0, 10)
+      .map((item) => {
+        let gradId = "grad-default";
+        if (item.severity === "critical") gradId = "grad-critical";
+        else if (item.severity === "high") gradId = "grad-high";
+        else if (item.severity === "medium") gradId = "grad-medium";
+        else if (item.severity === "low") gradId = "grad-low";
+
+        return {
+          ...item,
+          color: severityColors[item.severity as keyof typeof severityColors] || "#94a3b8",
+          fill: `url(#${gradId})`,
+        };
+      });
+  })();
+
+
 
   return (
     <div className="space-y-6">
@@ -1509,7 +1751,7 @@ function OverviewTab({
           <HugeiconsIcon
             icon={Refresh01Icon}
             size={14}
-            className={isRefreshing ? "animate-spin text-accent" : "text-slate-400"}
+            className={isRefreshing ? "animate-spin-premium text-accent" : "text-slate-400"}
           />
           <span>
             {isRefreshing
@@ -1534,7 +1776,7 @@ function OverviewTab({
               </p>
             </div>
           </div>
-          {currentCoins >= 1.0 ? (
+          {currentCoins >= 2.0 ? (
             <button
               onClick={(e) => {
                 if (isDemoMode) {
@@ -1550,7 +1792,7 @@ function OverviewTab({
                 : "bg-warning hover:opacity-90 cursor-pointer"
                 }`}
             >
-              Resume Audit ({Math.min(pendingCount, Math.floor(currentCoins))} pages)
+              Resume Audit ({Math.min(pendingCount, Math.floor(currentCoins / 2.0))} pages)
             </button>
           ) : (
             <div className="text-xs font-bold text-warning bg-warning-light px-3 py-1.5 rounded-lg border border-warning/20 text-center">
@@ -1636,36 +1878,183 @@ function OverviewTab({
         </div>
       </div>
 
+      {/* Top 10 Issues Chart Card */}
+      {chartData.length > 0 && (
+        <div className="bg-card border border-border rounded-2xl p-6">
+          <div className="mb-4">
+            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+              Top 10 Issues by Occurrences
+            </h3>
+            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
+              Visual breakdown of the most frequent errors across scanned pages
+            </p>
+          </div>
+          <div className="h-80 w-full text-slate-700 dark:text-slate-350">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{ top: 10, right: 10, left: -20, bottom: 85 }}
+              >
+                <defs>
+                  <linearGradient id="grad-critical" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f43f5e" stopOpacity={0.95}/>
+                    <stop offset="100%" stopColor="#be123c" stopOpacity={0.7}/>
+                  </linearGradient>
+                  <linearGradient id="grad-high" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f97316" stopOpacity={0.95}/>
+                    <stop offset="100%" stopColor="#c2410c" stopOpacity={0.7}/>
+                  </linearGradient>
+                  <linearGradient id="grad-medium" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.95}/>
+                    <stop offset="100%" stopColor="#b45309" stopOpacity={0.7}/>
+                  </linearGradient>
+                  <linearGradient id="grad-low" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.95}/>
+                    <stop offset="100%" stopColor="#0284c7" stopOpacity={0.7}/>
+                  </linearGradient>
+                  <linearGradient id="grad-default" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.95}/>
+                    <stop offset="100%" stopColor="#475569" stopOpacity={0.7}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.08)" vertical={false} />
+                <XAxis
+                  dataKey="name"
+                  type="category"
+                  stroke="#94a3b8"
+                  fontSize={8}
+                  tickLine={false}
+                  axisLine={false}
+                  interval={0}
+                  angle={-35}
+                  textAnchor="end"
+                  height={90}
+                  tickFormatter={(val) => (val.length > 25 ? val.slice(0, 22) + "..." : val)}
+                />
+                <YAxis
+                  type="number"
+                  stroke="#94a3b8"
+                  fontSize={9}
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                />
+                <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: "rgba(148, 163, 184, 0.04)" }} />
+                <Bar dataKey="pages" radius={[4, 4, 0, 0]} barSize={24}>
+                  {chartData.map((entry: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      )}
+
       {/* Top Issues Card */}
       <div className="bg-card border border-border rounded-2xl p-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 pb-3 border-b border-slate-100/60">
+        {/* Header Row */}
+        <div className="flex items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-100/60 dark:border-slate-800/40">
           <div>
-            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
+            <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">
               Priority Action Items
             </h3>
-            <p className="text-[11px] font-semibold text-slate-400">
+            <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">
               Select a severity or page to view specific tasks
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          {/* Copy Button */}
+          <button
+            onClick={handleCopyIssues}
+            className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-[10px] font-bold transition-all duration-150 cursor-pointer select-none ${
+              copied
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-800/30 dark:text-emerald-400"
+                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-655 dark:text-slate-300"
+            }`}
+            title="Copy detailed issues for AI IDE"
+          >
+            {copied ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 dark:text-emerald-400 shrink-0"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>Copied Issues</span>
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 dark:text-slate-550 shrink-0"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                <span>Copy Issues</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Dedicated Filters Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 p-4 bg-slate-50/50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-850/60 rounded-xl">
+          {/* Dropdown Filters (Left Side) */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 flex-1 min-w-0">
+            {/* Issue Filter Select Dropdown */}
+            {uniqueIssueTypes.length > 1 && (
+              <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Filter by Issue Type:</span>
+                <select
+                  value={selectedIssueId}
+                  onChange={(e) => setSelectedIssueId(e.target.value)}
+                  className="w-full text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer focus:border-accent dark:focus:border-accent truncate"
+                >
+                  <option value="all">
+                    All Issues (
+                    {activeIssues.filter((i) => {
+                      if (selectedPage !== "all" && i.url !== selectedPage) return false;
+                      if (activeSeverityTab !== "all" && i.severity !== activeSeverityTab) return false;
+                      return true;
+                    }).length}
+                    )
+                  </option>
+                  {issueFilterOptions.map((type) => {
+                    const count = activeIssues.filter((i) => 
+                      (i.id || i.title) === type.id && 
+                      (selectedPage === "all" || i.url === selectedPage) &&
+                      (activeSeverityTab === "all" || i.severity === activeSeverityTab)
+                    ).length;
+                    return (
+                      <option key={type.id} value={type.id}>
+                        {type.title} ({count})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            )}
+
             {/* Page Filter Select Dropdown */}
             {scannedPages.length > 1 && (
-              <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Page:</span>
+              <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Filter by Target Page:</span>
                 <select
                   value={selectedPage}
                   onChange={(e) => setSelectedPage(e.target.value)}
-                  className="text-xs font-bold bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-1.5 text-slate-655 focus:outline-none cursor-pointer focus:border-slate-350 max-w-[160px] sm:max-w-[220px] truncate shrink-0"
+                  className="w-full text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer focus:border-accent dark:focus:border-accent truncate"
                 >
-                  <option value="all">All Pages ({allIssues.filter((i) => i.severity !== "info").length})</option>
-                  {scannedPages.map((pageUrl) => {
+                  <option value="all">
+                    All Pages (
+                    {activeIssues.filter((i) => {
+                      if (selectedIssueId !== "all" && (i.id || i.title) !== selectedIssueId) return false;
+                      if (activeSeverityTab !== "all" && i.severity !== activeSeverityTab) return false;
+                      return true;
+                    }).length}
+                    )
+                  </option>
+                  {pageFilterOptions.map((pageUrl) => {
                     let label = pageUrl;
                     try {
                       const u = new URL(pageUrl);
                       label = u.pathname === "/" ? "Home (/)" : u.pathname;
                     } catch { }
-                    const count = allIssues.filter((i) => i.url === pageUrl && i.severity !== "info").length;
+                    const count = activeIssues.filter((i) => 
+                      i.url === pageUrl && 
+                      (selectedIssueId === "all" || (i.id || i.title) === selectedIssueId) &&
+                      (activeSeverityTab === "all" || i.severity === activeSeverityTab)
+                    ).length;
                     return (
                       <option key={pageUrl} value={pageUrl}>
                         {label} ({count})
@@ -1675,31 +2064,34 @@ function OverviewTab({
                 </select>
               </div>
             )}
+          </div>
 
-            {/* Segmented Control Tabs */}
-            <div className="flex items-center gap-1 p-1 bg-slate-50 border border-slate-100/80 rounded-xl overflow-x-auto scrollbar-none">
+          {/* Segmented Control Tabs / Severity Filters (Right Side) */}
+          <div className="flex flex-col gap-1.5 shrink-0">
+            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider self-start md:self-end">Filter by Severity:</span>
+            <div className="flex items-center gap-1 p-1 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl overflow-x-auto scrollbar-none">
               {[
-                { id: "all", label: "All", count: allIssues.filter((i) => i.severity !== "info").length },
-                { id: "critical", label: "Critical", count: criticalCount, activeColor: "text-red-600 bg-red-50/50" },
-                { id: "high", label: "High", count: highCount, activeColor: "text-orange-600 bg-orange-50/50" },
-                { id: "medium", label: "Medium", count: mediumCount, activeColor: "text-amber-600 bg-amber-50/50" },
-                { id: "low", label: "Low", count: lowCount, activeColor: "text-sky-600 bg-sky-50/50" },
+                { id: "all", label: "All", count: activeIssues.filter((i) => (selectedPage === "all" || i.url === selectedPage) && (selectedIssueId === "all" || (i.id || i.title) === selectedIssueId)).length },
+                { id: "critical", label: "Critical", count: activeIssues.filter((i) => i.severity === "critical" && (selectedPage === "all" || i.url === selectedPage) && (selectedIssueId === "all" || (i.id || i.title) === selectedIssueId)).length, activeColor: "text-rose-600 bg-rose-50/60 dark:text-rose-450 dark:bg-rose-950/20" },
+                { id: "high", label: "High", count: activeIssues.filter((i) => i.severity === "high" && (selectedPage === "all" || i.url === selectedPage) && (selectedIssueId === "all" || (i.id || i.title) === selectedIssueId)).length, activeColor: "text-orange-600 bg-orange-50/60 dark:text-orange-450 dark:bg-orange-950/20" },
+                { id: "medium", label: "Medium", count: activeIssues.filter((i) => i.severity === "medium" && (selectedPage === "all" || i.url === selectedPage) && (selectedIssueId === "all" || (i.id || i.title) === selectedIssueId)).length, activeColor: "text-amber-600 bg-amber-50/60 dark:text-amber-450 dark:bg-amber-950/20" },
+                { id: "low", label: "Low", count: activeIssues.filter((i) => i.severity === "low" && (selectedPage === "all" || i.url === selectedPage) && (selectedIssueId === "all" || (i.id || i.title) === selectedIssueId)).length, activeColor: "text-sky-655 bg-sky-50/60 dark:text-sky-400 dark:bg-sky-950/20" },
               ].map((tab) => {
                 const isActive = activeSeverityTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveSeverityTab(tab.id as any)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-1.5 shrink-0 select-none ${isActive
-                      ? "bg-white text-slate-800 border border-slate-100"
-                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
+                    className={`px-2.5 py-1.5 text-[11px] font-bold rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-1 shrink-0 select-none ${isActive
+                      ? "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-xs"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-850"
                       }`}
                   >
                     <span>{tab.label}</span>
                     <span
-                      className={`px-1.5 py-0.5 rounded-md text-[9px] font-extrabold ${isActive
-                        ? tab.activeColor || "bg-slate-100 text-slate-700"
-                        : "bg-slate-200/50 text-slate-500"
+                      className={`px-1.5 py-0.5 rounded-md text-[8.5px] font-extrabold ${isActive
+                        ? tab.activeColor || "bg-white dark:bg-slate-900 text-slate-750 dark:text-slate-200"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-500"
                         }`}
                     >
                       {tab.count}
@@ -1756,8 +2148,128 @@ function ModuleTab({
   isDemoMode?: boolean;
 }) {
   const [selectedPage, setSelectedPage] = useState<string>("all");
+  const [selectedIssueId, setSelectedIssueId] = useState<string>("all");
   const [copied, setCopied] = useState<boolean>(false);
   const [activeSeverityTab, setActiveSeverityTab] = useState<"all" | "critical" | "high" | "medium" | "low">("all");
+
+  const issues = result?.issues || [];
+  const activeIssues = issues.filter((i) => i.severity !== "info");
+
+  // Scanned pages having active issues
+  const scannedPages = Array.from(
+    new Set(activeIssues.map((i) => i.url).filter(Boolean))
+  ) as string[];
+
+  // All unique issue types (title & id) in this module
+  const uniqueIssueTypes = Array.from(
+    new Map(
+      activeIssues.map((i) => [
+        i.id || i.title,
+        { id: i.id || i.title, title: i.title }
+      ])
+    ).values()
+  );
+
+  // Reset issue filter when changing pages, and page filter when changing issues to avoid deadlocks
+  useEffect(() => {
+    setSelectedIssueId("all");
+  }, [selectedPage]);
+
+  // Validate and reset filters when severity changes to avoid deadlocks
+  useEffect(() => {
+    const validPages = Array.from(
+      new Set(
+        activeIssues
+          .filter((i) => {
+            if (activeSeverityTab !== "all" && i.severity !== activeSeverityTab) return false;
+            return true;
+          })
+          .map((i) => i.url)
+          .filter(Boolean)
+      )
+    ) as string[];
+
+    const validIssues = uniqueIssueTypes.filter((type) =>
+      activeIssues.some((i) => {
+        if (activeSeverityTab !== "all" && i.severity !== activeSeverityTab) return false;
+        return (i.id || i.title) === type.id;
+      })
+    );
+
+    if (selectedPage !== "all" && !validPages.includes(selectedPage)) {
+      setSelectedPage("all");
+    }
+    if (selectedIssueId !== "all" && !validIssues.some((opt) => opt.id === selectedIssueId)) {
+      setSelectedIssueId("all");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSeverityTab]);
+
+  if (!result) {
+    return (
+      <div className="text-center py-12 bg-card border border-border rounded-2xl text-slate-500">
+        <p className="font-bold">No data available for {moduleName}</p>
+      </div>
+    );
+  }
+
+  // Filter pages select options based on selected issue type & active severity
+  const pageFilterOptions = Array.from(
+    new Set(
+      activeIssues
+        .filter((i) => {
+          if (selectedIssueId !== "all" && (i.id || i.title) !== selectedIssueId) return false;
+          if (activeSeverityTab !== "all" && i.severity !== activeSeverityTab) return false;
+          return true;
+        })
+        .map((i) => i.url)
+        .filter(Boolean)
+    )
+  ) as string[];
+
+  // Filter issue select options based on selected page & active severity
+  const issueFilterOptions = uniqueIssueTypes.filter((type) =>
+    activeIssues.some((i) => {
+      if (selectedPage !== "all" && i.url !== selectedPage) return false;
+      if (activeSeverityTab !== "all" && i.severity !== activeSeverityTab) return false;
+      return (i.id || i.title) === type.id;
+    })
+  );
+
+  // 1. Filter raw issues by active filters (Page, Issue Type, Severity)
+  const rawFilteredIssues = activeIssues.filter((issue) => {
+    if (selectedPage !== "all" && issue.url !== selectedPage) return false;
+    if (selectedIssueId !== "all" && (issue.id || issue.title) !== selectedIssueId) return false;
+    if (activeSeverityTab !== "all" && issue.severity !== activeSeverityTab) return false;
+    return true;
+  });
+
+  // 2. Properly arrange/group the issues by type (title/id)
+  const groupedIssuesMap = new Map<string, any>();
+  rawFilteredIssues.forEach((issue) => {
+    const key = issue.id || issue.title;
+    if (!groupedIssuesMap.has(key)) {
+      groupedIssuesMap.set(key, {
+        ...issue,
+        affectedPages: issue.url ? [issue.url] : [],
+        affectedItems: issue.affectedItems ? [...issue.affectedItems] : [],
+      });
+    } else {
+      const existing = groupedIssuesMap.get(key)!;
+      if (issue.url && !existing.affectedPages.includes(issue.url)) {
+        existing.affectedPages.push(issue.url);
+      }
+      if (issue.affectedItems && issue.affectedItems.length > 0) {
+        issue.affectedItems.forEach((item: string) => {
+          if (!existing.affectedItems.includes(item)) {
+            existing.affectedItems.push(item);
+          }
+        });
+      }
+    }
+  });
+
+  const filteredIssues = Array.from(groupedIssuesMap.values());
 
   const handleCopyIssues = async () => {
     if (!result || !result.issues) return;
@@ -1769,7 +2281,7 @@ function ModuleTab({
       return `### ${idx + 1}. [${issue.severity.toUpperCase()}] ${issue.title} (ID: ${issue.id})\n` +
         `- **Description**: ${issue.description}\n` +
         `- **Recommendation**: ${issue.recommendation}\n` +
-        `- **Target Page URL**: ${issue.url || "Site-wide"}\n` +
+        `- **Target Pages**: ${issue.affectedPages?.join(", ") || issue.url || "Site-wide"}\n` +
         (issue.element ? `- **HTML Element/Selector**: \`${issue.element}\`\n` : "") +
         (issue.value ? `- **Current Value**: \`${issue.value}\`\n` : "");
     }).join("\n");
@@ -1788,30 +2300,10 @@ function ModuleTab({
     }
   };
 
-  if (!result) {
-    return (
-      <div className="text-center py-12 bg-card border border-border rounded-2xl text-slate-500">
-        <p className="font-bold">No data available for {moduleName}</p>
-      </div>
-    );
-  }
-
-  const issues = result.issues || [];
-  const activeIssues = issues.filter((i) => i.severity !== "info");
-  const scannedPages = Array.from(
-    new Set(activeIssues.map((i) => i.url).filter(Boolean))
-  ) as string[];
-
-  const filteredIssues = activeIssues.filter((issue) => {
-    if (selectedPage !== "all" && issue.url !== selectedPage) return false;
-    if (activeSeverityTab !== "all" && issue.severity !== activeSeverityTab) return false;
-    return true;
-  });
-
   const scannedPagesCount = (result && result.data && Array.isArray(result.data.scannedPages))
     ? result.data.scannedPages.length
     : 1;
-  const estimatedCost = scannedPagesCount * 0.05;
+  const estimatedCost = scannedPagesCount * 0.5;
   const isCoinsInsufficient = currentCoins !== undefined && currentCoins < estimatedCost;
 
   return (
@@ -1845,7 +2337,7 @@ function ModuleTab({
               <HugeiconsIcon
                 icon={Refresh01Icon}
                 size={12}
-                className={isRefreshing ? "animate-spin text-accent" : "text-slate-400"}
+                className={isRefreshing ? "animate-spin-premium text-accent" : "text-slate-400"}
               />
               <span>{isRefreshing ? "Refreshing..." : "Refresh Section"}</span>
             </button>
@@ -1901,52 +2393,103 @@ function ModuleTab({
 
       {/* Module-Specific Issues List */}
       <div className="bg-card border border-border rounded-2xl p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-100/60">
-          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+        {/* Header Row */}
+        <div className="flex items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-100/60 dark:border-slate-800/40">
+          <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">
             Module Issues ({filteredIssues.length})
           </h3>
 
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Copy Button */}
-            <button
-              onClick={handleCopyIssues}
-              className={`flex items-center gap-1 px-2.5 py-1.5 border rounded-xl text-[10px] font-extrabold transition-all duration-150 cursor-pointer select-none ${
-                copied
-                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                  : "bg-white border-slate-200 hover:border-slate-350 hover:bg-slate-50 text-slate-655"
-              }`}
-              title="Copy detailed issues for AI IDE"
-            >
-              {copied ? (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 shrink-0"><path d="M20 6 9 17l-5-5"/></svg>
-                  <span>Copied!</span>
-                </>
-              ) : (
-                <>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 shrink-0"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                  <span>Copy</span>
-                </>
-              )}
-            </button>
+          {/* Copy Button */}
+          <button
+            onClick={handleCopyIssues}
+            className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-[10px] font-bold transition-all duration-150 cursor-pointer select-none ${
+              copied
+                ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-950/20 dark:border-emerald-800/30 dark:text-emerald-400"
+                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-850 text-slate-655 dark:text-slate-300"
+            }`}
+            title="Copy detailed issues for AI IDE"
+          >
+            {copied ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-600 dark:text-emerald-400 shrink-0"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>Copied Issues</span>
+              </>
+            ) : (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400 dark:text-slate-500 shrink-0"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                <span>Copy Issues</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Dedicated Filters Bar */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 p-4 bg-slate-50/50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-850/60 rounded-xl">
+          {/* Dropdown Filters (Left Side) */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 flex-1 min-w-0">
+            {/* Issue Filter Select Dropdown */}
+            {uniqueIssueTypes.length > 1 && (
+              <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Filter by Issue Type:</span>
+                <select
+                  value={selectedIssueId}
+                  onChange={(e) => setSelectedIssueId(e.target.value)}
+                  className="w-full text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer focus:border-accent dark:focus:border-accent truncate"
+                >
+                  <option value="all">
+                    All Issues (
+                    {activeIssues.filter((i) => {
+                      if (selectedPage !== "all" && i.url !== selectedPage) return false;
+                      if (activeSeverityTab !== "all" && i.severity !== activeSeverityTab) return false;
+                      return true;
+                    }).length}
+                    )
+                  </option>
+                  {issueFilterOptions.map((type) => {
+                    const count = activeIssues.filter((i) => 
+                      (i.id || i.title) === type.id && 
+                      (selectedPage === "all" || i.url === selectedPage) &&
+                      (activeSeverityTab === "all" || i.severity === activeSeverityTab)
+                    ).length;
+                    return (
+                      <option key={type.id} value={type.id}>
+                        {type.title} ({count})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            )}
 
             {/* Page Filter Select Dropdown */}
             {scannedPages.length > 1 && (
-              <div className="flex items-center gap-2 shrink-0 whitespace-nowrap">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">Page:</span>
+              <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                <span className="text-[9px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider">Filter by Target Page:</span>
                 <select
                   value={selectedPage}
                   onChange={(e) => setSelectedPage(e.target.value)}
-                  className="text-xs font-bold bg-slate-50 border border-slate-200/80 rounded-xl px-3 py-1.5 text-slate-655 focus:outline-none cursor-pointer focus:border-slate-350 max-w-[160px] sm:max-w-[220px] truncate shrink-0"
+                  className="w-full text-xs font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-lg px-3 py-2 text-slate-700 dark:text-slate-300 focus:outline-none cursor-pointer focus:border-accent dark:focus:border-accent truncate"
                 >
-                  <option value="all">All Pages ({activeIssues.length})</option>
-                  {scannedPages.map((pageUrl) => {
+                  <option value="all">
+                    All Pages (
+                    {activeIssues.filter((i) => {
+                      if (selectedIssueId !== "all" && (i.id || i.title) !== selectedIssueId) return false;
+                      if (activeSeverityTab !== "all" && i.severity !== activeSeverityTab) return false;
+                      return true;
+                    }).length}
+                    )
+                  </option>
+                  {pageFilterOptions.map((pageUrl) => {
                     let label = pageUrl;
                     try {
                       const u = new URL(pageUrl);
                       label = u.pathname === "/" ? "Home (/)" : u.pathname;
                     } catch { }
-                    const count = activeIssues.filter((i) => i.url === pageUrl).length;
+                    const count = activeIssues.filter((i) => 
+                      i.url === pageUrl && 
+                      (selectedIssueId === "all" || (i.id || i.title) === selectedIssueId) &&
+                      (activeSeverityTab === "all" || i.severity === activeSeverityTab)
+                    ).length;
                     return (
                       <option key={pageUrl} value={pageUrl}>
                         {label} ({count})
@@ -1956,31 +2499,34 @@ function ModuleTab({
                 </select>
               </div>
             )}
+          </div>
 
-            {/* Segmented Control Tabs */}
-            <div className="flex items-center gap-1 p-1 bg-slate-50 border border-slate-100/80 rounded-xl overflow-x-auto scrollbar-none">
+          {/* Segmented Control Tabs / Severity Filters (Right Side) */}
+          <div className="flex flex-col gap-1.5 shrink-0">
+            <span className="text-[9px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider self-start md:self-end">Filter by Severity:</span>
+            <div className="flex items-center gap-1 p-1 bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl overflow-x-auto scrollbar-none">
               {[
-                { id: "all", label: "All", count: activeIssues.length },
-                { id: "critical", label: "Critical", count: issues.filter((i) => i.severity === "critical").length, activeColor: "text-red-600 bg-red-50/50" },
-                { id: "high", label: "High", count: issues.filter((i) => i.severity === "high").length, activeColor: "text-orange-600 bg-orange-50/50" },
-                { id: "medium", label: "Medium", count: issues.filter((i) => i.severity === "medium").length, activeColor: "text-amber-600 bg-amber-50/50" },
-                { id: "low", label: "Low", count: issues.filter((i) => i.severity === "low").length, activeColor: "text-sky-600 bg-sky-50/50" },
+                { id: "all", label: "All", count: activeIssues.filter((i) => (selectedPage === "all" || i.url === selectedPage) && (selectedIssueId === "all" || (i.id || i.title) === selectedIssueId)).length },
+                { id: "critical", label: "Critical", count: activeIssues.filter((i) => i.severity === "critical" && (selectedPage === "all" || i.url === selectedPage) && (selectedIssueId === "all" || (i.id || i.title) === selectedIssueId)).length, activeColor: "text-rose-600 bg-rose-50/60 dark:text-rose-450 dark:bg-rose-950/20" },
+                { id: "high", label: "High", count: activeIssues.filter((i) => i.severity === "high" && (selectedPage === "all" || i.url === selectedPage) && (selectedIssueId === "all" || (i.id || i.title) === selectedIssueId)).length, activeColor: "text-orange-600 bg-orange-50/60 dark:text-orange-450 dark:bg-orange-950/20" },
+                { id: "medium", label: "Medium", count: activeIssues.filter((i) => i.severity === "medium" && (selectedPage === "all" || i.url === selectedPage) && (selectedIssueId === "all" || (i.id || i.title) === selectedIssueId)).length, activeColor: "text-amber-600 bg-amber-50/60 dark:text-amber-450 dark:bg-amber-950/20" },
+                { id: "low", label: "Low", count: activeIssues.filter((i) => i.severity === "low" && (selectedPage === "all" || i.url === selectedPage) && (selectedIssueId === "all" || (i.id || i.title) === selectedIssueId)).length, activeColor: "text-sky-655 bg-sky-50/60 dark:text-sky-400 dark:bg-sky-950/20" },
               ].map((tab) => {
                 const isActive = activeSeverityTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveSeverityTab(tab.id as any)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-1.5 shrink-0 select-none ${isActive
-                      ? "bg-white text-slate-800 border border-slate-100"
-                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/50"
+                    className={`px-2.5 py-1.5 text-[11px] font-bold rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-1 shrink-0 select-none ${isActive
+                      ? "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 shadow-xs"
+                      : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-850"
                       }`}
                   >
                     <span>{tab.label}</span>
                     <span
-                      className={`px-1.5 py-0.5 rounded-md text-[9px] font-extrabold ${isActive
-                        ? tab.activeColor || "bg-slate-100 text-slate-700"
-                        : "bg-slate-200/50 text-slate-500"
+                      className={`px-1.5 py-0.5 rounded-md text-[8.5px] font-extrabold ${isActive
+                        ? tab.activeColor || "bg-white dark:bg-slate-900 text-slate-750 dark:text-slate-200"
+                        : "bg-slate-100 dark:bg-slate-800 text-slate-500"
                         }`}
                     >
                       {tab.count}

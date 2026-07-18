@@ -242,7 +242,18 @@ async function fetchTextResource(url: string): Promise<string | undefined> {
         continue;
       }
       if (response.ok) {
-        return await response.text();
+        const text = await response.text();
+        const contentType = response.headers.get("content-type")?.toLowerCase() || "";
+        const trimmed = text.trim();
+        if (
+          contentType.includes("text/html") ||
+          trimmed.startsWith("<!DOCTYPE") ||
+          trimmed.startsWith("<html") ||
+          trimmed.startsWith("<doctype")
+        ) {
+          return undefined;
+        }
+        return text;
       }
       break;
     }

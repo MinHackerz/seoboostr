@@ -5,13 +5,11 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   CompassIcon,
   ArrowDown01Icon,
-  ArrowUp01Icon,
   PencilEdit01Icon,
   Tick01Icon,
   Cancel01Icon,
   Delete01Icon,
   SearchIcon,
-  Add01Icon,
 } from "@hugeicons/core-free-icons";
 
 interface WebsiteDropdownProps {

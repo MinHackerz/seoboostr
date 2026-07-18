@@ -1,24 +1,25 @@
 "use client";
-
+ 
 import { useRef } from "react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
-
+import Link from "next/link";
+ 
 export function Footer() {
   const { data: session } = useSession();
-
+ 
   // Mouse tracking for CTA Card
   const cardRef = useRef<HTMLDivElement>(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-
+ 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!cardRef.current) return;
     const rect = cardRef.current.getBoundingClientRect();
     mouseX.set(e.clientX - rect.left);
     mouseY.set(e.clientY - rect.top);
   };
-
+ 
   return (
     <footer className="relative overflow-hidden">
       {/* ── Dynamic Luminous Aurora Background ── */}
@@ -33,7 +34,7 @@ export function Footer() {
           className="absolute top-10 left-1/4 w-[650px] h-[400px] rounded-full bg-gradient-to-r from-teal-500/35 via-indigo-500/25 to-purple-500/30 blur-[130px]"
         />
       </div>
-
+ 
       {/* ── Cyber Matrix Dot Grid Overlay ── */}
       <div
         className="absolute inset-0 opacity-25 pointer-events-none"
@@ -44,10 +45,10 @@ export function Footer() {
           WebkitMaskImage: "radial-gradient(ellipse 90% 70% at 50% 30%, black 40%, transparent 100%)",
         }}
       />
-
+ 
       {/* Top glowing divider line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-500/50 to-transparent pointer-events-none" />
-
+ 
       {/* CTA Banner inside Glass Container */}
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-22 pb-12 sm:pb-16 text-center">
         <motion.div
@@ -99,10 +100,10 @@ export function Footer() {
           </div>
         </motion.div>
       </div>
-
+ 
       {/* Divider */}
       <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mx-4 sm:mx-8" />
-
+ 
       {/* Footer content */}
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
@@ -124,26 +125,26 @@ export function Footer() {
               Built by engineers who got tired of running 5 sequential tools to get one answer. Ship faster. Rank better.
             </p>
           </div>
-
+ 
           {/* Links */}
           <div className="flex gap-10 sm:gap-16">
             <div className="space-y-3">
               <p className="text-[11px] font-extrabold text-teal-400 uppercase tracking-wider">Product</p>
-              <a href="/#modules" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">Features & Modules</a>
-              <a href="/#pricing" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">Credits & Pricing</a>
-              <a href="/#faq" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">FAQ</a>
+              <Link href="/#modules" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">Features & Modules</Link>
+              <Link href="/#pricing" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">Credits & Pricing</Link>
+              <Link href="/#faq" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">FAQ</Link>
             </div>
           </div>
         </div>
-
+ 
         {/* Bottom bar */}
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-slate-400 font-medium">
             © {new Date().getFullYear()} SEO Optimised. All rights reserved. Made with high-performance parallel processing.
           </p>
           <div className="flex items-center gap-6">
-            <a href="/privacy" className="text-xs font-semibold text-slate-400 hover:text-white transition-colors">Privacy Policy</a>
-            <a href="/terms" className="text-xs font-semibold text-slate-400 hover:text-white transition-colors">Terms of Service</a>
+            <Link href="/privacy" className="text-xs font-semibold text-slate-400 hover:text-white transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="text-xs font-semibold text-slate-400 hover:text-white transition-colors">Terms of Service</Link>
             {/* Social icons */}
             <a href="https://x.com/menajulm" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-teal-400 transition-colors" aria-label="Twitter">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>

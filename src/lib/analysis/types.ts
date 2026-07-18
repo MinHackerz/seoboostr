@@ -30,6 +30,17 @@ export interface Issue {
   element?: string; // The HTML element/selector related to the issue
   value?: string;   // The current value that caused the issue
   url?: string;     // The absolute URL of the page this issue was found on
+
+  // Rich fix guidance fields
+  codeSnippet?: {
+    language: 'html' | 'css' | 'javascript' | 'json' | 'text' | 'http';
+    label: string;      // e.g. "Add this to your <head>"
+    code: string;        // The actual fix code
+  };
+  learnMoreUrl?: string;       // External documentation link
+  impact?: string;             // e.g. "Improves LCP by ~200ms"
+  affectedItems?: string[];    // List of specific items (up to 5 shown)
+  affectedPages?: string[];    // List of page URLs where this issue occurred (when grouped)
 }
 
 export interface ModuleResult {

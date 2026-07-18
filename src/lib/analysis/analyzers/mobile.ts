@@ -19,6 +19,13 @@ export const mobileAnalyzer: Analyzer = {
         description: "No viewport meta tag detected. Without it, mobile browsers render pages at desktop width and scale down.",
         severity: "critical",
         recommendation: "Add <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"> to the <head>.",
+        impact: "Mobile users will see a tiny, zoomed-out version of your site, making navigation extremely difficult. Google will penalize the page heavily under mobile-first indexing.",
+        codeSnippet: {
+          language: "html",
+          label: "Add this viewport meta tag inside the <head> element:",
+          code: `<meta name="viewport" content="width=device-width, initial-scale=1" />`,
+        },
+        learnMoreUrl: "https://developer.mozilla.org/en-US/docs/Web/HTML/Viewport_meta_tag",
       });
     } else {
       // ── 1a. Fixed width viewport ──────────────────────────────────
@@ -31,6 +38,12 @@ export const mobileAnalyzer: Analyzer = {
           severity: "high",
           recommendation: "Replace fixed width with `width=device-width` in the viewport meta tag.",
           value: viewport,
+          impact: "Prevents the page from scaling correctly on modern mobile screens, causing content overflow or forced scaling.",
+          codeSnippet: {
+            language: "html",
+            label: "Update the viewport meta tag:",
+            code: `<meta name="viewport" content="width=device-width, initial-scale=1" />`,
+          },
         });
       }
 
@@ -48,6 +61,13 @@ export const mobileAnalyzer: Analyzer = {
           severity: "medium",
           recommendation: "Remove `user-scalable=no` and set `maximum-scale=5` or higher to allow zooming.",
           value: viewport,
+          impact: "Blocks visually impaired users from magnifying page text, failing WCAG compliance guidelines.",
+          codeSnippet: {
+            language: "html",
+            label: "Use a standard viewport configuration that permits scaling:",
+            code: `<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />`,
+          },
+          learnMoreUrl: "https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html",
         });
       }
     }
@@ -55,6 +75,7 @@ export const mobileAnalyzer: Analyzer = {
     // ── 2. Small touch targets ──────────────────────────────────────
     // Heuristic: look for inline styles with small explicit dimensions on interactive elements
     const smallTargetRegex = /<(?:a|button|input|select)\b[^>]*style=["'][^"']*(?:width|height)\s*:\s*(\d+)(?:px)[^"']*["'][^>]*>/gi;
+    const smallTargetsList: string[] = [];
     let smallTargetCount = 0;
     let match;
 
@@ -62,6 +83,7 @@ export const mobileAnalyzer: Analyzer = {
       const size = parseInt(match[1], 10);
       if (size > 0 && size < 44) {
         smallTargetCount++;
+        smallTargetsList.push(match[0].substring(0, 100) + "...");
       }
     }
 
@@ -71,6 +93,7 @@ export const mobileAnalyzer: Analyzer = {
       const size = parseInt(match[1], 10);
       if (size > 0 && size < 44) {
         smallTargetCount++;
+        smallTargetsList.push(match[0].substring(0, 100) + "...");
       }
     }
 
@@ -84,17 +107,27 @@ export const mobileAnalyzer: Analyzer = {
         severity: "high",
         recommendation: "Ensure all clickable/tappable elements are at least 48x48 CSS pixels with at least 8px spacing between targets.",
         value: `${smallTargetCount} small targets`,
+        impact: "Causes accidental clicks and user frustration on mobile devices. Directly affects Core Web Vitals mobile usability assessments.",
+        affectedItems: smallTargetsList,
+        codeSnippet: {
+          language: "css",
+          label: "Apply minimum target sizes to interactive classes in CSS:",
+          code: `.btn, .nav-link, button, a {\n  min-width: 48px;\n  min-height: 48px;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n}`,
+        },
+        learnMoreUrl: "https://web.dev/articles/accessible-tap-targets",
       });
     }
 
     // ── 3. Horizontal scroll indicators ─────────────────────────────
     // Check for elements with very large fixed widths
     const fixedWidthRegex = /style=["'][^"']*width\s*:\s*(\d{4,})px[^"']*["']/gi;
+    const oversizedList: string[] = [];
     let oversizedElements = 0;
     while ((match = fixedWidthRegex.exec(html)) !== null) {
       const width = parseInt(match[1], 10);
       if (width > 500) {
         oversizedElements++;
+        oversizedList.push(`Element style width: ${width}px`);
       }
     }
 
@@ -104,6 +137,7 @@ export const mobileAnalyzer: Analyzer = {
       const width = parseInt(match[1], 10);
       if (width > 500) {
         oversizedElements++;
+        oversizedList.push(`Attribute width: ${width}`);
       }
     }
 
@@ -117,16 +151,25 @@ export const mobileAnalyzer: Analyzer = {
         severity: "high",
         recommendation: "Use relative units (%, vw, rem) or max-width instead of fixed pixel widths. Apply `overflow-x: hidden` on the body as a safety net.",
         value: `${oversizedElements} oversized elements`,
+        impact: "Forces horizontal scrolling, which breaks mobile UX layout stability and causes a poor user experience.",
+        affectedItems: oversizedList,
+        codeSnippet: {
+          language: "css",
+          label: "Add responsive properties in your stylesheet:",
+          code: `.oversized-element {\n  max-width: 100%;\n  height: auto;\n  box-sizing: border-box;\n}`,
+        },
       });
     }
 
     // ── 4. Small font sizes ─────────────────────────────────────────
     const smallFontRegex = /style=["'][^"']*font-size\s*:\s*(\d+)px[^"']*["']/gi;
+    const smallFontsList: string[] = [];
     let smallFontCount = 0;
     while ((match = smallFontRegex.exec(html)) !== null) {
       const size = parseInt(match[1], 10);
       if (size > 0 && size < 12) {
         smallFontCount++;
+        smallFontsList.push(`Inline font-size: ${size}px`);
       }
     }
     data.smallFontElements = smallFontCount;
@@ -139,6 +182,13 @@ export const mobileAnalyzer: Analyzer = {
         severity: "medium",
         recommendation: "Use a minimum font size of 16px for body text and 12px for secondary text. Use relative units (rem, em) for better scaling.",
         value: `${smallFontCount} elements with font < 12px`,
+        impact: "Hinder mobile readability, forcing users to pinch-zoom to read text, which triggers mobile usability warnings in search consoles.",
+        affectedItems: smallFontsList,
+        codeSnippet: {
+          language: "css",
+          label: "Configure responsive font sizes:",
+          code: `body {\n  font-size: 16px; /* Ideal mobile body size */\n}\n\n@media (max-width: 768px) {\n  .small-text {\n    font-size: 0.875rem; /* ~14px */\n  }\n}`,
+        },
       });
     }
 
@@ -160,6 +210,7 @@ export const mobileAnalyzer: Analyzer = {
         severity: "medium",
         recommendation: "Replace Flash, Applets, and Silverlight with modern HTML5, CSS3, and JavaScript alternatives.",
         value: [hasFlash && "Flash", hasApplet && "Applet", hasSilverlight && "Silverlight"].filter(Boolean).join(", "),
+        impact: "Renders as broken boxes on modern mobile platforms (iOS and Android do not support these runtimes).",
       });
     }
 
@@ -179,6 +230,13 @@ export const mobileAnalyzer: Analyzer = {
         recommendation: "Add srcset and sizes attributes for responsive images, or use CSS max-width: 100% to constrain images.",
         element: wideImages.slice(0, 3).map((i) => i.src).join(", "),
         value: `${wideImages.length} wide images`,
+        impact: "Unconstrained large images break page containers on small phone screens, causing ugly horizontal overflow.",
+        affectedItems: wideImages.map((i) => i.src),
+        codeSnippet: {
+          language: "css",
+          label: "Add global CSS rules for responsive images:",
+          code: `img {\n  max-width: 100%;\n  height: auto;\n}`,
+        },
       });
     }
 
@@ -195,10 +253,15 @@ export const mobileAnalyzer: Analyzer = {
         description: "Page has significant content but uses only fixed pixel font sizes with no media queries for responsive scaling.",
         severity: "low",
         recommendation: "Use relative font units (rem, em) and implement responsive typography with CSS media queries or clamp().",
+        codeSnippet: {
+          language: "css",
+          label: "Implement fluid typography utilizing CSS clamp():",
+          code: `h1 {\n  font-size: clamp(1.8rem, 4vw + 1rem, 3rem);\n}`,
+        },
       });
     }
 
-    // ── Score ────────────────────────────────────────────────────────
+    // Score
     const criticalCount = issues.filter((i) => i.severity === "critical").length;
     const highCount = issues.filter((i) => i.severity === "high").length;
     const mediumCount = issues.filter((i) => i.severity === "medium").length;

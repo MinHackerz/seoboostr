@@ -28,6 +28,15 @@ export const sitemapAnalyzer: Analyzer = {
         recommendation: isBlocked 
           ? "Whitelist the SEO Optimised crawler User-Agent ('SEOOptimized/1.0') or configure your WAF to allow automated crawler requests."
           : "Create an XML sitemap and submit it to Google Search Console.",
+        impact: isBlocked 
+          ? "Without sitemap access, the audit cannot verify URL coverage and indexing health."
+          : "Sitemaps help search engines discover and index pages faster, especially for large or new sites.",
+        codeSnippet: isBlocked ? undefined : {
+          language: "html",
+          label: "Create a sitemap.xml file at your site root:",
+          code: `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <url>\n    <loc>${fetchResult.finalUrl}</loc>\n    <lastmod>${new Date().toISOString().split("T")[0]}</lastmod>\n  </url>\n  <!-- Add all important pages -->\n</urlset>`,
+        },
+        learnMoreUrl: "https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview",
       });
 
       return {
@@ -53,6 +62,8 @@ export const sitemapAnalyzer: Analyzer = {
         description: "The sitemap does not appear to be valid XML.",
         severity: "critical",
         recommendation: "Fix the sitemap XML to conform to the sitemap protocol specification.",
+        impact: "Invalid sitemaps are completely ignored by search engines, as if no sitemap exists at all.",
+        learnMoreUrl: "https://www.sitemaps.org/protocol.html",
       });
     }
 
@@ -73,6 +84,12 @@ export const sitemapAnalyzer: Analyzer = {
         severity: "critical",
         recommendation: "Split the sitemap using a sitemap index file.",
         value: `${urlCount.toLocaleString()} URLs`,
+        impact: "Search engines will stop processing URLs after 50,000. Excess pages won't be discovered via the sitemap.",
+        codeSnippet: {
+          language: "html",
+          label: "Create a sitemap index to split into multiple sitemaps:",
+          code: `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n  <sitemap>\n    <loc>${fetchResult.finalUrl.replace(/\/$/, "")}/sitemap-pages.xml</loc>\n    <lastmod>${new Date().toISOString().split("T")[0]}</lastmod>\n  </sitemap>\n  <sitemap>\n    <loc>${fetchResult.finalUrl.replace(/\/$/, "")}/sitemap-posts.xml</loc>\n    <lastmod>${new Date().toISOString().split("T")[0]}</lastmod>\n  </sitemap>\n</sitemapindex>`,
+        },
       });
     }
 
@@ -86,6 +103,7 @@ export const sitemapAnalyzer: Analyzer = {
         severity: "high",
         recommendation: "Update all sitemap URLs to use HTTPS.",
         value: `${httpUrls.length} HTTP URLs`,
+        impact: "HTTP URLs in the sitemap conflict with HTTPS enforcement, causing crawl confusion and wasted crawl budget.",
       });
     }
 
@@ -120,6 +138,7 @@ export const sitemapAnalyzer: Analyzer = {
           description: "All URLs have the same lastmod date — this suggests they aren't actual modification dates.",
           severity: "low",
           recommendation: "Use actual modification dates for lastmod, not a bulk-generated timestamp.",
+          impact: "Inaccurate lastmod dates erode Google's trust in your sitemap, causing it to ignore lastmod signals entirely.",
         });
       }
     }
@@ -135,6 +154,11 @@ export const sitemapAnalyzer: Analyzer = {
         description: "The sitemap is not listed in robots.txt.",
         severity: "medium",
         recommendation: "Add 'Sitemap: https://yourdomain.com/sitemap.xml' to robots.txt.",
+        codeSnippet: {
+          language: "text",
+          label: "Add this line to your robots.txt:",
+          code: `Sitemap: ${fetchResult.finalUrl.replace(/\/$/, "")}/sitemap.xml`,
+        },
       });
     }
 

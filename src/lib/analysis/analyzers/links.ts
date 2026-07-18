@@ -17,7 +17,7 @@ const GENERIC_ANCHOR_PATTERNS = [
 
 export const linksAnalyzer: Analyzer = {
   name: "links",
-  async analyze(page: ParsedPage, fetchResult: FetchResult): Promise<ModuleResult> {
+  async analyze(page: ParsedPage, _fetchResult: FetchResult): Promise<ModuleResult> {
     const startTime = Date.now();
     const issues: Issue[] = [];
     const data: Record<string, unknown> = {};
@@ -39,6 +39,7 @@ export const linksAnalyzer: Analyzer = {
         severity: "medium",
         recommendation: "Reduce internal links to under 100 per page. Prioritize the most important pages and use navigation wisely.",
         value: `${internalLinks.length} internal links`,
+        impact: "Google divides PageRank equally among all links on a page. More links = less equity per link.",
       });
     }
 
@@ -53,8 +54,14 @@ export const linksAnalyzer: Analyzer = {
         description: `Found ${nofollowInternal.length} internal link(s) with rel="nofollow". This wastes crawl budget and prevents PageRank from flowing to your own pages.`,
         severity: "high",
         recommendation: "Remove rel=\"nofollow\" from internal links. Use robots.txt or meta robots to control crawling if needed.",
-        element: nofollowInternal.slice(0, 3).map((l) => l.href).join(", "),
+        affectedItems: nofollowInternal.slice(0, 5).map((l) => `"${l.text || "(no text)"}" → ${l.href}`),
         value: `${nofollowInternal.length} nofollow internal links`,
+        impact: "Nofollow on internal links wastes PageRank. The equity that would flow to your own pages is simply lost.",
+        codeSnippet: {
+          language: "html",
+          label: "Remove rel=\"nofollow\" from internal links:",
+          code: `<!-- Before (wrong) -->\n<a href="/your-page" rel="nofollow">Link Text</a>\n\n<!-- After (correct) -->\n<a href="/your-page">Link Text</a>`,
+        },
       });
     }
 
@@ -72,6 +79,11 @@ export const linksAnalyzer: Analyzer = {
         severity: "medium",
         recommendation: "Replace empty hrefs with actual URLs, or use <button> elements for non-navigation interactive elements.",
         value: `${emptyHrefLinks.length} empty/placeholder links`,
+        codeSnippet: {
+          language: "html",
+          label: "Use <button> for interactive elements that aren't navigation:",
+          code: `<!-- Before (wrong) -->\n<a href="#" onclick="doSomething()">Click</a>\n<a href="javascript:void(0)">Action</a>\n\n<!-- After (correct) -->\n<button onclick="doSomething()">Click</button>`,
+        },
       });
     }
 
@@ -90,8 +102,9 @@ export const linksAnalyzer: Analyzer = {
         description: `Found ${genericAnchors.length} internal link(s) with generic text like "click here" or "read more". Descriptive anchor text helps search engines understand linked page content.`,
         severity: "medium",
         recommendation: "Use descriptive, keyword-relevant anchor text that describes the linked page content.",
-        element: genericAnchors.slice(0, 5).map((l) => `"${l.text}" → ${l.href}`).join("; "),
+        affectedItems: genericAnchors.slice(0, 5).map((l) => `"${l.text}" → ${l.href}`),
         value: `${genericAnchors.length} generic anchors`,
+        impact: "Anchor text is a ranking signal. Descriptive anchors tell Google what the linked page is about, improving its rankings for relevant keywords.",
       });
     }
 
@@ -104,6 +117,7 @@ export const linksAnalyzer: Analyzer = {
         severity: "low",
         recommendation: "Link to authoritative external sources to demonstrate expertise and provide value to users.",
         value: "0 outbound links",
+        impact: "Outbound links to authoritative sources are a trust signal. Studies show pages linking to relevant authorities rank higher.",
       });
     }
 
@@ -139,7 +153,7 @@ export const linksAnalyzer: Analyzer = {
         description: `Found ${emptyTextLinks.length} link(s) with no visible text. Search engines cannot determine the topic of the linked page without anchor text.`,
         severity: "medium",
         recommendation: "Add descriptive text to all links. For image links, use alt text on the image. For icon links, use aria-label.",
-        element: emptyTextLinks.slice(0, 5).map((l) => l.href).join(", "),
+        affectedItems: emptyTextLinks.slice(0, 5).map((l) => l.href),
         value: `${emptyTextLinks.length} empty text links`,
       });
     }
@@ -157,6 +171,11 @@ export const linksAnalyzer: Analyzer = {
         severity: "low",
         recommendation: "Consider adding target=\"_blank\" with rel=\"noopener noreferrer\" to external links to keep users on your site.",
         value: `${externalSameWindow.length} external links without target="_blank"`,
+        codeSnippet: {
+          language: "html",
+          label: "Open external links in a new tab safely:",
+          code: `<a href="https://external-site.com" target="_blank" rel="noopener noreferrer">External Link</a>`,
+        },
       });
     }
 

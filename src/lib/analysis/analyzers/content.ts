@@ -107,6 +107,8 @@ export const contentAnalyzer: Analyzer = {
         severity: page.wordCount < minimum / 2 ? "high" : "medium",
         recommendation: `Add more substantive content to reach at least ${minimum} words for a ${pageType} page.`,
         value: `${page.wordCount} words`,
+        impact: `Studies show that top-ranking pages for competitive queries average 1,447 words. ${pageType} pages with fewer than ${minimum} words often struggle to rank.`,
+        learnMoreUrl: "https://developers.google.com/search/docs/fundamentals/creating-helpful-content",
       });
     }
 
@@ -122,6 +124,7 @@ export const contentAnalyzer: Analyzer = {
         severity: "medium",
         recommendation: "Simplify sentences, use shorter words, and break up complex paragraphs.",
         value: `Score: ${readabilityScore}/100`,
+        impact: "Content at reading grade 7-8 reaches the widest audience. Difficult content increases bounce rates and reduces time-on-page.",
       });
     } else if (readabilityScore < 50) {
       issues.push({
@@ -147,6 +150,7 @@ export const contentAnalyzer: Analyzer = {
         description: `Only ${h2Count} H2 headings for ${page.wordCount} words.`,
         severity: "medium",
         recommendation: "Add more H2 headings to break content into scannable sections.",
+        impact: "Well-structured content with headings every 200-300 words performs better in featured snippets and passage ranking.",
       });
     }
 
@@ -164,6 +168,21 @@ export const contentAnalyzer: Analyzer = {
     const eatScore = Object.values(eatSignals).filter(Boolean).length;
     data.eatScore = eatScore;
 
+    // Build affectedItems showing which signals are present/missing
+    const eatDetails: string[] = [];
+    if (!eatSignals.hasAuthor) eatDetails.push("✗ Author byline — not found");
+    else eatDetails.push("✓ Author byline — detected");
+    if (!eatSignals.hasDate) eatDetails.push("✗ Publication/modification date — not found");
+    else eatDetails.push("✓ Publication/modification date — detected");
+    if (!eatSignals.hasCredentials) eatDetails.push("✗ Author credentials — not found");
+    else eatDetails.push("✓ Author credentials — detected");
+    if (!eatSignals.hasExternalCitations) eatDetails.push("✗ External citations — not found");
+    else eatDetails.push("✓ External citations — detected");
+    if (!eatSignals.hasAboutPage) eatDetails.push("✗ Link to About page — not found");
+    else eatDetails.push("✓ Link to About page — detected");
+    if (!eatSignals.hasContactInfo) eatDetails.push("✗ Contact information — not found");
+    else eatDetails.push("✓ Contact information — detected");
+
     if (eatScore < 2) {
       issues.push({
         id: "content-weak-eat",
@@ -171,6 +190,9 @@ export const contentAnalyzer: Analyzer = {
         description: `Only ${eatScore}/6 E-E-A-T signals detected.`,
         severity: "high",
         recommendation: "Add author information, credentials, dates, and citations to demonstrate expertise and trustworthiness.",
+        impact: "Google's Quality Rater Guidelines heavily weight E-E-A-T. Sites lacking these signals rank lower, especially for YMYL topics.",
+        affectedItems: eatDetails,
+        learnMoreUrl: "https://developers.google.com/search/docs/fundamentals/creating-helpful-content#e-e-a-t",
       });
     } else if (eatScore < 4) {
       issues.push({
@@ -179,6 +201,8 @@ export const contentAnalyzer: Analyzer = {
         description: `${eatScore}/6 E-E-A-T signals detected.`,
         severity: "medium",
         recommendation: "Strengthen E-E-A-T by adding more author credentials, first-hand experience markers, and authoritative citations.",
+        affectedItems: eatDetails,
+        learnMoreUrl: "https://developers.google.com/search/docs/fundamentals/creating-helpful-content#e-e-a-t",
       });
     }
 
@@ -194,6 +218,7 @@ export const contentAnalyzer: Analyzer = {
         description: `${Math.round(linksPerThousand * 10) / 10} internal links per 1000 words (target: 3-5).`,
         severity: "medium",
         recommendation: "Add more relevant internal links to distribute link equity and help navigation.",
+        impact: "Internal links are a top-3 ranking factor. Pages with 3-5 internal links per 1000 words pass significantly more PageRank.",
       });
     }
 
@@ -208,6 +233,7 @@ export const contentAnalyzer: Analyzer = {
         description: "No date stamps found on the page.",
         severity: "medium",
         recommendation: "Add publication and last-modified dates for content freshness signals.",
+        impact: "Google uses content freshness as a ranking signal, especially for time-sensitive queries. Dated content gets prioritized in 'Query Deserves Freshness' (QDF) queries.",
       });
     }
 

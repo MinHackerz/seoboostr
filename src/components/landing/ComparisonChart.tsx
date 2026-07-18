@@ -64,7 +64,7 @@ function AnimatedCounter({ value, suffix = "", prefix = "" }: { value: number; s
 }
 
 // ── Individual Stat Widget Component ──
-function StatWidget({ label, value, suffix, prefix, index }: { label: string; value: number; suffix: string; prefix: string; index: number }) {
+function StatWidget({ label, value, suffix, prefix, index: _index }: { label: string; value: number; suffix: string; prefix: string; index: number }) {
   const widgetRef = useRef<HTMLDivElement>(null);
   const mX = useMotionValue(0);
   const mY = useMotionValue(0);

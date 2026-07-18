@@ -51,9 +51,9 @@ export async function POST(request: NextRequest) {
       previouslyScanned = [analysis.website.url];
     }
 
-    // Cost: 1.0 credit per page
+    // Cost: 0.5 credit per page
     const pageCount = previouslyScanned.length;
-    const rate = 1.0;
+    const rate = 0.5;
     const cost = pageCount * rate;
 
     // Check user coins balance

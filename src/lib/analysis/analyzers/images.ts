@@ -21,6 +21,7 @@ export const imagesAnalyzer: Analyzer = {
           description: "The page contains no images. Consider adding relevant visual content.",
           severity: "info",
           recommendation: "Add relevant images to improve engagement and visual appeal.",
+          impact: "Pages with images get 94% more views. Visual content also enables Google Image Search traffic.",
         }],
         data,
         executionTimeMs: Date.now() - startTime,
@@ -46,7 +47,14 @@ export const imagesAnalyzer: Analyzer = {
         description: `${missingAlt.length} of ${page.images.length} images have no alt attribute.`,
         severity: missingAlt.length > page.images.length / 2 ? "critical" : "high",
         recommendation: "Add descriptive alt text to all images (10-125 characters).",
-        value: missingAlt.slice(0, 5).map((i) => i.src).join(", "),
+        affectedItems: missingAlt.slice(0, 8).map((i) => i.src || "(inline image)"),
+        impact: "Missing alt text harms accessibility (WCAG violation) and eliminates Google Image Search ranking potential.",
+        codeSnippet: {
+          language: "html",
+          label: "Add descriptive alt text to each image:",
+          code: `<!-- Before -->\n<img src="image.jpg" />\n\n<!-- After -->\n<img src="image.jpg" alt="Descriptive text explaining the image content" />`,
+        },
+        learnMoreUrl: "https://developers.google.com/search/docs/appearance/google-images#descriptive-alt-text",
       });
     }
 
@@ -57,7 +65,7 @@ export const imagesAnalyzer: Analyzer = {
         description: `${badAlt.length} images have generic or filename-based alt text.`,
         severity: "medium",
         recommendation: "Replace generic alt text with descriptive text that explains the image content.",
-        value: badAlt.slice(0, 5).map((i) => `"${i.alt}"`).join(", "),
+        affectedItems: badAlt.slice(0, 5).map((i) => `"${i.alt}" → ${i.src}`),
       });
     }
 
@@ -79,6 +87,12 @@ export const imagesAnalyzer: Analyzer = {
         description: `All ${legacyFormats} images use legacy formats (JPEG/PNG). No WebP or AVIF detected.`,
         severity: "medium",
         recommendation: "Convert images to WebP (97%+ browser support) or AVIF (92%+ support) for better compression.",
+        impact: "WebP reduces image size by 25-34% vs JPEG at equivalent quality. AVIF provides 50% savings. This directly improves LCP.",
+        codeSnippet: {
+          language: "html",
+          label: "Use the <picture> element to serve modern formats with fallbacks:",
+          code: `<picture>\n  <source srcset="image.avif" type="image/avif" />\n  <source srcset="image.webp" type="image/webp" />\n  <img src="image.jpg" alt="Description" width="800" height="600" />\n</picture>`,
+        },
       });
     }
 
@@ -103,6 +117,12 @@ export const imagesAnalyzer: Analyzer = {
         description: `${nonLazyBelowFold.length} below-fold images are not lazy-loaded.`,
         severity: "medium",
         recommendation: 'Add loading="lazy" to below-fold images to improve initial page load.',
+        impact: "Lazy loading below-fold images can reduce initial page weight by 40-60%, directly improving LCP and user experience.",
+        codeSnippet: {
+          language: "html",
+          label: "Add native lazy loading to below-fold images:",
+          code: `<img src="below-fold.jpg" alt="Description" loading="lazy" decoding="async" />`,
+        },
       });
     }
 
@@ -115,6 +135,13 @@ export const imagesAnalyzer: Analyzer = {
         severity: "high",
         recommendation: 'Remove loading="lazy" from the hero/above-fold image and add fetchpriority="high" instead.',
         element: page.images[0].src,
+        impact: "Lazy-loading the LCP image delays its discovery and download, directly increasing Largest Contentful Paint time by 200-500ms.",
+        codeSnippet: {
+          language: "html",
+          label: "Fix your hero image attributes:",
+          code: `<!-- Remove loading="lazy" and add fetchpriority="high" -->\n<img\n  src="${page.images[0].src}"\n  alt="Hero image"\n  fetchpriority="high"\n  decoding="async"\n  width="..." height="..."\n/>`,
+        },
+        learnMoreUrl: "https://web.dev/articles/lcp-lazy-loading",
       });
     }
 
@@ -129,6 +156,11 @@ export const imagesAnalyzer: Analyzer = {
         description: "The main image does not have fetchpriority=\"high\" set.",
         severity: "low",
         recommendation: 'Add fetchpriority="high" to your hero/LCP image for faster loading.',
+        codeSnippet: {
+          language: "html",
+          label: "Add fetchpriority to your hero image:",
+          code: `<img src="${page.images[0].src}" alt="..." fetchpriority="high" />`,
+        },
       });
     }
 
@@ -143,6 +175,13 @@ export const imagesAnalyzer: Analyzer = {
         description: `${noDimensions.length} images have no width/height set, risking CLS.`,
         severity: noDimensions.length > page.images.length / 2 ? "high" : "medium",
         recommendation: "Add explicit width and height attributes to all images to prevent Cumulative Layout Shift.",
+        affectedItems: noDimensions.slice(0, 5).map((i) => i.src || "(inline image)"),
+        impact: "Missing dimensions cause layout shift as images load, harming CLS (a Core Web Vital). Pages with poor CLS rank lower.",
+        codeSnippet: {
+          language: "html",
+          label: "Always include width and height attributes:",
+          code: `<img src="image.jpg" alt="Description" width="800" height="600" />`,
+        },
       });
     }
 
@@ -171,6 +210,12 @@ export const imagesAnalyzer: Analyzer = {
         description: "No images use srcset for responsive delivery.",
         severity: "medium",
         recommendation: "Use srcset and sizes attributes to serve appropriately sized images for each device.",
+        impact: "Without responsive images, mobile users download desktop-sized images, wasting bandwidth and slowing page load.",
+        codeSnippet: {
+          language: "html",
+          label: "Add responsive image markup with srcset and sizes:",
+          code: `<img\n  src="image-800.jpg"\n  srcset="image-400.jpg 400w, image-800.jpg 800w, image-1200.jpg 1200w"\n  sizes="(max-width: 600px) 400px, (max-width: 1024px) 800px, 1200px"\n  alt="Description"\n  width="1200" height="800"\n/>`,
+        },
       });
     }
 

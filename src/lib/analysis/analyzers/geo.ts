@@ -8,8 +8,15 @@ export const geoAnalyzer: Analyzer = {
     const issues: Issue[] = [];
     const data: Record<string, unknown> = {};
 
-    // 1. AI Crawler accessibility
-    if (fetchResult.robotsTxt) {
+    let isRoot = false;
+    try {
+      isRoot = new URL(fetchResult.url).pathname === "/";
+    } catch {
+      isRoot = fetchResult.url.endsWith("/") || !fetchResult.url.includes("/", 9);
+    }
+
+    // 1. AI Crawler accessibility (Only checked on site root/homepage)
+    if (isRoot && fetchResult.robotsTxt) {
       const aiCrawlers = [
         { name: "GPTBot", token: "GPTBot", company: "OpenAI" },
         { name: "ChatGPT-User", token: "ChatGPT-User", company: "OpenAI" },
@@ -29,6 +36,11 @@ export const geoAnalyzer: Analyzer = {
       data.aiCrawlerStatus = crawlerStatus;
 
       const blockedCount = Object.values(crawlerStatus).filter((s) => s === "blocked").length;
+      const crawlerDetails = aiCrawlers.map((c) => {
+        const status = crawlerStatus[c.name];
+        return `${status === "blocked" ? "✗" : "✓"} ${c.name} (${c.company}) — ${status}`;
+      });
+
       if (blockedCount === aiCrawlers.length) {
         issues.push({
           id: "geo-all-ai-blocked",
@@ -37,6 +49,8 @@ export const geoAnalyzer: Analyzer = {
           severity: "high",
           recommendation:
             "Consider allowing at least some AI crawlers — being cited by AI systems drives brand awareness and referral traffic.",
+          impact: "Blocking all AI crawlers means your content cannot be cited by ChatGPT, Claude, Perplexity, or Google AI Overviews, losing significant emerging traffic.",
+          affectedItems: crawlerDetails,
         });
       } else if (blockedCount > 0) {
         issues.push({
@@ -45,20 +59,38 @@ export const geoAnalyzer: Analyzer = {
           description: `${blockedCount} of ${aiCrawlers.length} AI crawlers are blocked.`,
           severity: "info",
           recommendation: "Review your AI crawler strategy — ensure intentional blocking aligns with your AI visibility goals.",
+          affectedItems: crawlerDetails,
         });
       }
     }
 
-    // 2. llms.txt check
-    data.hasLlmsTxt = !!fetchResult.llmsTxt;
-    if (fetchResult.llmsTxt) {
-      issues.push({
-        id: "geo-has-llms-txt",
-        title: "llms.txt file found",
-        description: "Your site has an llms.txt file for AI system guidance.",
-        severity: "info",
-        recommendation: "Note: Google has confirmed llms.txt is not a ranking factor. Maintain it if useful for other AI systems.",
-      });
+    // 2. llms.txt check (Only checked on site root/homepage)
+    if (isRoot) {
+      data.hasLlmsTxt = !!fetchResult.llmsTxt;
+      if (fetchResult.llmsTxt) {
+        issues.push({
+          id: "geo-has-llms-txt",
+          title: "llms.txt file found",
+          description: "Your site has an llms.txt file for AI system guidance.",
+          severity: "info",
+          recommendation: "Note: Google has confirmed llms.txt is not a ranking factor. Maintain it if useful for other AI systems.",
+        });
+      } else {
+        // Suggest creating llms.txt
+        issues.push({
+          id: "geo-no-llms-txt",
+          title: "No llms.txt file detected",
+          description: "Your site does not have an llms.txt file. This file helps AI models understand your site's content structure.",
+          severity: "low",
+          recommendation: "Consider creating an llms.txt file to help AI systems better understand and cite your content.",
+          codeSnippet: {
+            language: "text",
+            label: "Create an llms.txt file at your site root with this structure:",
+            code: `# ${page.title || "Your Site Name"}\n\n> ${page.metaDescription || "Brief description of your site and what it offers."}\n\n## Key Pages\n\n- [Home](${page.url}): Main landing page\n- [About](/about): About the organization\n- [Blog](/blog): Latest articles and insights\n\n## Topics We Cover\n\n- Topic 1\n- Topic 2\n- Topic 3`,
+          },
+          learnMoreUrl: "https://llmstxt.org/",
+        });
+      }
     }
 
     // 3. Citability scoring
@@ -93,6 +125,7 @@ export const geoAnalyzer: Analyzer = {
         description: "Very few specific facts, statistics, or data points detected.",
         severity: "medium",
         recommendation: "Add specific statistics, data points, and cited facts to improve AI citability.",
+        impact: "Content with 5+ statistics, data points, or cited facts is 2.3x more likely to be cited by AI assistants like ChatGPT and Claude.",
       });
     }
 
@@ -111,6 +144,7 @@ export const geoAnalyzer: Analyzer = {
         description: "No headings are phrased as questions.",
         severity: "low",
         recommendation: "Use question-based headings (e.g., 'What is X?', 'How does Y work?') to match AI query patterns.",
+        impact: "Question-based headings directly match how users query AI assistants, making your content more likely to be surfaced as an answer.",
       });
     }
 
@@ -126,6 +160,16 @@ export const geoAnalyzer: Analyzer = {
     data.authoritySignals = authoritySignals;
 
     const authorityScore = Object.values(authoritySignals).filter(Boolean).length;
+
+    const authorityDetails = [
+      `${authoritySignals.hasAuthorByline ? "✓" : "✗"} Author byline`,
+      `${authoritySignals.hasPublicationDate ? "✓" : "✗"} Publication date`,
+      `${authoritySignals.hasLastModified ? "✓" : "✗"} Last modified date`,
+      `${authoritySignals.hasCitations ? "✓" : "✗"} External citations`,
+      `${authoritySignals.hasCredentials ? "✓" : "✗"} Author credentials`,
+      `${authoritySignals.hasOrganizationSchema ? "✓" : "✗"} Organization schema`,
+    ];
+
     if (authorityScore < 3) {
       issues.push({
         id: "geo-weak-authority",
@@ -133,6 +177,8 @@ export const geoAnalyzer: Analyzer = {
         description: `Only ${authorityScore}/6 authority signals detected.`,
         severity: "medium",
         recommendation: "Strengthen authority signals: add author bylines, credentials, dates, and external citations.",
+        impact: "AI models weigh source authority when deciding which content to cite. More authority signals = higher citation probability.",
+        affectedItems: authorityDetails,
       });
     }
 
@@ -151,6 +197,7 @@ export const geoAnalyzer: Analyzer = {
         description: "Pages with multi-modal content see 156% higher AI citation rates.",
         severity: "medium",
         recommendation: "Add relevant images, videos, or infographics to boost AI visibility.",
+        impact: "Multi-modal content (text + images + video) gets cited 156% more by AI assistants vs text-only pages.",
       });
     }
 

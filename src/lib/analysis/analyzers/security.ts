@@ -19,6 +19,13 @@ export const securityAnalyzer: Analyzer = {
         description: "The Strict-Transport-Security header is not set. Browsers may allow HTTP downgrade attacks.",
         severity: "high",
         recommendation: "Add `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload` to enforce HTTPS.",
+        impact: "Without HSTS, users can be tricked into connecting over insecure HTTP via man-in-the-middle attacks.",
+        codeSnippet: {
+          language: "http",
+          label: "Add this header to your server response:",
+          code: `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`,
+        },
+        learnMoreUrl: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Strict-Transport-Security",
       });
     } else {
       const maxAgeMatch = hsts.match(/max-age=(\d+)/i);
@@ -32,6 +39,11 @@ export const securityAnalyzer: Analyzer = {
           severity: "medium",
           recommendation: "Set `max-age=31536000` (1 year) or higher for effective HSTS protection.",
           value: hsts,
+          codeSnippet: {
+            language: "http",
+            label: "Update your HSTS header:",
+            code: `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`,
+          },
         });
       }
 
@@ -54,6 +66,7 @@ export const securityAnalyzer: Analyzer = {
           severity: "info",
           recommendation: "Add `preload` to your HSTS header and submit to hstspreload.org for browser-level enforcement.",
           value: hsts,
+          learnMoreUrl: "https://hstspreload.org/",
         });
       }
     }
@@ -69,6 +82,13 @@ export const securityAnalyzer: Analyzer = {
         description: "No CSP header detected. The site is vulnerable to XSS, clickjacking, and data injection attacks.",
         severity: "high",
         recommendation: "Implement a Content-Security-Policy header. Start with a report-only policy to avoid breakage, then enforce.",
+        impact: "CSP is the most effective defense against XSS attacks, which are the #1 web vulnerability. Without it, injected scripts run unrestricted.",
+        codeSnippet: {
+          language: "http",
+          label: "Start with a report-only policy to test without breaking your site:",
+          code: `Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self'; report-uri /csp-report`,
+        },
+        learnMoreUrl: "https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP",
       });
     } else {
       if (/unsafe-inline/i.test(csp)) {
@@ -79,6 +99,7 @@ export const securityAnalyzer: Analyzer = {
           severity: "medium",
           recommendation: "Replace 'unsafe-inline' with nonce-based or hash-based CSP directives for scripts and styles.",
           value: csp.substring(0, 200),
+          impact: "'unsafe-inline' allows any injected inline script to execute, negating most of CSP's XSS protection.",
         });
       }
 
@@ -105,6 +126,11 @@ export const securityAnalyzer: Analyzer = {
         description: "Without `nosniff`, browsers may MIME-sniff responses, potentially executing malicious content.",
         severity: "medium",
         recommendation: "Add `X-Content-Type-Options: nosniff` to prevent MIME-type sniffing attacks.",
+        codeSnippet: {
+          language: "http",
+          label: "Add this header to your server response:",
+          code: `X-Content-Type-Options: nosniff`,
+        },
       });
     }
 
@@ -119,6 +145,11 @@ export const securityAnalyzer: Analyzer = {
         description: "The site can be embedded in iframes on other domains, making it vulnerable to clickjacking attacks.",
         severity: "medium",
         recommendation: "Add `X-Frame-Options: DENY` or `SAMEORIGIN` to prevent clickjacking. Also consider using CSP `frame-ancestors`.",
+        codeSnippet: {
+          language: "http",
+          label: "Add this header to prevent iframe embedding:",
+          code: `X-Frame-Options: SAMEORIGIN`,
+        },
       });
     }
 
@@ -133,6 +164,11 @@ export const securityAnalyzer: Analyzer = {
         description: "Without a Referrer-Policy, the full URL (including query parameters) may be sent to third-party sites.",
         severity: "medium",
         recommendation: "Add `Referrer-Policy: strict-origin-when-cross-origin` or `no-referrer-when-downgrade`.",
+        codeSnippet: {
+          language: "http",
+          label: "Add this header to control referrer information:",
+          code: `Referrer-Policy: strict-origin-when-cross-origin`,
+        },
       });
     }
 
@@ -147,6 +183,12 @@ export const securityAnalyzer: Analyzer = {
         description: "No Permissions-Policy (formerly Feature-Policy) is set. Browser features like camera, microphone, and geolocation are unrestricted.",
         severity: "medium",
         recommendation: "Add a `Permissions-Policy` header to restrict browser API access, e.g. `camera=(), microphone=(), geolocation=()`.",
+        codeSnippet: {
+          language: "http",
+          label: "Add this header to restrict sensitive browser APIs:",
+          code: `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()`,
+        },
+        learnMoreUrl: "https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Permissions-Policy",
       });
     }
 
@@ -162,6 +204,7 @@ export const securityAnalyzer: Analyzer = {
         severity: "low",
         recommendation: "Remove version numbers from the Server header or suppress it entirely.",
         value: serverHeader,
+        impact: "Exposing server software versions helps attackers target specific CVEs for your server/framework version.",
       });
     }
 
@@ -177,6 +220,15 @@ export const securityAnalyzer: Analyzer = {
         severity: "low",
         recommendation: "Remove the X-Powered-By header. In Express.js use `app.disable('x-powered-by')`. In Next.js set `poweredByHeader: false` in next.config.",
         value: xPoweredBy,
+        codeSnippet: xPoweredBy.toLowerCase().includes("next") ? {
+          language: "javascript",
+          label: "Disable in your next.config.js:",
+          code: `/** @type {import('next').NextConfig} */\nconst nextConfig = {\n  poweredByHeader: false,\n};\n\nmodule.exports = nextConfig;`,
+        } : xPoweredBy.toLowerCase().includes("express") ? {
+          language: "javascript",
+          label: "Disable in your Express app:",
+          code: `app.disable('x-powered-by');`,
+        } : undefined,
       });
     }
 
@@ -207,6 +259,7 @@ export const securityAnalyzer: Analyzer = {
           severity: "high",
           recommendation: "Update all resource URLs to use HTTPS. Use protocol-relative URLs or update CDN references.",
           value: `${mixedContentCount} HTTP resources on HTTPS page`,
+          impact: "Browsers block mixed content by default, causing broken images, scripts, or styles. Chrome shows a 'Not Secure' warning.",
         });
       }
     }

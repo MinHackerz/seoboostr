@@ -7,9 +7,9 @@ export function Pricing() {
   const deductions = [
     { name: "Initial Homepage Audit", cost: "2.0 credits", detail: "Charged once when saving or importing a new website's homepage report." },
     { name: "First-Time Page Scans", cost: "2.0 credits / pg", detail: "Per page scanned when crawling and analyzing newly discovered subpages from scratch." },
-    { name: "Full Website Rescans", cost: "1.0 credit / pg", detail: "Per page scanned when running refresh audits on already-scanned pages." },
-    { name: "Resume Paused Scans", cost: "Dynamic", detail: "Charges 2.0 credits per pending new page, and 1.0 credit per previously scanned page." },
-    { name: "Single Module Rescan", cost: "1.0 credit / pg", detail: "Per page scanned when updating a single module (e.g., Schema, Performance)." },
+    { name: "Full Website Rescans", cost: "3.75 credits / pg", detail: "Charges 0.25 credits per page scan per module (15 modules total) when running rescan refresh audits." },
+    { name: "Resume Paused Scans", cost: "Dynamic", detail: "Charges 2.0 credits per pending new page, and 3.75 credits per previously scanned page." },
+    { name: "Single Module Rescan", cost: "0.5 credits / pg", detail: "Per page scanned when updating a single module (e.g., Schema, Performance) at a flat 0.5 rate." },
   ];
 
   const packages = [

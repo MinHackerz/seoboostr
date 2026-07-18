@@ -16,6 +16,17 @@ function classifyPageType(page: ParsedPage): string {
   return "general";
 }
 
+const PAGE_TYPE_CTA_SUGGESTIONS: Record<string, string[]> = {
+  product: ["Buy Now", "Add to Cart", "Start Free Trial", "View Pricing"],
+  blog: ["Subscribe", "Read More", "Share This Article", "Get the Guide"],
+  service: ["Get a Quote", "Book a Consultation", "Contact Us", "Learn More"],
+  homepage: ["Get Started", "Explore Features", "Start Free Trial", "See Demo"],
+  "how-to": ["Download the Template", "Try It Now", "Get the Checklist"],
+  comparison: ["Compare Plans", "Choose Your Plan", "Start Free Trial"],
+  tool: ["Try for Free", "Calculate Now", "Start Using"],
+  general: ["Get Started", "Learn More", "Contact Us"],
+};
+
 export const sxoAnalyzer: Analyzer = {
   name: "sxo",
   async analyze(page: ParsedPage): Promise<ModuleResult> {
@@ -63,12 +74,19 @@ export const sxoAnalyzer: Analyzer = {
     data.ctaLinks = ctaLinks.length;
 
     if (ctaMatches.length === 0) {
+      const suggestions = PAGE_TYPE_CTA_SUGGESTIONS[pageType] || PAGE_TYPE_CTA_SUGGESTIONS.general;
       issues.push({
         id: "sxo-no-cta",
         title: "No clear call-to-action",
         description: "No CTA elements detected on the page.",
         severity: "high",
-        recommendation: "Add clear calls-to-action that guide users toward conversion goals.",
+        recommendation: `For ${pageType} pages, add clear calls-to-action such as: ${suggestions.join(", ")}.`,
+        impact: "Pages without clear CTAs have 2-5x lower conversion rates. Users need explicit guidance on what to do next.",
+        codeSnippet: {
+          language: "html",
+          label: `Suggested CTA buttons for a ${pageType} page:`,
+          code: suggestions.map((cta) => `<a href="#action" class="cta-button">${cta}</a>`).join("\n"),
+        },
       });
     }
 
@@ -86,6 +104,15 @@ export const sxoAnalyzer: Analyzer = {
     const trustScore = Object.values(trustSignals).filter(Boolean).length;
     data.trustScore = trustScore;
 
+    const trustDetails = [
+      `${trustSignals.hasContactInfo ? "✓" : "✗"} Contact information`,
+      `${trustSignals.hasPrivacyPolicy ? "✓" : "✗"} Privacy policy link`,
+      `${trustSignals.hasTerms ? "✓" : "✗"} Terms of service link`,
+      `${trustSignals.hasTestimonials ? "✓" : "✗"} Testimonials or reviews`,
+      `${trustSignals.hasSecureBadge ? "✓" : "✗"} Security/trust badges`,
+      `${trustSignals.hasSocialProof ? "✓" : "✗"} Social proof (user counts)`,
+    ];
+
     if (trustScore < 2) {
       issues.push({
         id: "sxo-low-trust",
@@ -93,6 +120,8 @@ export const sxoAnalyzer: Analyzer = {
         description: `Only ${trustScore}/6 trust signals detected.`,
         severity: "high",
         recommendation: "Add trust signals: contact info, privacy policy, testimonials, social proof.",
+        impact: "Trust signals directly impact conversion rates. Adding testimonials alone can increase conversions by 34%.",
+        affectedItems: trustDetails,
       });
     } else if (trustScore < 4) {
       issues.push({
@@ -101,6 +130,7 @@ export const sxoAnalyzer: Analyzer = {
         description: `${trustScore}/6 trust signals detected.`,
         severity: "medium",
         recommendation: "Add more trust signals to increase user confidence and conversion rates.",
+        affectedItems: trustDetails,
       });
     }
 
@@ -115,6 +145,7 @@ export const sxoAnalyzer: Analyzer = {
         description: "Primary heading should be visible without scrolling.",
         severity: "medium",
         recommendation: "Ensure the H1 tag appears in the above-fold area of the page.",
+        impact: "Users decide within 3-5 seconds whether to stay. A clear H1 immediately communicates page relevance.",
       });
     }
 
@@ -134,6 +165,7 @@ export const sxoAnalyzer: Analyzer = {
         description: "Page lacks visual content variety.",
         severity: "medium",
         recommendation: "Add diverse media: images, videos, infographics, or interactive elements.",
+        impact: "Content with images gets 94% more views. Video on landing pages increases conversions by up to 86%.",
       });
     }
 
@@ -156,6 +188,7 @@ export const sxoAnalyzer: Analyzer = {
         description: `${renderBlockingScripts.length} scripts may block page rendering.`,
         severity: "medium",
         recommendation: "Add async or defer attributes to non-critical scripts.",
+        impact: "Slow-loading pages have 123% higher bounce rates. Each second of delay reduces conversions by 7%.",
       });
     }
 
@@ -171,6 +204,7 @@ export const sxoAnalyzer: Analyzer = {
         description: "Very few internal navigation links found.",
         severity: "medium",
         recommendation: "Ensure clear site navigation for better user experience and crawlability.",
+        impact: "Poor navigation increases bounce rates and reduces pages per session, both of which are negative engagement signals for SEO.",
       });
     }
 

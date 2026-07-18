@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
+import { useRef } from "react";
 import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
-import { MODULES, getScoreColor, type ScanResult, type Module } from "./moduleData";
+import { MODULES, getScoreColor, type ScanResult } from "./moduleData";
 
 interface ModuleGridProps {
   scanResults: ScanResult[] | null;

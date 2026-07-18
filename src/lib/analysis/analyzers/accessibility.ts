@@ -7,7 +7,6 @@ export const accessibilityAnalyzer: Analyzer = {
     const issues: Issue[] = [];
     const data: Record<string, unknown> = {};
     const html = fetchResult.html;
-    const htmlLower = html.toLowerCase();
 
     // ── 1. Missing lang attribute ───────────────────────────────────
     data.hasLang = !!page.language;
@@ -19,6 +18,13 @@ export const accessibilityAnalyzer: Analyzer = {
         description: "The <html> element does not have a lang attribute. Screen readers cannot determine the page language.",
         severity: "high",
         recommendation: "Add a lang attribute to the <html> element, e.g. <html lang=\"en\">.",
+        impact: "Screen readers use the lang attribute to select the correct pronunciation. Without it, content may be read in the wrong language.",
+        codeSnippet: {
+          language: "html",
+          label: "Add the lang attribute to your <html> element:",
+          code: `<html lang="en">`,
+        },
+        learnMoreUrl: "https://www.w3.org/WAI/WCAG22/Understanding/language-of-page",
       });
     }
 
@@ -35,6 +41,13 @@ export const accessibilityAnalyzer: Analyzer = {
         description: "No skip-to-content link detected. Keyboard users must tab through the entire navigation on every page.",
         severity: "medium",
         recommendation: "Add a visually hidden skip link at the top of the page: <a href=\"#main-content\" class=\"sr-only\">Skip to main content</a>.",
+        impact: "Keyboard-only users and screen reader users must navigate through all menus and headers on every page load without a skip link.",
+        codeSnippet: {
+          language: "html",
+          label: "Add a skip link as the first element inside <body>, and add the CSS:",
+          code: `<!-- HTML: Add as first child of <body> -->\n<a href="#main-content" class="skip-link">Skip to main content</a>\n\n<!-- Give your main content area the matching ID -->\n<main id="main-content">\n  ...\n</main>\n\n<!-- CSS: Visually hidden until focused -->\n<style>\n.skip-link {\n  position: absolute;\n  top: -40px;\n  left: 0;\n  padding: 8px 16px;\n  background: #000;\n  color: #fff;\n  z-index: 100;\n  font-size: 14px;\n}\n.skip-link:focus {\n  top: 0;\n}\n</style>`,
+        },
+        learnMoreUrl: "https://www.w3.org/WAI/WCAG22/Techniques/general/G1",
       });
     }
 
@@ -51,6 +64,12 @@ export const accessibilityAnalyzer: Analyzer = {
         description: "The page has no ARIA landmark roles and no semantic HTML5 sectioning elements (<main>, <nav>, <header>, <footer>).",
         severity: "medium",
         recommendation: "Use semantic HTML5 elements like <main>, <nav>, <header>, <footer> to define page regions for assistive technology.",
+        impact: "Screen readers allow users to jump between landmarks. Without them, navigating the page is like reading a book with no chapters.",
+        codeSnippet: {
+          language: "html",
+          label: "Structure your page with semantic HTML landmarks:",
+          code: `<header>\n  <nav><!-- Navigation --></nav>\n</header>\n\n<main>\n  <!-- Primary content -->\n</main>\n\n<aside>\n  <!-- Sidebar -->\n</aside>\n\n<footer>\n  <!-- Footer -->\n</footer>`,
+        },
       });
     }
 
@@ -91,6 +110,13 @@ export const accessibilityAnalyzer: Analyzer = {
         severity: "high",
         recommendation: "Associate every form input with a <label for=\"id\">, aria-label, or aria-labelledby attribute. Placeholder text alone is insufficient.",
         value: `${unlabeledInputs.length} unlabeled inputs`,
+        impact: "Unlabeled form inputs are unusable for screen reader users and violate WCAG 2.2 Success Criterion 1.3.1.",
+        codeSnippet: {
+          language: "html",
+          label: "Associate labels with form inputs:",
+          code: `<!-- Option 1: Explicit label -->\n<label for="email">Email address</label>\n<input type="email" id="email" />\n\n<!-- Option 2: aria-label -->\n<input type="search" aria-label="Search the site" />\n\n<!-- Option 3: Wrapping label -->\n<label>\n  Email address\n  <input type="email" />\n</label>`,
+        },
+        learnMoreUrl: "https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships",
       });
     }
 
@@ -115,15 +141,15 @@ export const accessibilityAnalyzer: Analyzer = {
         severity: "high",
         recommendation: "Add visible text, aria-label, or title attribute to all buttons. Icon-only buttons must have aria-label.",
         value: `${emptyButtons.length} empty buttons`,
+        codeSnippet: {
+          language: "html",
+          label: "Add accessible labels to icon-only buttons:",
+          code: `<!-- Icon-only button needs aria-label -->\n<button aria-label="Close menu">\n  <svg><!-- icon --></svg>\n</button>\n\n<!-- Or use visually hidden text -->\n<button>\n  <svg><!-- icon --></svg>\n  <span class="sr-only">Close menu</span>\n</button>`,
+        },
       });
     }
 
     // ── 6. Images without alt text ──────────────────────────────────
-    const imagesWithoutAlt = page.images.filter((img) => {
-      // Decorative images can have alt=""
-      if (img.alt === "") return false; // Intentionally empty (decorative)
-      return img.alt === undefined || img.alt === null;
-    });
     // Also check for images where alt is simply missing (not set at all)
     const imgNoAltRegex = /<img\b(?![^>]*\balt\b)[^>]*>/gi;
     const trueNoAlt = (html.match(imgNoAltRegex) || []).length;
@@ -137,6 +163,8 @@ export const accessibilityAnalyzer: Analyzer = {
         severity: "high",
         recommendation: "Add descriptive alt text to all images. Use alt=\"\" only for purely decorative images.",
         value: `${trueNoAlt} images without alt`,
+        impact: "Missing alt text is a WCAG Level A violation. It also eliminates Google Image Search traffic potential.",
+        learnMoreUrl: "https://www.w3.org/WAI/WCAG22/Understanding/non-text-content",
       });
     }
 
@@ -159,6 +187,11 @@ export const accessibilityAnalyzer: Analyzer = {
         severity: "medium",
         recommendation: "Use tabindex=\"0\" to include elements in natural tab order, or tabindex=\"-1\" for programmatic focus. Never use positive values.",
         value: `${positiveTabindexCount} elements with positive tabindex`,
+        codeSnippet: {
+          language: "html",
+          label: "Use tabindex correctly:",
+          code: `<!-- tabindex="0" — included in natural tab order -->\n<div tabindex="0" role="button">Focusable</div>\n\n<!-- tabindex="-1" — focusable via JS only -->\n<div tabindex="-1" id="modal">Modal content</div>\n\n<!-- NEVER use positive values like tabindex="1", "2", etc. -->`,
+        },
       });
     }
 
@@ -179,6 +212,11 @@ export const accessibilityAnalyzer: Analyzer = {
         severity: "medium",
         recommendation: "Add the `muted` attribute to autoplay media, or remove autoplay entirely and let users control playback.",
         value: `${unmutedAutoplay.length} unmuted autoplay elements`,
+        codeSnippet: {
+          language: "html",
+          label: "Add muted attribute to autoplay media:",
+          code: `<video autoplay muted loop playsinline>\n  <source src="video.mp4" type="video/mp4" />\n</video>`,
+        },
       });
     }
 
@@ -208,6 +246,7 @@ export const accessibilityAnalyzer: Analyzer = {
         severity: "high",
         recommendation: "Add descriptive text or aria-label to all links. For image links, ensure the <img> has meaningful alt text.",
         value: `${linksNoAriaCount.length} empty links`,
+        affectedItems: linksNoAriaCount.slice(0, 5).map((l) => l.href),
       });
     }
 

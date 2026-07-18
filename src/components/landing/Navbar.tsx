@@ -1,32 +1,33 @@
 "use client";
-
+ 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signIn, signOut, useSession } from "next-auth/react";
-
+import Link from "next/link";
+ 
 interface NavbarProps {
   onRunAudit?: () => void;
   onStartScan?: (url: string) => void;
 }
-
-export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
+ 
+export function Navbar({ onRunAudit: _onRunAudit, onStartScan: _onStartScan }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { data: session, status } = useSession();
   const isLoggedIn = status === "authenticated" && session?.user?.email !== "demo@seoptimised.com";
-
+ 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
+ 
   const navLinks = [
     { href: "/#modules", label: "Features" },
     { href: "/#pricing", label: "Pricing" },
     { href: "/#faq", label: "FAQ" },
   ];
-
+ 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 px-4 transition-all duration-300">
       <div
@@ -38,7 +39,7 @@ export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
       >
         <div className="flex items-center justify-between h-16 px-4 sm:px-6">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2.5 shrink-0 group/logo">
+          <Link href="/" className="flex items-center gap-2.5 shrink-0 group/logo">
             <div className="relative">
               <img
                 src="/logo.png"
@@ -51,31 +52,31 @@ export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
             <span className="text-lg font-black tracking-tight text-white group-hover/logo:text-teal-400 transition-colors font-sans">
               SEO Optimised
             </span>
-          </a>
-
+          </Link>
+ 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.href}
                 href={link.href}
                 className="text-xs font-bold text-slate-400 hover:text-white px-3.5 py-2 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/5 transition-all duration-200"
               >
                 {navLinks.find((l) => l.href === link.href)?.label || link.label}
-              </a>
+              </Link>
             ))}
           </div>
-
+ 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
             {isLoggedIn ? (
               <>
-                <a
+                <Link
                   href="/dashboard"
                   className="px-4 py-2 text-xs font-bold text-slate-200 hover:text-white bg-slate-900/60 hover:bg-slate-800/60 rounded-xl border border-white/10 hover:border-teal-500/30 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 cursor-pointer shadow-sm hover:shadow-[0_0_15px_rgba(20,184,166,0.15)]"
                 >
                   Dashboard
-                </a>
+                </Link>
                 <button
                   onClick={() => signOut({ callbackUrl: "/" })}
                   className="px-4 py-2 text-xs font-bold text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 rounded-xl transition-all duration-200 cursor-pointer"
@@ -114,7 +115,7 @@ export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
               </>
             )}
           </div>
-
+ 
           {/* Mobile menu button */}
           <div className="flex md:hidden items-center gap-2">
             <button
@@ -138,7 +139,7 @@ export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
             </button>
           </div>
         </div>
-
+ 
         {/* Mobile menu */}
         <AnimatePresence>
           {mobileOpen && (
@@ -151,26 +152,26 @@ export function Navbar({ onRunAudit, onStartScan }: NavbarProps) {
             >
               <div className="px-4 py-4 space-y-3">
                 {navLinks.map((link) => (
-                  <a
+                  <Link
                     key={link.href}
                     href={link.href}
                     onClick={() => setMobileOpen(false)}
                     className="block text-sm font-medium text-slate-400 hover:text-teal-400 transition-colors"
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 ))}
                 <div className="pt-3 border-t border-white/10 space-y-2.5">
                   {isLoggedIn ? (
                     <>
-                      <a
+                      <Link
                         href="/dashboard"
                         onClick={() => setMobileOpen(false)}
                         className="block text-sm font-semibold text-slate-200 hover:text-teal-400 mb-1"
                       >
                         Dashboard
-                      </a>
-
+                      </Link>
+ 
                       <button
                         onClick={() => {
                           setMobileOpen(false);

@@ -9,7 +9,7 @@ interface SignupGateProps {
   visible: boolean;
 }
 
-export function SignupGate({ visible }: SignupGateProps) {
+export function SignupGate({ visible: _visible }: SignupGateProps) {
   const { data: session } = useSession();
   const [email, setEmail] = useState("");
   // Deterministic mock data — no Math.random() to avoid hydration mismatches

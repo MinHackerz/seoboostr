@@ -67,19 +67,19 @@ export async function POST(request: NextRequest) {
   
 
   // Dynamic minimum coins
-  let minCoinsRequired = 1.0;
+  let minCoinsRequired = 2.0;
   if (isResume) {
-    // Resume rate: if it was a refresh session (completedCount > 1), rate is 0.2, else 1.0
-    const resumeRate = completedCount > 1 ? 0.2 : 1.0;
+    // Resume rate: if it was a refresh session (completedCount > 1), rate is 3.75, else 2.0
+    const resumeRate = completedCount > 1 ? 3.75 : 2.0;
     minCoinsRequired = resumeRate;
   } else {
     // Starting from scratch
     if (isRefreshSession) {
-      // Refresh audit: 0.2 per page
-      minCoinsRequired = 0.2 * pageCountEstimate;
+      // Refresh audit: 0.25 * 15 = 3.75 credits per page
+      minCoinsRequired = 3.75 * pageCountEstimate;
     } else {
-      // First scan: 1.0 per page
-      minCoinsRequired = 1.0;
+      // First scan: 2.0 per page
+      minCoinsRequired = 2.0 * pageCountEstimate;
     }
   }
 
@@ -160,15 +160,15 @@ export async function POST(request: NextRequest) {
     let newlyCrawledRefreshedCount = 0;
 
     if (isResume) {
-      const resumeRate = completedCount > 1 ? 1.0 : 2.0;
+      const rate = completedCount > 1 ? 3.75 : 2.0;
       const newlyCrawledPending = crawled.filter((p: string) => !previouslyScanned.includes(p));
       const newlyCrawledRefreshed = crawled.filter((p: string) => previouslyScanned.includes(p));
       newlyCrawledPendingCount = newlyCrawledPending.length;
       newlyCrawledRefreshedCount = newlyCrawledRefreshed.length;
-      cost = newlyCrawledPendingCount * resumeRate + newlyCrawledRefreshedCount * 1.0;
+      cost = crawled.length * rate;
     } else {
-      // Starting from scratch: rate is 1.0 for refresh session, 2.0 for first audit
-      const rate = isRefreshSession ? 1.0 : 2.0;
+      // Starting from scratch: rate is 3.75 for refresh session, 2.0 for first audit
+      const rate = isRefreshSession ? 3.75 : 2.0;
       cost = crawled.length * rate;
       if (isRefreshSession) {
         newlyCrawledRefreshedCount = crawled.length;

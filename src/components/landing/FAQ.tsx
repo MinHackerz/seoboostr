@@ -10,7 +10,7 @@ const faqs = [
   },
   {
     q: "How does the pay-as-you-go credit model work?",
-    a: "We charge purely based on usage, with no recurring monthly subscriptions or hidden lock-ins. First-time page scans consume 2.0 credits per page, while subsequent full website rescans cost 1.0 credit per page. Updating a single audit module (e.g. testing if you fixed a Schema issue) costs 1.0 credit per page scan. Flat credit top-ups start at just $2.50.",
+    a: "We charge purely based on usage, with no recurring monthly subscriptions or hidden lock-ins. First-time page scans consume 2.0 credits per page, while subsequent full website rescans cost 3.75 credits per page (0.25 credits per page per module across 15 modules). Updating a single audit module (e.g. testing if you fixed a Schema issue) costs a flat 0.5 credits per page scan. Flat credit top-ups start at just $2.50.",
   },
   {
     q: "What audit modules are included in a scan?",

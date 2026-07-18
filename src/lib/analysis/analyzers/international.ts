@@ -58,6 +58,7 @@ export const internationalAnalyzer: Analyzer = {
         description: "This page has no hreflang tags. If your site targets multiple languages or regions, hreflang tells Google which version to show each audience.",
         severity: "info",
         recommendation: "If your site serves content in multiple languages or regions, add hreflang link elements to indicate language/region variants.",
+        learnMoreUrl: "https://developers.google.com/search/docs/specialty/international/localized-versions",
       });
 
       return {
@@ -90,6 +91,13 @@ export const internationalAnalyzer: Analyzer = {
         severity: "high",
         recommendation: `Add a self-referencing hreflang tag: <link rel="alternate" hreflang="YOUR_LANG" href="${currentUrl}" />`,
         value: `Current URL: ${currentUrl}`,
+        impact: "Without a self-referencing hreflang, Google may ignore all hreflang annotations on this page, causing wrong language versions to appear in search results.",
+        codeSnippet: {
+          language: "html",
+          label: "Add a self-referencing hreflang tag for this page:",
+          code: `<link rel="alternate" hreflang="${page.language || "en"}" href="${currentUrl}" />`,
+        },
+        learnMoreUrl: "https://developers.google.com/search/docs/specialty/international/localized-versions#all-methods",
       });
     }
 
@@ -104,6 +112,12 @@ export const internationalAnalyzer: Analyzer = {
         description: "No x-default hreflang tag found. The x-default tells search engines which page to show when no language match is found.",
         severity: "high",
         recommendation: "Add an x-default hreflang tag pointing to your primary language page or language selector page.",
+        impact: "Without x-default, users in unsupported regions may see an incorrect language version of your page.",
+        codeSnippet: {
+          language: "html",
+          label: "Add an x-default hreflang tag:",
+          code: `<link rel="alternate" hreflang="x-default" href="${currentUrl}" />`,
+        },
       });
     }
 
@@ -121,6 +135,7 @@ export const internationalAnalyzer: Analyzer = {
         severity: "medium",
         recommendation: "Use valid ISO 639-1 language codes (e.g., 'en', 'fr', 'de') optionally combined with ISO 3166-1 region codes (e.g., 'en-US', 'pt-BR').",
         value: invalidLangs.map((t) => t.lang).join(", "),
+        affectedItems: invalidLangs.map((t) => `"${t.lang}" → ${t.href}`),
       });
     }
 
@@ -161,6 +176,7 @@ export const internationalAnalyzer: Analyzer = {
         recommendation: "Replace relative URLs with fully qualified absolute URLs including the protocol and domain.",
         element: relativeUrls.slice(0, 3).map((t) => `${t.lang}: ${t.href}`).join("; "),
         value: `${relativeUrls.length} relative URLs`,
+        affectedItems: relativeUrls.map((t) => `${t.lang}: ${t.href}`),
       });
     }
 
@@ -192,6 +208,7 @@ export const internationalAnalyzer: Analyzer = {
             severity: "medium",
             recommendation: "Ensure the <html lang> attribute matches the hreflang value for the current page.",
             value: `Page: ${page.language}, Hreflang: ${selfRefTag.lang}`,
+            impact: "Mismatched lang and hreflang signals confuse Google about the page's actual language, potentially causing wrong-language rankings.",
           });
         }
       }
