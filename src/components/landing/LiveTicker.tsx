@@ -2,56 +2,78 @@
 
 import { useEffect, useState } from "react";
 import { TICKER_MESSAGES, getScoreColor } from "./moduleData";
+import { Globe02Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+
+function TickerFavicon({ domain }: { domain: string }) {
+  const [error, setError] = useState(false);
+  const faviconUrl = domain
+    ? `https://www.google.com/s2/favicons?domain=${domain}&sz=64`
+    : null;
+
+  if (error || !faviconUrl) {
+    return (
+      <div className="w-5 h-5 rounded-lg flex items-center justify-center bg-gradient-to-tr from-teal-500/10 to-indigo-500/10 border border-teal-500/25 text-teal-400 shrink-0 shadow-sm shadow-teal-500/5 animate-pulse-soft">
+        <HugeiconsIcon icon={Globe02Icon} size={11} />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={faviconUrl}
+      alt=""
+      onLoad={(e) => {
+        if (e.currentTarget.naturalWidth <= 16) {
+          setError(true);
+        }
+      }}
+      onError={() => setError(true)}
+      className="w-5 h-5 object-contain rounded-md select-none pointer-events-none shrink-0"
+    />
+  );
+}
 
 export function LiveTicker() {
   const [messages, setMessages] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadTickerData() {
+      let mergedData = [...TICKER_MESSAGES];
       try {
         const res = await fetch("/api/websites/ticker");
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            setMessages(data);
-            return;
+            // Prepend database scan results, then append static fallbacks
+            mergedData = [...data, ...TICKER_MESSAGES];
           }
         }
       } catch (err) {
         console.error("Failed to load ticker database data:", err);
       }
-      // Fallback to static metrics if database has no scans yet
-      setMessages(TICKER_MESSAGES);
+
+      // Deduplicate by domain
+      const uniqueMap = new Map<string, any>();
+      mergedData.forEach((item: any) => {
+        if (!uniqueMap.has(item.domain.toLowerCase())) {
+          uniqueMap.set(item.domain.toLowerCase(), item);
+        }
+      });
+      const uniqueList = Array.from(uniqueMap.values());
+
+      // Repeat sequence 1, 2, 3... 1, 2, 3... to ensure ticker is long enough
+      let repeatedList = [...uniqueList];
+      while (repeatedList.length > 0 && repeatedList.length < 24) {
+        repeatedList = [...repeatedList, ...uniqueList];
+      }
+      setMessages(repeatedList);
     }
     loadTickerData();
   }, []);
 
   // Double the messages list to guarantee a seamless looping animation
   const displayMessages = messages.length > 0 ? [...messages, ...messages] : [];
-
-  // Helper function to format detail text with keyword syntax highlights
-  const formatDetail = (detail: string) => {
-    const words = detail.split(" ");
-    return words.map((word, idx) => {
-      const cleanWord = word.replace(/[^a-zA-Z0-9-]/g, "");
-      const isNumber = /^\d+/.test(cleanWord);
-      const isLcp = cleanWord.toLowerCase() === "lcp";
-      const isEeat = cleanWord.toLowerCase() === "e-e-a-t";
-      const isSuccess = ["perfect", "passed", "strong", "zero", "ready", "validated"].includes(cleanWord.toLowerCase());
-      const isWarning = ["critical", "missing", "broken", "failed", "violations", "issues", "detected"].includes(cleanWord.toLowerCase());
-      
-      if (isNumber || isLcp || isEeat) {
-        return <span key={idx} className="text-slate-200 font-semibold">{word} </span>;
-      }
-      if (isSuccess) {
-        return <span key={idx} className="text-emerald-400 font-semibold">{word} </span>;
-      }
-      if (isWarning) {
-        return <span key={idx} className="text-red-400 font-semibold">{word} </span>;
-      }
-      return <span key={idx} className="text-slate-400">{word} </span>;
-    });
-  };
 
   return (
     <section className="relative py-4.5 bg-slate-950/40 backdrop-blur-xl border-y border-white/5 overflow-hidden">
@@ -71,8 +93,11 @@ export function LiveTicker() {
           return (
             <div 
               key={i} 
-              className="flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-white/3 border border-white/5 hover:border-teal-500/30 hover:bg-white/8 hover:shadow-[0_0_20px_rgba(20,184,166,0.08)] hover:-translate-y-0.5 transition-all duration-300 group/chip cursor-pointer shrink-0"
+              className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-white/3 border border-white/5 hover:border-teal-500/30 hover:bg-white/8 hover:shadow-[0_0_20px_rgba(20,184,166,0.08)] hover:-translate-y-0.5 transition-all duration-300 group/chip cursor-pointer shrink-0"
             >
+              {/* Favicon */}
+              <TickerFavicon domain={msg.domain} />
+
               {/* Domain Name */}
               <span className="text-xs font-bold text-slate-100 group-hover/chip:text-teal-400 transition-colors font-sans">
                 {msg.domain}
@@ -91,14 +116,6 @@ export function LiveTicker() {
                 }}
               >
                 {msg.score}
-              </span>
-
-              {/* Divider */}
-              <span className="h-3 w-px bg-white/10" />
-
-              {/* Detail Audit Message */}
-              <span className="text-xs font-medium tracking-wide font-sans flex items-center">
-                {formatDetail(msg.detail)}
               </span>
             </div>
           );

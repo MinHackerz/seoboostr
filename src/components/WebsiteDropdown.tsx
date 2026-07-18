@@ -10,6 +10,7 @@ import {
   Cancel01Icon,
   Delete01Icon,
   SearchIcon,
+  Globe02Icon,
 } from "@hugeicons/core-free-icons";
 
 interface WebsiteDropdownProps {
@@ -22,6 +23,46 @@ interface WebsiteDropdownProps {
   onAnalyze?: (url: string) => Promise<void>;
   isAnalyzing?: boolean;
   currentScore?: number | null;
+}
+
+function FaviconIcon({ url, isSelected = false }: { url: string; isSelected?: boolean }) {
+  const [error, setError] = useState(false);
+
+  let domain = "";
+  try {
+    const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
+    domain = parsed.hostname;
+  } catch {
+    domain = url;
+  }
+
+  const faviconUrl = domain
+    ? `https://www.google.com/s2/favicons?domain=${domain}&sz=64`
+    : null;
+
+  if (error || !faviconUrl) {
+    return (
+      <HugeiconsIcon
+        icon={Globe02Icon}
+        size={18}
+        className={isSelected ? "text-accent animate-pulse-soft" : "text-slate-400"}
+      />
+    );
+  }
+
+  return (
+    <img
+      src={faviconUrl}
+      alt=""
+      onLoad={(e) => {
+        if (e.currentTarget.naturalWidth <= 16) {
+          setError(true);
+        }
+      }}
+      onError={() => setError(true)}
+      className="w-5.5 h-5.5 object-contain rounded-md select-none pointer-events-none"
+    />
+  );
 }
 
 export function WebsiteDropdown({
@@ -363,7 +404,7 @@ export function WebsiteDropdown({
                               ? "bg-accent/10 border-accent/20 text-accent shadow-sm"
                               : "bg-slate-50 border-slate-100 text-slate-400"
                           }`}>
-                            <HugeiconsIcon icon={CompassIcon} size={18} />
+                            <FaviconIcon url={w.url} isSelected={isSelected} />
                           </div>
 
                           <div className="flex flex-col min-w-0 flex-1">
