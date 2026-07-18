@@ -45,7 +45,7 @@ export default function TermsPage() {
 
             <h2 className="text-xl font-bold text-white mt-8 mb-3">2. Credit Purchases & Refunds</h2>
             <p>
-              Every new user account is credited with a one-time free signup bonus of 100.0 credits. All purchased credits (via Starter, Professional, or Agency packages) are final and non-refundable. Credits roll over indefinitely and never expire. Deductions are processed automatically: 2.0 credits per page for first-time crawls, 1.0 credit per page for subsequent full site rescans, and 1.0 credit per page for individual module updates.
+              Every new user account is credited with a one-time free signup bonus of 200.0 credits. All purchased credits (via Starter, Professional, or Agency packages) are final and non-refundable. Credits roll over indefinitely and never expire. Deductions are processed automatically: 2.0 credits per page for first-time crawls, 4.50 credits per page for subsequent full site rescans, and 0.5 credits per page for individual module updates.
             </p>
 
             <h2 className="text-xl font-bold text-white mt-8 mb-3">3. Disclaimer of Warranties</h2>

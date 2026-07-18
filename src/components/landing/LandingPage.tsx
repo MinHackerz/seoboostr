@@ -21,6 +21,7 @@ import { LiveTicker } from "./LiveTicker";
 import { ModuleGrid } from "./ModuleGrid";
 import { HowItWorks } from "./HowItWorks";
 import { ComparisonChart } from "./ComparisonChart";
+import { ScoringExplain } from "./ScoringExplain";
 import { FAQ } from "./FAQ";
 import { Pricing } from "./Pricing";
 import { Footer } from "./Footer";
@@ -113,6 +114,7 @@ export function LandingPage() {
       <LiveTicker />
       <ModuleGrid scanResults={scanResults} phase={scanPhase} />
       <HowItWorks />
+      <ScoringExplain />
       <ComparisonChart />
       <Pricing />
       <FAQ />

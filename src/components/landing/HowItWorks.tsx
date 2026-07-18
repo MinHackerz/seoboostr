@@ -212,8 +212,8 @@ export function HowItWorks() {
     },
     {
       step: "02",
-      title: "15 modules scan in parallel",
-      description: "Not one after another — all at once. Technical SEO, content, schema, images, performance — done simultaneously.",
+      title: "18 modules scan in parallel",
+      description: "Not one after another — all at once. Indexability, backlinks, drift, technical, schema, content, performance — done simultaneously.",
       visual: <ParallelAuditVisual />,
     },
     {

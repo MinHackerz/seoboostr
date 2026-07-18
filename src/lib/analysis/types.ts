@@ -19,7 +19,10 @@ export type ModuleName =
   | 'links'
   | 'accessibility'
   | 'international'
-  | 'mobile';
+  | 'mobile'
+  | 'indexability'
+  | 'backlinks'
+  | 'drift';
 
 export interface Issue {
   id: string;
@@ -170,5 +173,5 @@ export interface HreflangTag {
 // Analyzer interface - all analyzers implement this
 export interface Analyzer {
   name: ModuleName;
-  analyze(page: ParsedPage, fetchResult: FetchResult): Promise<ModuleResult>;
+  analyze(page: ParsedPage, fetchResult: FetchResult, previousModule?: ModuleResult): Promise<ModuleResult>;
 }

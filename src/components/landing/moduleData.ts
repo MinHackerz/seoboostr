@@ -134,6 +134,30 @@ export const MODULES: Module[] = [
     iconPath: "M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z",
     demoScore: 83,
   },
+  {
+    id: "indexability",
+    name: "Indexability",
+    shortName: "Indexability",
+    description: "Canonical conflicts, noindex tags, thin content detection, duplicate metadata, and server status codes.",
+    iconPath: "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z",
+    demoScore: 95,
+  },
+  {
+    id: "backlinks",
+    name: "Backlink Profile",
+    shortName: "Backlinks",
+    description: "Link equity distribution, outbound authority citations, generic anchor ratios, and malformed URLs.",
+    iconPath: "M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1",
+    demoScore: 89,
+  },
+  {
+    id: "drift",
+    name: "SEO Drift Monitor",
+    shortName: "SEO Drift",
+    description: "Historical regression tracking, status changes, robots directives modifications, and metadata drift alerts.",
+    iconPath: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+    demoScore: 92,
+  },
 ];
 
 // ── Score utilities ──────────────────────────────────────────
@@ -192,6 +216,9 @@ export function generateMockScan(): ScanResult[] {
       accessibility: [50, 92],
       international: [75, 100],
       mobile: [55, 93],
+      indexability: [70, 98],
+      backlinks: [65, 95],
+      drift: [60, 96],
     };
     const [min, max] = baseScores[mod.id] || [60, 95];
     const score = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -229,6 +256,12 @@ export function generateMockScan(): ScanResult[] {
       finding = score >= 90 ? "✓ Hreflang valid. Self-ref and x-default present." : "⚠️ Missing x-default hreflang. Invalid language codes.";
     } else if (mod.id === "mobile") {
       finding = score >= 90 ? "✓ Touch targets ≥48px. Viewport configured properly." : "⚠️ 3 small touch targets. Zoom disabled via viewport.";
+    } else if (mod.id === "indexability") {
+      finding = score >= 90 ? "✓ Robots.txt directives parsed. 0 canonical discrepancies. Sitemap indexable." : "⚠️ Robots.txt blocks canonical URL pathways. 2 duplicate canonical declarations found.";
+    } else if (mod.id === "backlinks") {
+      finding = score >= 90 ? "✓ High authority outbound references. Anchor keywords optimized." : "⚠️ 4 empty anchor tags detected. Redundant target links found on the homepage.";
+    } else if (mod.id === "drift") {
+      finding = score >= 90 ? "✓ Metatags synchronized. Zero outline regression alerts." : "⚠️ Page speed degraded by 2.4x. Structured Schema type was removed since last crawl.";
     }
 
     // Staggered delays: 800ms - 3500ms to feel like parallel scans completing at different times

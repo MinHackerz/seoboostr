@@ -3,16 +3,16 @@ import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SEO Optimised — 15-Module Parallel SEO Audit in Seconds",
+  title: "SEO Optimised — 18-Module Parallel SEO Audit in Seconds",
   description:
-    "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more. One URL. One scored report.",
+    "Run a free, instant SEO audit across 18 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more. One URL. One scored report.",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
   },
   openGraph: {
-    title: "SEO Optimised — 15-Module Parallel SEO Audit in Seconds",
-    description: "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more.",
+    title: "SEO Optimised — 18-Module Parallel SEO Audit in Seconds",
+    description: "Run a free, instant SEO audit across 18 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more.",
     url: "https://seoptimised.com",
     siteName: "SEO Optimised",
     type: "website",
@@ -21,14 +21,14 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "SEO Optimised — 15-Module Parallel SEO Audit in Seconds. Run free technical SEO, Core Web Vitals, Schema markup, and Content E-E-A-T audits.",
+        alt: "SEO Optimised — 18-Module Parallel SEO Audit in Seconds. Run free technical SEO, Core Web Vitals, Schema markup, and Content E-E-A-T audits.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "SEO Optimised — 15-Module Parallel SEO & GEO Audit",
-    description: "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more.",
+    title: "SEO Optimised — 18-Module Parallel SEO & GEO Audit",
+    description: "Run a free, instant SEO audit across 18 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more.",
     creator: "@menajulm",
     images: ["/og-image.png"],
   }
@@ -49,7 +49,7 @@ const jsonLd = {
         "price": "0.00",
         "priceCurrency": "USD"
       },
-      "description": "Run a free, instant SEO audit across 15 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more."
+      "description": "Run a free, instant SEO audit across 18 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more."
     },
     {
       "@type": "FAQPage",
@@ -60,7 +60,7 @@ const jsonLd = {
           "name": "Is this actually free?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. Run unlimited audits, see your overall score and partial results — no card, no trial expiry. The full 15-module report with issue-level detail is behind a free account."
+            "text": "Yes. Run unlimited audits, see your overall score and partial results — no card, no trial expiry. The full 18-module report with issue-level detail is behind a free account."
           }
         },
         {

@@ -15,6 +15,9 @@ import { linksAnalyzer } from "./analyzers/links";
 import { accessibilityAnalyzer } from "./analyzers/accessibility";
 import { internationalAnalyzer } from "./analyzers/international";
 import { mobileAnalyzer } from "./analyzers/mobile";
+import { indexabilityAnalyzer } from "./analyzers/indexability";
+import { backlinksAnalyzer } from "./analyzers/backlinks";
+import { driftAnalyzer } from "./analyzers/drift";
 
 const ALL_ANALYZERS = [
   technicalAnalyzer,
@@ -31,6 +34,9 @@ const ALL_ANALYZERS = [
   accessibilityAnalyzer,
   internationalAnalyzer,
   mobileAnalyzer,
+  indexabilityAnalyzer,
+  backlinksAnalyzer,
+  driftAnalyzer,
 ];
 
 // Simple average scoring for overall SEO health
@@ -122,7 +128,7 @@ export async function runAnalysis(
     const discovered = discoverAllPages(homepageFetch.finalUrl, homepageParsed, homepageFetch.sitemapXml);
 
     const previouslyScanned = options?.previouslyScannedPages || [];
-    const userCoins = options?.userCoins ?? 100.0;
+    const userCoins = options?.userCoins ?? 200.0;
 
     // Filter discovered pages to find the actual list of pending pages
     const currentPending = discovered.filter((p) => !previouslyScanned.includes(p));
@@ -217,10 +223,11 @@ export async function runAnalysis(
         } else {
           // Page-specific analyzer: execute on all pages crawled in this run
           const startTime = Date.now();
+          const previousModule = options?.previousModules?.find((m) => m.module === analyzer.name);
           const pageRuns = await Promise.all(
             allPages.map(async (page) => {
               try {
-                const run = await analyzer.analyze(page.parsedPage, page.fetchResult);
+                const run = await analyzer.analyze(page.parsedPage, page.fetchResult, previousModule);
                 return {
                   ...run,
                   url: page.url,
@@ -282,6 +289,8 @@ export async function runAnalysis(
                 aggregatedData[key] = aggregatedData[key] || val;
               } else if (Array.isArray(val)) {
                 aggregatedData[key] = [...(aggregatedData[key] || []), ...val];
+              } else if (typeof val === "object" && val !== null) {
+                aggregatedData[key] = { ...(aggregatedData[key] || {}), ...val };
               } else {
                 aggregatedData[key] = val;
               }
@@ -297,7 +306,6 @@ export async function runAnalysis(
           });
 
           // --- Merge with previously scanned, uncrawled pages ---
-          const previousModule = options?.previousModules?.find((m) => m.module === analyzer.name);
           const uncrawledPages = previouslyScanned.filter((p) => !crawledInThisRun.includes(p));
 
           const prevUncrawledIssues = (previousModule?.issues || [])
@@ -351,6 +359,8 @@ export async function runAnalysis(
                 }
               } else if (Array.isArray(newVal) && Array.isArray(prevVal)) {
                 nextAggregatedData[key] = Array.from(new Set([...newVal, ...prevVal]));
+              } else if (typeof newVal === "object" && newVal !== null && typeof prevVal === "object" && prevVal !== null) {
+                nextAggregatedData[key] = { ...prevVal, ...newVal };
               } else {
                 nextAggregatedData[key] = newVal;
               }
@@ -413,6 +423,7 @@ export async function runSingleModuleAnalysis(
   moduleName: string,
   options?: {
     previouslyScannedPages?: string[];
+    previousModule?: ModuleResult;
   }
 ): Promise<ModuleResult & { crawledInThisRun: string[] }> {
   // Step 1: Fetch and parse the home page
@@ -478,7 +489,7 @@ export async function runSingleModuleAnalysis(
     const pageRuns = await Promise.all(
       allPages.map(async (page) => {
         try {
-          const run = await analyzer.analyze(page.parsedPage, page.fetchResult);
+          const run = await analyzer.analyze(page.parsedPage, page.fetchResult, options?.previousModule);
           return {
             ...run,
             url: page.url,

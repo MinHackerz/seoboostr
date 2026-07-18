@@ -56,13 +56,15 @@ export async function POST(request: NextRequest) {
     const rate = 0.5;
     const cost = pageCount * rate;
 
+    const isDemoUser = session.user.email === "demo@seoptimised.com";
+
     // Check user coins balance
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { coins: true },
     });
 
-    if (!user || user.coins < cost) {
+    if (!isDemoUser && (!user || user.coins < cost)) {
       return Response.json(
         {
           error: `Insufficient credits. This module refresh requires at least ${cost.toFixed(2)} credits. Your balance: ${
@@ -73,11 +75,60 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Fetch previous completed result for this specific module to pass baseline context (essential for Drift)
+    const previousResult = await prisma.analysisResult.findFirst({
+      where: {
+        analysis: {
+          websiteId: analysis.websiteId,
+          status: "completed",
+        },
+        module: moduleName,
+      },
+      orderBy: {
+        analysis: {
+          completedAt: "desc",
+        },
+      },
+    });
+
+    const previousModule = previousResult
+      ? {
+          module: previousResult.module as any,
+          status: previousResult.status as any,
+          score: previousResult.score ?? 0,
+          data: (previousResult.data || {}) as any,
+          issues: (previousResult.issues || []) as any,
+          executionTimeMs: previousResult.executionTimeMs ?? 0,
+        }
+      : undefined;
+
     // Run module-scoped analysis
     console.log(`[Module Refresh] Starting refresh for ${moduleName} on ${analysis.website.url}...`);
-    const result = await runSingleModuleAnalysis(analysis.website.url, moduleName, {
-      previouslyScannedPages: previouslyScanned,
-    });
+    let result;
+    if (isDemoUser) {
+      // Simulate delay to make the refresh feel active
+      await new Promise(resolve => setTimeout(resolve, 800));
+      if (!previousModule) {
+        result = {
+          score: 95,
+          data: { scannedPages: [analysis.website.url], pendingPages: [], discoveredPages: [analysis.website.url] },
+          issues: [],
+          executionTimeMs: 120,
+        };
+      } else {
+        result = {
+          score: previousModule.score,
+          data: previousModule.data,
+          issues: previousModule.issues,
+          executionTimeMs: previousModule.executionTimeMs || 100,
+        };
+      }
+    } else {
+      result = await runSingleModuleAnalysis(analysis.website.url, moduleName, {
+        previouslyScannedPages: previouslyScanned,
+        previousModule,
+      });
+    }
 
     // Save results
     const analysisResult = await prisma.analysisResult.upsert({
@@ -106,18 +157,20 @@ export async function POST(request: NextRequest) {
     });
 
     // Deduct coins & create transaction
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { coins: { decrement: cost } },
-    });
+    if (!isDemoUser) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { coins: { decrement: cost } },
+      });
 
-    await prisma.coinTransaction.create({
-      data: {
-        userId: session.user.id,
-        amount: -cost,
-        description: `Refresh module ${moduleName}: ${analysis.website.url} (${pageCount} pages)`,
-      },
-    });
+      await prisma.coinTransaction.create({
+        data: {
+          userId: session.user.id,
+          amount: -cost,
+          description: `Refresh module ${moduleName}: ${analysis.website.url} (${pageCount} pages)`,
+        },
+      });
+    }
 
     // Recalculate overall score
     const allResults = await prisma.analysisResult.findMany({
@@ -138,10 +191,12 @@ export async function POST(request: NextRequest) {
     });
 
     // Fetch updated user coins balance
-    const updatedUser = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { coins: true },
-    });
+    const updatedUser = isDemoUser
+      ? user
+      : await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { coins: true },
+        });
 
     console.log(`[Module Refresh] ${moduleName} refresh completed successfully.`);
 
@@ -157,7 +212,7 @@ export async function POST(request: NextRequest) {
         executionTimeMs: analysisResult.executionTimeMs,
       },
       overallScore,
-      coins: updatedUser?.coins ?? user.coins,
+      coins: updatedUser?.coins ?? (user?.coins ?? 200.0),
     });
   } catch (error) {
     console.error("[Module Refresh] Execution error:", error);

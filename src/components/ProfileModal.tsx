@@ -79,11 +79,11 @@ export function ProfileModal({ isOpen, onClose, currentCoins }: ProfileModalProp
   const pricingTiers = [
     {
       name: "Starter Pack",
-      credits: "50 Credits",
-      price: "$2.50",
+      credits: "200 Credits",
+      price: "$5.00",
       description: "Ideal for single audits and quick checks.",
       features: [
-        "50 audit page scans",
+        "200 audit page scans",
         "Includes Core Web Vitals checks",
         "Credits roll over forever",
       ],
@@ -91,11 +91,11 @@ export function ProfileModal({ isOpen, onClose, currentCoins }: ProfileModalProp
     },
     {
       name: "Professional Pack",
-      credits: "200 Credits",
+      credits: "500 Credits",
       price: "$10.00",
       description: "Best for growing sites needing active fixes.",
       features: [
-        "200 audit page scans",
+        "500 audit page scans",
         "Priority crawling speeds",
         "Credits roll over forever",
       ],
@@ -103,11 +103,11 @@ export function ProfileModal({ isOpen, onClose, currentCoins }: ProfileModalProp
     },
     {
       name: "Agency Pack",
-      credits: "1,500 Credits",
+      credits: "3,000 Credits",
       price: "$50.00",
       description: "Designed for high volume audits & crawls.",
       features: [
-        "1500 audit page scans",
+        "3000 audit page scans",
         "Maximum crawling speeds",
         "Dedicated agency support",
       ],

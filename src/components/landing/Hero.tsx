@@ -237,7 +237,7 @@ export function Hero({ scanPhase, scanResults, scanUrl, onStartScan, onClearScan
             style={{ textWrap: "balance" }}
             className="text-base sm:text-lg text-slate-300 max-w-xl mx-auto leading-relaxed"
           >
-            15 audit modules run simultaneously. You get one clean, scored report.
+            18 audit modules run simultaneously. You get one clean, scored report.
             <br className="hidden sm:block" />
             No signup required to start.
           </p>
@@ -314,7 +314,7 @@ export function Hero({ scanPhase, scanResults, scanUrl, onStartScan, onClearScan
           <span className="text-slate-700">·</span>
           <span className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-teal-400" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
-            15 modules
+            18 modules
           </span>
           <span className="text-slate-700">·</span>
           <span className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">

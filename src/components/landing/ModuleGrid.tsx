@@ -215,6 +215,36 @@ const MODULE_EXTRAS: Record<
       "Media Query Breakdown Verifier",
     ],
   },
+  indexability: {
+    longDesc: "Performs critical validation of indexing directives, canonical tag self-referencing states, and robots meta tags. Resolves indexation loop holes, consolidates duplicate parameter configurations, flags noindex status codes, and detects thin content.",
+    checks: [
+      "Canonical Tag Consolidation",
+      "Robots Tag Contradictions Check",
+      "Noindex / Index Tag Compliance",
+      "Thin Content Length Threshold",
+      "Status Code Error Routing Check",
+    ],
+  },
+  backlinks: {
+    longDesc: "Audits link equity flow across internal and external page resources. Checks anchor text optimization distributions, catches excessive generic anchor terms, monitors follow vs nofollow link profiles, and scans for malformed link destination protocols.",
+    checks: [
+      "Anchor Text Distribution Check",
+      "Link Equity Ratio Calculation",
+      "Nofollow Qualification Rates",
+      "Malformed Link Target Detection",
+      "Authority Outbound Citations check",
+    ],
+  },
+  drift: {
+    longDesc: "Keeps historical baselines of your critical SEO tags to guard against code updates breaking rankings. Triggers regression alerts when status codes, index status rules, canonical link paths, page H1 headings, or title metadata drift from baseline.",
+    checks: [
+      "HTTP Status Regression Monitor",
+      "Canonical Path Change Tracker",
+      "Robots Directives Shift Alert",
+      "Title & Meta Tag Drift Audit",
+      "H1 Semantic Headline Drift Warning",
+    ],
+  },
 };
 
 // Custom interactive animations representing each module's functionalities
@@ -2544,8 +2574,265 @@ function SectionVisualizer({ type }: { type: string }) {
     );
   }
 
+  if (type === "indexability") {
+    return (
+      <div className="w-full h-full flex flex-col justify-between overflow-hidden select-none font-sans text-xs">
+        {/* Mock DevTools tab layout */}
+        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500/30 border border-red-500/50" />
+            <span className="w-2 h-2 rounded-full bg-yellow-500/30 border border-yellow-500/50" />
+            <span className="w-2 h-2 rounded-full bg-green-500/30 border border-green-500/50" />
+          </div>
+          <div className="flex gap-2.5 text-[9px] font-extrabold text-slate-500">
+            <span className="text-teal-400 border-b border-teal-400 pb-1.5">Index Directives</span>
+            <span>Canonical Consolidation</span>
+            <span>Crawler Logs</span>
+          </div>
+        </div>
+
+        {/* Split Layout */}
+        <div className="flex-grow grid grid-cols-1 md:grid-cols-12 gap-5 py-4 items-stretch">
+          {/* Left: Crawler Output */}
+          <div className="md:col-span-6 flex flex-col justify-between h-full bg-slate-950/70 rounded-xl border border-white/5 p-3.5 relative overflow-hidden font-mono text-[9px]">
+            <div className="flex items-center justify-between border-b border-slate-900 pb-1.5 mb-2 w-full">
+              <span className="text-slate-500 uppercase tracking-widest font-black">Directives Auditor</span>
+              <span className="text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Verified</span>
+            </div>
+
+            <div className="space-y-2 py-1">
+              <div className="flex justify-between border-b border-white/[0.02] pb-1">
+                <span className="text-slate-500">GET /blog/seo-trends</span>
+                <span className="text-emerald-400 font-bold">200 OK</span>
+              </div>
+              <div className="flex justify-between border-b border-white/[0.02] pb-1">
+                <span className="text-slate-500">x-robots-tag</span>
+                <span className="text-teal-400 font-bold">index, follow</span>
+              </div>
+              <div className="flex justify-between border-b border-white/[0.02] pb-1">
+                <span className="text-slate-500">canonical</span>
+                <span className="text-slate-300 truncate max-w-[100px]">/blog/seo-trends</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">robots metadata</span>
+                <span className="text-teal-400 font-bold">all, index</span>
+              </div>
+            </div>
+            
+            <div className="text-[8px] text-slate-550 border-t border-slate-900/60 pt-2 flex justify-between items-center font-semibold">
+              <span>Canonical mismatch: None</span>
+              <span className="text-teal-400">100% Eligible</span>
+            </div>
+          </div>
+
+          {/* Right: Validation Checklist */}
+          <div className="md:col-span-6 flex flex-col justify-between h-full bg-slate-950/70 rounded-xl border border-white/5 p-3.5 relative overflow-hidden">
+            <span className="text-[7.5px] text-slate-500 uppercase tracking-widest font-black block mb-2.5">Indexability Scores</span>
+            
+            <div className="flex-grow flex flex-col justify-center space-y-1.5">
+              <div className="flex justify-between items-center bg-slate-900/40 rounded px-2.5 py-1.5 border border-white/[0.02]">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-slate-300">Canonical Matching</span>
+                  <span className="text-[6.5px] text-slate-500 font-mono">No loops or conflicts</span>
+                </div>
+                <span className="text-[6.5px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Passed</span>
+              </div>
+
+              <div className="flex justify-between items-center bg-slate-900/40 rounded px-2.5 py-1.5 border border-white/[0.02]">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-slate-300">Robots directives</span>
+                  <span className="text-[6.5px] text-slate-500 font-mono">No index bloat detected</span>
+                </div>
+                <span className="text-[6.5px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Clean</span>
+              </div>
+
+              <div className="flex justify-between items-center bg-slate-900/40 rounded px-2.5 py-1.5 border border-white/[0.02]">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-slate-300">Thin Content Check</span>
+                  <span className="text-[6.5px] text-slate-500 font-mono">Word count &gt; threshold</span>
+                </div>
+                <span className="text-[6.5px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Passed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-2.5 rounded-xl bg-slate-950/80 border border-white/5 flex items-center justify-between text-[8.5px] text-slate-500 font-sans">
+          <span>Target URL is fully ready for Googlebot indexing</span>
+          <span className="text-emerald-400 font-bold">100/100 Score</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "backlinks") {
+    return (
+      <div className="w-full h-full flex flex-col justify-between overflow-hidden select-none font-sans text-xs">
+        {/* Mock DevTools tab layout */}
+        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500/30 border border-red-500/50" />
+            <span className="w-2 h-2 rounded-full bg-yellow-500/30 border border-yellow-500/50" />
+            <span className="w-2 h-2 rounded-full bg-green-500/30 border border-green-500/50" />
+          </div>
+          <div className="flex gap-2.5 text-[9px] font-extrabold text-slate-500">
+            <span className="text-teal-400 border-b border-teal-400 pb-1.5">Link Equity</span>
+            <span>Anchor Texts</span>
+            <span>Trust Citations</span>
+          </div>
+        </div>
+
+        {/* Split Layout */}
+        <div className="flex-grow grid grid-cols-1 md:grid-cols-12 gap-5 py-4 items-stretch">
+          {/* Left: Link structure visualizer */}
+          <div className="md:col-span-6 flex flex-col justify-between h-full bg-slate-950/70 rounded-xl border border-white/5 p-3.5 relative overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-900 pb-1.5 mb-2 w-full">
+              <span className="text-[7.5px] text-slate-500 uppercase tracking-widest font-black">Anchor Text Distribution</span>
+              <span className="text-[7.5px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold uppercase">Healthy</span>
+            </div>
+
+            <div className="relative w-full flex-grow flex items-center justify-center py-1">
+              <svg className="w-full h-full min-h-[90px]" viewBox="0 0 200 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Outbound Link Nodes */}
+                <circle cx="40" cy="45" r="12" fill="#090d16" stroke="#8b5cf6" strokeWidth="1.2" />
+                <text x="40" y="47.5" fontSize="5.5" fontWeight="bold" fill="#a78bfa" textAnchor="middle">Branded</text>
+
+                <circle cx="100" cy="25" r="12" fill="#090d16" stroke="#14b8a6" strokeWidth="1.2" />
+                <text x="100" y="27.5" fontSize="5.5" fontWeight="bold" fill="#2dd4bf" textAnchor="middle">Keyword</text>
+
+                <circle cx="160" cy="45" r="12" fill="#090d16" stroke="#3b82f6" strokeWidth="1.2" />
+                <text x="160" y="47.5" fontSize="5.5" fontWeight="bold" fill="#60a5fa" textAnchor="middle">Generic</text>
+
+                <path d="M 40 45 L 100 25 M 100 25 L 160 45" stroke="rgba(255,255,255,0.06)" strokeWidth="1" strokeDasharray="3 3" />
+              </svg>
+            </div>
+
+            <span className="text-[7px] text-slate-500 uppercase tracking-widest font-black text-center block">Anchor Text Type Overlap</span>
+          </div>
+
+          {/* Right: Metrics */}
+          <div className="md:col-span-6 flex flex-col justify-between h-full bg-slate-950/70 rounded-xl border border-white/5 p-3.5 relative overflow-hidden">
+            <span className="text-[7.5px] text-slate-500 uppercase tracking-widest font-black block mb-2.5">Equity Ratios</span>
+            
+            <div className="flex-grow flex flex-col justify-center space-y-1.5">
+              <div className="flex justify-between items-center bg-slate-900/40 rounded px-2.5 py-1.5 border border-white/[0.02]">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-slate-300">Authority Citations</span>
+                  <span className="text-[6.5px] text-slate-500 font-mono">Linked to trusted .gov/.edu</span>
+                </div>
+                <span className="text-[6.5px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">E-E-A-T Check</span>
+              </div>
+
+              <div className="flex justify-between items-center bg-slate-900/40 rounded px-2.5 py-1.5 border border-white/[0.02]">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-slate-300">Anchor Distribution</span>
+                  <span className="text-[6.5px] text-slate-500 font-mono">Branded anchors dominance</span>
+                </div>
+                <span className="text-[6.5px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Optimal</span>
+              </div>
+
+              <div className="flex justify-between items-center bg-slate-900/40 rounded px-2.5 py-1.5 border border-white/[0.02]">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-slate-300">Outbound Link Health</span>
+                  <span className="text-[6.5px] text-slate-500 font-mono">0 malformed link protocols</span>
+                </div>
+                <span className="text-[6.5px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Clean</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-2.5 rounded-xl bg-slate-950/80 border border-white/5 flex items-center justify-between text-[8.5px] text-slate-500 font-sans">
+          <span>Authority citation profile and internal link anchors are optimized</span>
+          <span className="text-emerald-400 font-bold">Passed</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (type === "drift") {
+    return (
+      <div className="w-full h-full flex flex-col justify-between overflow-hidden select-none font-sans text-xs">
+        {/* Mock DevTools tab layout */}
+        <div className="flex items-center justify-between border-b border-white/5 pb-2">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500/30 border border-red-500/50" />
+            <span className="w-2 h-2 rounded-full bg-yellow-500/30 border border-yellow-500/50" />
+            <span className="w-2 h-2 rounded-full bg-green-500/30 border border-green-500/50" />
+          </div>
+          <div className="flex gap-2.5 text-[9px] font-extrabold text-slate-500">
+            <span className="text-teal-400 border-b border-teal-400 pb-1.5">Baseline vs Current</span>
+            <span>Diff Alerts</span>
+            <span>Historical Logs</span>
+          </div>
+        </div>
+
+        {/* Split Layout */}
+        <div className="flex-grow grid grid-cols-1 md:grid-cols-12 gap-5 py-4 items-stretch">
+          {/* Left: Code Diff viewer */}
+          <div className="md:col-span-7 flex flex-col justify-between h-full bg-slate-950/70 rounded-xl border border-white/5 p-3.5 relative overflow-hidden font-mono text-[8px]">
+            <div className="flex items-center justify-between border-b border-slate-900 pb-1.5 mb-2 w-full">
+              <span className="text-slate-500 uppercase tracking-widest font-black">Git-Style Diff</span>
+              <span className="text-rose-400 font-bold bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20">Drift Alert</span>
+            </div>
+
+            <div className="space-y-1.5 py-1">
+              <div className="text-slate-500">@@ -1,5 +1,5 @@</div>
+              <div className="text-rose-400 bg-rose-500/5 px-1 py-0.5 border-l-2 border-rose-500">- &lt;title&gt;Best Developer Tools for SEO&lt;/title&gt;</div>
+              <div className="text-emerald-400 bg-emerald-500/5 px-1 py-0.5 border-l-2 border-emerald-500">+ &lt;title&gt;SEO Toolkit - Home&lt;/title&gt;</div>
+              <div className="text-slate-400 px-1 py-0.5 border-l-2 border-transparent">  &lt;meta name=&quot;description&quot; content=&quot;Audits...&quot;</div>
+              <div className="text-rose-400 bg-rose-500/5 px-1 py-0.5 border-l-2 border-rose-500">- &lt;meta name=&quot;robots&quot; content=&quot;index,follow&quot;&gt;</div>
+              <div className="text-emerald-400 bg-emerald-500/5 px-1 py-0.5 border-l-2 border-emerald-500">+ &lt;meta name=&quot;robots&quot; content=&quot;noindex,follow&quot;&gt;</div>
+            </div>
+            
+            <div className="text-[7.5px] text-slate-550 border-t border-slate-900/60 pt-2 flex justify-between items-center font-semibold">
+              <span className="text-rose-400">Critical: robots directive changed to noindex</span>
+            </div>
+          </div>
+
+          {/* Right: Regressions Alert Center */}
+          <div className="md:col-span-5 flex flex-col justify-between h-full bg-slate-950/70 rounded-xl border border-white/5 p-3.5 relative overflow-hidden">
+            <span className="text-[7.5px] text-slate-500 uppercase tracking-widest font-black block mb-2.5">Alert Center</span>
+            
+            <div className="flex-grow flex flex-col justify-center space-y-1.5">
+              <div className="flex justify-between items-center bg-rose-950/30 rounded px-2.5 py-1.5 border border-rose-500/10">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-rose-300">Index Status Drift</span>
+                  <span className="text-[6.5px] text-rose-500/70 font-mono">noindex tags injected</span>
+                </div>
+                <span className="text-[6.5px] text-rose-400 font-bold bg-rose-500/10 px-1.5 py-0.5 rounded border border-rose-500/20">Critical</span>
+              </div>
+
+              <div className="flex justify-between items-center bg-amber-950/20 rounded px-2.5 py-1.5 border border-amber-500/10">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-amber-300">Title Tag Drift</span>
+                  <span className="text-[6.5px] text-amber-500/70 font-mono">Meta title re-written</span>
+                </div>
+                <span className="text-[6.5px] text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">High</span>
+              </div>
+
+              <div className="flex justify-between items-center bg-slate-900/40 rounded px-2.5 py-1.5 border border-white/[0.02]">
+                <div className="flex flex-col">
+                  <span className="text-[8px] font-bold text-slate-300">Status Code Drift</span>
+                  <span className="text-[6.5px] text-slate-500 font-mono">Stable 200 responses</span>
+                </div>
+                <span className="text-[6.5px] text-emerald-400 font-bold bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">Stable</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-2.5 rounded-xl bg-slate-950/80 border border-white/5 flex items-center justify-between text-[8.5px] text-slate-500 font-sans">
+          <span>Drift monitor detected 2 critical metadata changes against baseline</span>
+          <span className="text-rose-400 font-bold">2 Regressions</span>
+        </div>
+      </div>
+    );
+  }
+
   return null;
 }
+
 
 export function ModuleGrid({ scanResults, phase }: ModuleGridProps) {
   const isScanned = phase === "complete" && !!scanResults;
@@ -2602,18 +2889,18 @@ export function ModuleGrid({ scanResults, phase }: ModuleGridProps) {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M4 6h16M4 12h16M4 18h16" />
             </svg>
-            15 Parallel Check Modules
+            18 Parallel Check Modules
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight mb-4 leading-tight">
-            One URL. <span className="gradient-text">Fifteen audits.</span> One report.
+            One URL. <span className="gradient-text">Eighteen audits.</span> One report.
           </h2>
           <p className="text-sm sm:text-base text-slate-300 max-w-xl mx-auto leading-relaxed font-semibold">
-            Every module runs in parallel across our cloud architecture. Below is the full breakdown of all 15 audit check modules.
+            Every module runs in parallel across our cloud architecture. Below is the full breakdown of all 18 audit check modules.
           </p>
         </motion.div>
       </div>
 
-      {/* ── Staggered Full-Width Alternating Bands for all 15 modules ── */}
+      {/* ── Staggered Full-Width Alternating Bands for all 18 modules ── */}
       <div className="w-full border-t border-white/5">
 {MODULES.map((mod, modIdx) => {
           const isEven = modIdx % 2 === 0;

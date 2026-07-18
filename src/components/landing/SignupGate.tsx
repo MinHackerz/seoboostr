@@ -56,7 +56,7 @@ export function SignupGate({ visible: _visible }: SignupGateProps) {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-white">Full SEO Audit Report</h3>
-                <p className="text-xs text-slate-400 font-mono tabular-nums">yoursite.com · 15 modules · 47 issues found</p>
+                <p className="text-xs text-slate-400 font-mono tabular-nums">yoursite.com · 18 modules · 47 issues found</p>
               </div>
             </div>
 
@@ -114,7 +114,7 @@ export function SignupGate({ visible: _visible }: SignupGateProps) {
                 Unlock your full report
               </h3>
               <p className="text-sm text-slate-500 text-center mb-6 leading-relaxed">
-                Your audit ran across all 15 modules. Create a free account to see
+                Your audit ran across all 18 modules. Create a free account to see
                 every issue, fix priority, and score breakdown.
               </p>
 

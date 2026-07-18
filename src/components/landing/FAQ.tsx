@@ -6,15 +6,15 @@ import { motion, AnimatePresence } from "framer-motion";
 const faqs = [
   {
     q: "Is SEO Optimised actually free to start?",
-    a: "Yes. You can sign up for a free account instantly—no credit card required—and receive 100.0 credits. This is enough to run audits on up to 50 pages. You can scan your site, inspect detailed issue-level reports, and view scores across all 15 audit modules entirely within the free credits quota.",
+    a: "Yes. You can sign up for a free account instantly—no credit card required—and receive 200.0 credits. This is enough to run audits on up to 100 pages. You can scan your site, inspect detailed issue-level reports, and view scores across all 18 audit modules entirely within the free credits quota.",
   },
   {
     q: "How does the pay-as-you-go credit model work?",
-    a: "We charge purely based on usage, with no recurring monthly subscriptions or hidden lock-ins. First-time page scans consume 2.0 credits per page, while subsequent full website rescans cost 3.75 credits per page (0.25 credits per page per module across 15 modules). Updating a single audit module (e.g. testing if you fixed a Schema issue) costs a flat 0.5 credits per page scan. Flat credit top-ups start at just $2.50.",
+    a: "We charge purely based on usage, with no recurring monthly subscriptions or hidden lock-ins. First-time page scans consume 2.0 credits per page, while subsequent full website rescans cost 4.50 credits per page (0.25 credits per page per module across 18 modules). Updating a single audit module (e.g. testing if you fixed a Schema issue) costs a flat 0.5 credits per page scan. Flat credit top-ups start at just $5.00.",
   },
   {
     q: "What audit modules are included in a scan?",
-    a: "SEO Optimised executes 15 specialized audits in parallel. This covers Core Web Vitals performance parameters, Schema JSON-LD structured data validation, content E-E-A-T indicators (Trust/Authority), AI & Search Engine Visibility factors (GEO), image optimization, sitemaps, link integrity, security headers, accessibility guidelines, mobile layouts, and international targeting.",
+    a: "SEO Optimised executes 18 specialized audits in parallel. This covers indexability tags, backlink profiles, SEO drift & regression monitoring, Core Web Vitals performance parameters, Schema JSON-LD structured data validation, content E-E-A-T indicators (Trust/Authority), AI & Search Engine Visibility factors (GEO), image optimization, sitemaps, link integrity, security headers, accessibility guidelines, mobile layouts, and international targeting.",
   },
   {
     q: "How is this different from Google Lighthouse?",
@@ -30,7 +30,7 @@ const faqs = [
   },
   {
     q: "Can I export white-label reports for clients?",
-    a: "Absolutely. All report summaries and full 15-module sheets are exportable as clean, client-ready documents. Agencies upgrading to our high-volume tiers can apply white-label branding, custom logos, and host audit reports on their own custom domains.",
+    a: "Absolutely. All report summaries and full 18-module sheets are exportable as clean, client-ready documents. Agencies upgrading to our high-volume tiers can apply white-label branding, custom logos, and host audit reports on their own custom domains.",
   },
 ];
 

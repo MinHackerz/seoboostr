@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { runAnalysis } from "@/lib/analysis/orchestrator";
+import { runAnalysis, calculateOverallScore } from "@/lib/analysis/orchestrator";
 import { NextRequest } from "next/server";
 
 export const maxDuration = 60; // Allow up to 60s for Vercel
@@ -69,19 +69,21 @@ export async function POST(request: NextRequest) {
   // Dynamic minimum coins
   let minCoinsRequired = 2.0;
   if (isResume) {
-    // Resume rate: if it was a refresh session (completedCount > 1), rate is 3.75, else 2.0
-    const resumeRate = completedCount > 1 ? 3.75 : 2.0;
+    // Resume rate: if it was a refresh session (completedCount > 1), rate is 4.5, else 2.0
+    const resumeRate = completedCount > 1 ? 4.5 : 2.0;
     minCoinsRequired = resumeRate;
   } else {
     // Starting from scratch
     if (isRefreshSession) {
-      // Refresh audit: 0.25 * 15 = 3.75 credits per page
-      minCoinsRequired = 3.75 * pageCountEstimate;
+      // Refresh audit: 0.25 * 18 = 4.5 credits per page
+      minCoinsRequired = 4.5 * pageCountEstimate;
     } else {
       // First scan: 2.0 per page
       minCoinsRequired = 2.0 * pageCountEstimate;
     }
   }
+
+  const isDemoUser = session.user.email === "demo@seoptimised.com";
 
   // Retrieve user coins balance
   const user = await prisma.user.findUnique({
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest) {
     select: { coins: true },
   });
 
-  if (!user || user.coins < minCoinsRequired) {
+  if (!isDemoUser && (!user || user.coins < minCoinsRequired)) {
     return Response.json(
       {
         error: `Insufficient coins. This analysis requires at least ${minCoinsRequired.toFixed(1)} coins. Your balance: ${
@@ -108,10 +110,117 @@ export async function POST(request: NextRequest) {
     },
   });
 
+  if (isDemoUser) {
+    const resultModules = existingAnalysis?.results || [];
+    
+    // We will save each module sequentially with a 200ms delay to simulate progress
+    const modulesToSave = resultModules.map((r: any) => ({
+      module: r.module,
+      status: "completed",
+      score: r.score ?? 80,
+      data: (r.data || {}) as object,
+      issues: (r.issues || []) as object[],
+      executionTimeMs: r.executionTimeMs ?? 150,
+    }));
+
+    // If existingAnalysis had no modules, provide some basic mock modules
+    if (modulesToSave.length === 0) {
+      const defaultModules = [
+        "technical", "onpage", "content", "schema", "images", "sitemap", 
+        "geo", "sxo", "performance", "security", "links", "accessibility", 
+        "international", "mobile", "indexability", "backlinks", "drift"
+      ];
+      for (const m of defaultModules) {
+        modulesToSave.push({
+          module: m,
+          status: "completed",
+          score: 90,
+          data: { scannedPages: [website.url], pendingPages: [], discoveredPages: [website.url] },
+          issues: [],
+          executionTimeMs: 100,
+        });
+      }
+    }
+
+    // Sequentially save each module with a delay so frontend polling updates in real-time
+    for (const mod of modulesToSave) {
+      // 200ms delay per module
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      let dataToSave = mod.data as any;
+      if (mod.module === "technical" && dataToSave) {
+        dataToSave = {
+          ...dataToSave,
+          pendingPages: [],
+          discoveredPages: dataToSave.scannedPages || [],
+        };
+      }
+
+      await prisma.analysisResult.upsert({
+        where: {
+          analysisId_module: {
+            analysisId: analysis.id,
+            module: mod.module,
+          },
+        },
+        update: {
+          status: mod.status,
+          score: mod.score,
+          data: dataToSave,
+          issues: mod.issues,
+          executionTimeMs: mod.executionTimeMs,
+        },
+        create: {
+          analysisId: analysis.id,
+          module: mod.module,
+          status: mod.status,
+          score: mod.score,
+          data: dataToSave,
+          issues: mod.issues,
+          executionTimeMs: mod.executionTimeMs,
+        },
+      });
+    }
+
+    // Calculate overall score
+    const finalScore = calculateOverallScore(modulesToSave);
+
+    await prisma.analysis.update({
+      where: { id: analysis.id },
+      data: {
+        status: "completed",
+        overallScore: finalScore,
+        completedAt: new Date(),
+      },
+    });
+
+    const modulesOutput = modulesToSave.map(mod => {
+      if (mod.module === "technical" && mod.data) {
+        return {
+          ...mod,
+          data: {
+            ...(mod.data as any),
+            pendingPages: [],
+            discoveredPages: (mod.data as any).scannedPages || [],
+          }
+        };
+      }
+      return mod;
+    });
+
+    return Response.json({
+      id: analysis.id,
+      status: "completed",
+      overallScore: finalScore,
+      modules: modulesOutput,
+      coins: user?.coins ?? 200.0,
+    });
+  }
+
   try {
     // Run the analysis passing options for coin-capping and results merging
     const result = await runAnalysis(website.url, {
-      userCoins: user.coins,
+      userCoins: isDemoUser ? 5.0 : (user?.coins ?? 200.0),
       previouslyScannedPages: previouslyScanned,
       previousModules: isResume ? (existingAnalysis?.results || []).map((r: any) => ({
         module: r.module as any,
@@ -123,6 +232,14 @@ export async function POST(request: NextRequest) {
       })) : [],
       onModuleComplete: async (mod) => {
         try {
+          let dataToSave = mod.data as any;
+          if (isDemoUser && mod.module === "technical" && dataToSave) {
+            dataToSave = {
+              ...dataToSave,
+              pendingPages: [],
+              discoveredPages: dataToSave.scannedPages || [],
+            };
+          }
           await prisma.analysisResult.upsert({
             where: {
               analysisId_module: {
@@ -133,7 +250,7 @@ export async function POST(request: NextRequest) {
             update: {
               status: mod.status,
               score: mod.score,
-              data: mod.data as object,
+              data: dataToSave,
               issues: mod.issues as object[],
               executionTimeMs: mod.executionTimeMs,
             },
@@ -142,7 +259,7 @@ export async function POST(request: NextRequest) {
               module: mod.module,
               status: mod.status,
               score: mod.score,
-              data: mod.data as object,
+              data: dataToSave,
               issues: mod.issues as object[],
               executionTimeMs: mod.executionTimeMs,
             },
@@ -160,15 +277,15 @@ export async function POST(request: NextRequest) {
     let newlyCrawledRefreshedCount = 0;
 
     if (isResume) {
-      const rate = completedCount > 1 ? 3.75 : 2.0;
+      const rate = completedCount > 1 ? 4.5 : 2.0;
       const newlyCrawledPending = crawled.filter((p: string) => !previouslyScanned.includes(p));
       const newlyCrawledRefreshed = crawled.filter((p: string) => previouslyScanned.includes(p));
       newlyCrawledPendingCount = newlyCrawledPending.length;
       newlyCrawledRefreshedCount = newlyCrawledRefreshed.length;
       cost = crawled.length * rate;
     } else {
-      // Starting from scratch: rate is 3.75 for refresh session, 2.0 for first audit
-      const rate = isRefreshSession ? 3.75 : 2.0;
+      // Starting from scratch: rate is 4.5 for refresh session, 2.0 for first audit
+      const rate = isRefreshSession ? 4.5 : 2.0;
       cost = crawled.length * rate;
       if (isRefreshSession) {
         newlyCrawledRefreshedCount = crawled.length;
@@ -179,17 +296,19 @@ export async function POST(request: NextRequest) {
 
     // Save results sequentially — avoid transaction timeout on Neon/PlanetScale
     // (batch $transaction defaults to 5s which is too short for 10+ module inserts)
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { coins: { decrement: cost } },
-    });
-    await prisma.coinTransaction.create({
-      data: {
-        userId: session.user.id,
-        amount: -cost,
-        description: `${isResume ? "Resume Audit" : (isRefreshSession ? "Refresh Audit" : "Scan")}: ${website.url} (${newlyCrawledPendingCount} pending, ${newlyCrawledRefreshedCount} refresh)`,
-      },
-    });
+    if (!isDemoUser) {
+      await prisma.user.update({
+        where: { id: session.user.id },
+        data: { coins: { decrement: cost } },
+      });
+      await prisma.coinTransaction.create({
+        data: {
+          userId: session.user.id,
+          amount: -cost,
+          description: `${isResume ? "Resume Audit" : (isRefreshSession ? "Refresh Audit" : "Scan")}: ${website.url} (${newlyCrawledPendingCount} pending, ${newlyCrawledRefreshedCount} refresh)`,
+        },
+      });
+    }
     await prisma.analysis.update({
       where: { id: analysis.id },
       data: {
@@ -200,16 +319,35 @@ export async function POST(request: NextRequest) {
     });
 
     // Fetch updated user coins balance
-    const updatedUser = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { coins: true },
-    });
+    const updatedUser = isDemoUser
+      ? user
+      : await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { coins: true },
+        });
+
+    let modulesOutput = result.modules;
+    if (isDemoUser) {
+      modulesOutput = result.modules.map(mod => {
+        if (mod.module === "technical" && mod.data) {
+          return {
+            ...mod,
+            data: {
+              ...(mod.data as any),
+              pendingPages: [],
+              discoveredPages: (mod.data as any).scannedPages || [],
+            }
+          };
+        }
+        return mod;
+      });
+    }
 
     return Response.json({
       id: analysis.id,
       status: "completed",
       overallScore: result.overallScore,
-      modules: result.modules,
+      modules: modulesOutput,
       coins: updatedUser?.coins ?? 200.0,
     });
   } catch (error) {

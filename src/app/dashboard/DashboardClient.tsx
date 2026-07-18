@@ -32,6 +32,7 @@ import {
   Globe02Icon,
   SmartphoneWifiIcon,
   CheckmarkCircle02Icon,
+  SearchIcon,
 } from "@hugeicons/core-free-icons";
 import {
   BarChart,
@@ -71,7 +72,10 @@ type TabId =
   | "links"
   | "accessibility"
   | "international"
-  | "mobile";
+  | "mobile"
+  | "indexability"
+  | "backlinks"
+  | "drift";
 
 const TABS = [
   { id: "overview" as const, label: "Overview", icon: DashboardSquare01Icon },
@@ -93,6 +97,9 @@ const TABS = [
   { id: "accessibility" as const, label: "Accessibility", icon: AccessibilityIcon },
   { id: "international" as const, label: "International SEO", icon: Globe02Icon },
   { id: "mobile" as const, label: "Mobile UX", icon: SmartphoneWifiIcon },
+  { id: "indexability" as const, label: "Indexability", icon: SearchIcon },
+  { id: "backlinks" as const, label: "Backlinks", icon: Link01Icon },
+  { id: "drift" as const, label: "SEO Drift", icon: Refresh01Icon },
   { id: "pagespeed" as const, label: "PageSpeed Insights", icon: ActivityIcon },
 ];
 
@@ -852,11 +859,11 @@ export function DashboardClient({ user }: { user: User }) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-500 font-medium">Full Website Rescan</span>
-                    <span className="font-semibold text-slate-800">3.75 cr / page</span>
+                    <span className="font-semibold text-slate-800">4.5 cr / page</span>
                   </div>
                   <div className="flex justify-between flex-col mt-0.5 pt-0.5 border-t border-slate-100">
                     <span className="text-[10px] text-slate-450 font-semibold leading-tight">
-                      (Rescan runs 15 modules at 0.25 cr/page per module)
+                      (Rescan runs 18 modules at 0.25 cr/page per module)
                     </span>
                   </div>
                   <div className="flex justify-between mt-1 pt-1 border-t border-slate-100">
@@ -1333,16 +1340,25 @@ export function DashboardClient({ user }: { user: User }) {
                         onUpdateAnalysis={handleUpdateAnalysisModule}
                       />
                     ) : (
-                      <ModuleTab
-                        result={getModuleResult(activeTab)}
-                        moduleName={
-                          TABS.find((t) => t.id === activeTab)?.label || activeTab
-                        }
-                        onRefreshModule={handleRefreshModule}
-                        isRefreshing={isRefreshingModule}
-                        currentCoins={coins}
-                        isDemoMode={user.email === "demo@seoptimised.com"}
-                      />
+                      (() => {
+                        const techResult = getModuleResult("technical");
+                        const scannedPagesCount = (techResult?.data as any)?.scannedPages?.length || 1;
+                        return (
+                          <ModuleTab
+                            key={activeTab}
+                            result={getModuleResult(activeTab)}
+                            moduleId={activeTab}
+                            moduleName={
+                              TABS.find((t) => t.id === activeTab)?.label || activeTab
+                            }
+                            onRefreshModule={handleRefreshModule}
+                            isRefreshing={isRefreshingModule}
+                            currentCoins={coins}
+                            isDemoMode={user.email === "demo@seoptimised.com"}
+                            scannedPagesCount={scannedPagesCount}
+                          />
+                        );
+                      })()
                     )}
                   </div>
                 ) : (
@@ -1369,7 +1385,7 @@ export function DashboardClient({ user }: { user: User }) {
                           <span className="text-accent">SEO Health</span>
                         </h3>
                         <p className="text-[13px] text-slate-500 max-w-lg font-medium leading-relaxed mb-7">
-                          Run a comprehensive 15-module audit covering technical SEO, content quality, schema markup, Core Web Vitals, security headers, accessibility, and more.
+                          Run a comprehensive 18-module audit covering technical SEO, content quality, schema markup, Core Web Vitals, security headers, accessibility, and more.
                         </p>
 
                         {/* URL Input Area */}
@@ -1528,6 +1544,13 @@ function OverviewTab({
     setSelectedIssueId("all");
   }, [selectedPage]);
 
+  // Reset all filters when active analysis changes
+  useEffect(() => {
+    setSelectedPage("all");
+    setSelectedIssueId("all");
+    setActiveSeverityTab("all");
+  }, [analysis?.id]);
+
   // Validate and reset filters when severity changes to avoid deadlocks
   useEffect(() => {
     const validPages = Array.from(
@@ -1602,7 +1625,7 @@ function OverviewTab({
   const totalCount = (techResult?.data as any)?.discoveredPages?.length || scannedCount + pendingCount || 0;
   const hasPending = pendingCount > 0;
 
-  const minCoinsRequired = hasPending ? (2.0 * pendingCount) : (scannedCount > 0 ? 3.75 * scannedCount : 3.75);
+  const minCoinsRequired = hasPending ? (2.0 * pendingCount) : (scannedCount > 0 ? 4.5 * scannedCount : 4.5);
   const isCoinsInsufficient = currentCoins < minCoinsRequired || currentCoins <= 0;
 
   // Filter raw issues by active filters (Page, Issue Type, Severity)
@@ -1728,22 +1751,18 @@ function OverviewTab({
           </p>
         </div>
         <button
-          onClick={(e) => {
-            if (isDemoMode) {
-              e.preventDefault();
-              return;
-            }
+          onClick={() => {
             onRefresh({ resume: false });
           }}
-          disabled={isRefreshing || isCoinsInsufficient || isDemoMode}
+          disabled={isRefreshing || (isCoinsInsufficient && !isDemoMode)}
           title={
             isDemoMode
-              ? "Refresh audit is disabled in demo mode."
+              ? "Refresh Audit"
               : isCoinsInsufficient
                 ? `Insufficient coins. Requires at least ${minCoinsRequired.toFixed(1)} coins. Your balance: ${currentCoins.toFixed(1)} coins.`
                 : ""
           }
-          className={`flex items-center gap-1.5 px-4 py-2 bg-white text-slate-700 font-bold border rounded-xl transition-all text-xs shrink-0 border-slate-200 ${isDemoMode || isCoinsInsufficient || isRefreshing
+          className={`flex items-center gap-1.5 px-4 py-2 bg-white text-slate-700 font-bold border rounded-xl transition-all text-xs shrink-0 border-slate-200 ${(!isDemoMode && isCoinsInsufficient) || isRefreshing
             ? "opacity-50 cursor-not-allowed pointer-events-none"
             : "hover:bg-slate-50 cursor-pointer"
             }`}
@@ -2134,18 +2153,22 @@ function SummaryRow({
 /* ---------- Module Tab ---------- */
 function ModuleTab({
   result,
+  moduleId,
   moduleName,
   onRefreshModule,
   isRefreshing,
   currentCoins,
   isDemoMode = false,
+  scannedPagesCount = 1,
 }: {
   result: ModuleResult | undefined;
+  moduleId?: string;
   moduleName: string;
   onRefreshModule?: (moduleName: string) => Promise<void>;
   isRefreshing?: boolean;
   currentCoins?: number;
   isDemoMode?: boolean;
+  scannedPagesCount?: number;
 }) {
   const [selectedPage, setSelectedPage] = useState<string>("all");
   const [selectedIssueId, setSelectedIssueId] = useState<string>("all");
@@ -2174,6 +2197,13 @@ function ModuleTab({
   useEffect(() => {
     setSelectedIssueId("all");
   }, [selectedPage]);
+
+  // Reset all filters when category module changes
+  useEffect(() => {
+    setSelectedPage("all");
+    setSelectedIssueId("all");
+    setActiveSeverityTab("all");
+  }, [result?.module]);
 
   // Validate and reset filters when severity changes to avoid deadlocks
   useEffect(() => {
@@ -2206,9 +2236,65 @@ function ModuleTab({
   }, [activeSeverityTab]);
 
   if (!result) {
+    const estimatedCost = (scannedPagesCount ?? 1) * 0.5;
+    const isCoinsInsufficient = currentCoins !== undefined && currentCoins < estimatedCost;
+
     return (
-      <div className="text-center py-12 bg-card border border-border rounded-2xl text-slate-500">
-        <p className="font-bold">No data available for {moduleName}</p>
+      <div className="max-w-2xl mx-auto my-8 p-8 sm:p-12 text-center bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl shadow-sm relative overflow-hidden animate-fade-in">
+        {/* Subtle decorative elements */}
+        <div className="absolute inset-0 opacity-[0.015]" style={{
+          backgroundImage: `radial-gradient(circle at 1px 1px, var(--color-accent) 0.5px, transparent 0)`,
+          backgroundSize: '20px 20px',
+        }} />
+        <div className="absolute -top-20 -right-20 w-48 h-48 bg-teal-100/30 dark:bg-teal-900/10 rounded-full blur-[60px]" />
+
+        <div className="relative z-10 flex flex-col items-center justify-center space-y-5">
+          <div className="w-14 h-14 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center text-accent shadow-xs">
+            <HugeiconsIcon icon={CompassIcon} size={26} />
+          </div>
+
+          <div>
+            <h3 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight">
+              Audit Not Run Yet
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto leading-relaxed">
+              The <strong>{moduleName}</strong> audit category has not been executed for this scan session. Run this individual category audit to retrieve optimization suggestions.
+            </p>
+          </div>
+
+          {onRefreshModule && moduleId && (
+            <div className="pt-2 flex flex-col items-center gap-3">
+              <button
+                onClick={async () => {
+                  await onRefreshModule(moduleId);
+                }}
+                disabled={isRefreshing || (isCoinsInsufficient && !isDemoMode)}
+                title={
+                  isDemoMode
+                    ? "Run this section audit"
+                    : isCoinsInsufficient
+                      ? `Insufficient credits. Requires ${estimatedCost.toFixed(2)} credits. Your balance: ${currentCoins?.toFixed(2)} credits.`
+                      : `Run this section audit (costs ${estimatedCost.toFixed(2)} credits)`
+                }
+                className={`flex items-center gap-2 px-5 py-3 bg-accent text-white font-extrabold rounded-2xl transition-all text-xs shadow-md shadow-accent/25 hover:shadow-lg ${(!isDemoMode && isCoinsInsufficient) || isRefreshing
+                  ? "opacity-50 cursor-not-allowed pointer-events-none"
+                  : "hover:bg-accent/90 cursor-pointer"
+                  }`}
+              >
+                <HugeiconsIcon
+                  icon={Refresh01Icon}
+                  size={14}
+                  className={isRefreshing ? "animate-spin-premium" : ""}
+                />
+                <span>{isRefreshing ? "Auditing Section..." : "Audit Category Now"}</span>
+              </button>
+              
+              <span className="text-[10px] text-slate-450 dark:text-slate-500 font-semibold font-mono">
+                Cost: {estimatedCost.toFixed(2)} Credits
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -2300,10 +2386,10 @@ function ModuleTab({
     }
   };
 
-  const scannedPagesCount = (result && result.data && Array.isArray(result.data.scannedPages))
+  const count = (result && result.data && Array.isArray(result.data.scannedPages))
     ? result.data.scannedPages.length
-    : 1;
-  const estimatedCost = scannedPagesCount * 0.5;
+    : (scannedPagesCount || 1);
+  const estimatedCost = count * 0.5;
   const isCoinsInsufficient = currentCoins !== undefined && currentCoins < estimatedCost;
 
   return (
@@ -2314,22 +2400,18 @@ function ModuleTab({
           <ScoreGauge score={result.score} size={110} label={moduleName} />
           {onRefreshModule && (
             <button
-              onClick={(e) => {
-                if (isDemoMode) {
-                  e.preventDefault();
-                  return;
-                }
+              onClick={() => {
                 onRefreshModule(result.module);
               }}
-              disabled={isRefreshing || isDemoMode || isCoinsInsufficient}
+              disabled={isRefreshing || (isCoinsInsufficient && !isDemoMode)}
               title={
                 isDemoMode
-                  ? "Refresh is disabled in demo mode."
+                  ? "Refresh this section"
                   : isCoinsInsufficient
                     ? `Insufficient coins. Requires ${estimatedCost.toFixed(2)} coins. Your balance: ${currentCoins?.toFixed(2)} coins.`
                     : `Refresh this section (costs ${estimatedCost.toFixed(2)} coins)`
               }
-              className={`mt-4 flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-700 font-bold border rounded-xl transition-all text-xs border-slate-200 ${isDemoMode || isRefreshing || isCoinsInsufficient
+              className={`mt-4 flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-700 font-bold border rounded-xl transition-all text-xs border-slate-200 ${(!isDemoMode && isCoinsInsufficient) || isRefreshing
                 ? "opacity-50 cursor-not-allowed pointer-events-none"
                 : "hover:bg-slate-50 cursor-pointer"
                 }`}

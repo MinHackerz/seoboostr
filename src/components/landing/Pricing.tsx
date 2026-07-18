@@ -7,29 +7,29 @@ export function Pricing() {
   const deductions = [
     { name: "Initial Homepage Audit", cost: "2.0 credits", detail: "Charged once when saving or importing a new website's homepage report." },
     { name: "First-Time Page Scans", cost: "2.0 credits / pg", detail: "Per page scanned when crawling and analyzing newly discovered subpages from scratch." },
-    { name: "Full Website Rescans", cost: "3.75 credits / pg", detail: "Charges 0.25 credits per page scan per module (15 modules total) when running rescan refresh audits." },
-    { name: "Resume Paused Scans", cost: "Dynamic", detail: "Charges 2.0 credits per pending new page, and 3.75 credits per previously scanned page." },
+    { name: "Full Website Rescans", cost: "4.50 credits / pg", detail: "Charges 0.25 credits per page scan per module (18 modules total) when running rescan refresh audits." },
+    { name: "Resume Paused Scans", cost: "Dynamic", detail: "Charges 2.0 credits per pending new page, and 4.50 credits per previously scanned page." },
     { name: "Single Module Rescan", cost: "0.5 credits / pg", detail: "Per page scanned when updating a single module (e.g., Schema, Performance) at a flat 0.5 rate." },
   ];
 
   const packages = [
     {
       name: "Starter Pack",
-      credits: "50",
-      price: "$2.50",
+      credits: "200",
+      price: "$5.00",
       description: "Ideal for single audits and quick checks.",
       popular: false,
     },
     {
       name: "Professional Pack",
-      credits: "200",
+      credits: "500",
       price: "$10.00",
       description: "Best for growing sites needing active fixes.",
       popular: true,
     },
     {
       name: "Agency Pack",
-      credits: "1,500",
+      credits: "3,000",
       price: "$50.00",
       description: "Designed for high volume audits & crawls.",
       popular: false,
@@ -127,7 +127,7 @@ export function Pricing() {
             transition={{ duration: 0.4, delay: 0.15 }}
             className="text-slate-300 font-medium text-sm sm:text-base leading-relaxed"
           >
-            Every new account gets <span className="text-teal-400 font-extrabold font-mono px-2.5 py-0.5 bg-teal-500/10 border border-teal-500/25 rounded-md shadow-[0_0_10px_rgba(20,184,166,0.15)] select-none">100.0 free credits</span> instantly upon signing up. Use them right away to crawl pages and audit your sites.
+            Every new account gets <span className="text-teal-400 font-extrabold font-mono px-2.5 py-0.5 bg-teal-500/10 border border-teal-500/25 rounded-md shadow-[0_0_10px_rgba(20,184,166,0.15)] select-none">200.0 free credits</span> instantly upon signing up. Use them right away to crawl pages and audit your sites.
           </motion.p>
         </div>
 
@@ -252,7 +252,7 @@ export function Pricing() {
 
               <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between relative z-10 select-none">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">No monthly fees. Pay as you go.</span>
-                <span className="text-[9px] font-black text-teal-400 font-mono bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 shadow-sm">0.05 USD / credit</span>
+                <span className="text-[9px] font-black text-teal-400 font-mono bg-white/5 px-2.5 py-1 rounded-lg border border-white/10 shadow-sm">From 0.016 USD / credit</span>
               </div>
             </div>
           </motion.div>
