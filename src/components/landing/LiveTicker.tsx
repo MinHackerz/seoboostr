@@ -30,6 +30,10 @@ function TickerFavicon({ domain }: { domain: string }) {
       }}
       onError={() => setError(true)}
       className="w-5 h-5 object-contain rounded-md select-none pointer-events-none shrink-0"
+      width={20}
+      height={20}
+      loading="lazy"
+      decoding="async"
     />
   );
 }

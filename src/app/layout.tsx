@@ -1,24 +1,38 @@
+/* eslint-disable @next/next/google-font-preconnect */
 import type { Metadata } from "next";
 import { Providers } from "@/components/Providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SEO Optimised — 18-Module Parallel SEO Audit in Seconds",
+  metadataBase: new URL("https://seoptimised.com"),
+  title: "Free SEO Audit Tool & Website Checker — SEO Optimised",
   description:
-    "Run a free, instant SEO audit across 18 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more. One URL. One scored report.",
+    "Audit your website in seconds with SEO Optimised. Run a free website checker across 18 technical SEO, schema, content E-E-A-T, and Core Web Vitals modules in parallel. No signup required.",
+  keywords: [
+    "free seo audit tool",
+    "seo checker",
+    "website seo checker",
+    "technical seo audit",
+    "schema validator",
+    "core web vitals test",
+    "seo analysis"
+  ],
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
   },
+  alternates: {
+    canonical: "https://seoptimised.com",
+  },
   openGraph: {
-    title: "SEO Optimised — 18-Module Parallel SEO Audit in Seconds",
+    title: "Free SEO Audit Tool & Website Checker — SEO Optimised",
     description: "Run a free, instant SEO audit across 18 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more.",
     url: "https://seoptimised.com",
     siteName: "SEO Optimised",
     type: "website",
     images: [
       {
-        url: "/og-image.png",
+        url: "/og-image.webp",
         width: 1200,
         height: 630,
         alt: "SEO Optimised — 18-Module Parallel SEO Audit in Seconds. Run free technical SEO, Core Web Vitals, Schema markup, and Content E-E-A-T audits.",
@@ -27,10 +41,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "SEO Optimised — 18-Module Parallel SEO & GEO Audit",
+    title: "Free SEO Audit Tool & Website Checker — SEO Optimised",
     description: "Run a free, instant SEO audit across 18 modules simultaneously: technical SEO, schema markup, content E-E-A-T, Core Web Vitals, security headers, accessibility, AI visibility, and more.",
     creator: "@menajulm",
-    images: ["/og-image.png"],
+    images: ["/og-image.webp"],
   }
 };
 
@@ -98,6 +112,8 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap"

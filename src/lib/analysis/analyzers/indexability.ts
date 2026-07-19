@@ -42,7 +42,7 @@ function isUrlBlockedByRobotsTxt(urlPath: string, robotsTxtContent: string): boo
       }
     }
     return isBlocked;
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -61,7 +61,6 @@ export const indexabilityAnalyzer: Analyzer = {
     const headersRobots = ((fetchResult.headers || {})["x-robots-tag"] || "").toLowerCase();
     
     const hasNoIndex = robots.includes("noindex") || headersRobots.includes("noindex");
-    const hasNoFollow = robots.includes("nofollow") || headersRobots.includes("nofollow");
 
     data.metaRobots = page.metaRobots || "None";
     data.xRobotsTag = (fetchResult.headers || {})["x-robots-tag"] || "None";
@@ -86,7 +85,7 @@ export const indexabilityAnalyzer: Analyzer = {
       try {
         const urlObj = new URL(pageUrl);
         isBlockedByRobotsTxt = isUrlBlockedByRobotsTxt(urlObj.pathname, fetchResult.robotsTxt);
-      } catch (e) {
+      } catch {
         // Safe fallback
       }
     }
@@ -223,7 +222,7 @@ export const indexabilityAnalyzer: Analyzer = {
             learnMoreUrl: "https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls"
           });
         }
-      } catch (e) {
+      } catch {
         issues.push({
           id: "index-invalid-canonical-url",
           title: "Invalid Canonical URL Format",

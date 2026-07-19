@@ -131,6 +131,10 @@ export function ProfileModal({ isOpen, onClose, currentCoins }: ProfileModalProp
                 src={profile.image}
                 alt={profile.name || "User"}
                 className="w-11 h-11 rounded-full object-cover border border-slate-200"
+                width={44}
+                height={44}
+                loading="lazy"
+                decoding="async"
               />
             ) : (
               <div className="w-11 h-11 rounded-full bg-accent/10 border border-accent/15 flex items-center justify-center text-accent font-black text-xs select-none">

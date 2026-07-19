@@ -116,6 +116,8 @@ export function Footer() {
                 className="w-8 h-8 rounded-xl object-contain shadow-md"
                 width={32}
                 height={32}
+                loading="lazy"
+                decoding="async"
               />
               <span className="text-lg font-black tracking-tight text-white">
                 SEO Optimised
@@ -127,12 +129,28 @@ export function Footer() {
           </div>
  
           {/* Links */}
-          <div className="flex gap-10 sm:gap-16">
+          <div className="flex flex-wrap gap-10 sm:gap-16">
             <div className="space-y-3">
               <p className="text-[11px] font-extrabold text-teal-400 uppercase tracking-wider">Product</p>
               <Link href="/#modules" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">Features & Modules</Link>
               <Link href="/#pricing" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">Credits & Pricing</Link>
               <Link href="/#faq" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">FAQ</Link>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-[11px] font-extrabold text-teal-400 uppercase tracking-wider">Free Tools</p>
+              <Link href="/free-tools/geo-grader" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">GEO Grader</Link>
+              <Link href="/free-tools/ai-overview-simulator" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">AI Overview Simulator</Link>
+              <Link href="/free-tools/robots-generator" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">Robots.txt Generator</Link>
+              <Link href="/free-tools/llms-generator" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">LLMs.txt Generator</Link>
+              <Link href="/free-tools/crawler-checker" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">AI Crawler Checker</Link>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-[11px] font-extrabold text-teal-400 uppercase tracking-wider">Contact</p>
+              <a href="https://menajul.com" target="_blank" rel="noopener noreferrer" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">Website</a>
+              <a href="https://x.com/menajulm" target="_blank" rel="noopener noreferrer" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">X (Twitter)</a>
+              <a href="https://github.com/minhackerz" target="_blank" rel="noopener noreferrer" className="block text-xs font-semibold text-slate-300 hover:text-white transition-colors">GitHub</a>
             </div>
           </div>
         </div>

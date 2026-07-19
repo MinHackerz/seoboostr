@@ -24,6 +24,7 @@ export function Navbar({ onRunAudit: _onRunAudit, onStartScan: _onStartScan }: N
  
   const navLinks = [
     { href: "/#modules", label: "Features" },
+    { href: "/free-tools", label: "Free Tools" },
     { href: "/#pricing", label: "Pricing" },
     { href: "/#faq", label: "FAQ" },
   ];
@@ -47,6 +48,8 @@ export function Navbar({ onRunAudit: _onRunAudit, onStartScan: _onStartScan }: N
                 className="w-8 h-8 rounded-xl object-contain border border-white/10 group-hover/logo:border-teal-500/30 transition-all duration-300"
                 width={32}
                 height={32}
+                fetchPriority="high"
+                decoding="async"
               />
             </div>
             <span className="text-lg font-black tracking-tight text-white group-hover/logo:text-teal-400 transition-colors font-sans">

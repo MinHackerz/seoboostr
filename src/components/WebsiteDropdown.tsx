@@ -61,6 +61,10 @@ function FaviconIcon({ url, isSelected = false }: { url: string; isSelected?: bo
       }}
       onError={() => setError(true)}
       className="w-5.5 h-5.5 object-contain rounded-md select-none pointer-events-none"
+      width={22}
+      height={22}
+      loading="lazy"
+      decoding="async"
     />
   );
 }

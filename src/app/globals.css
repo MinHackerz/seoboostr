@@ -804,4 +804,122 @@
   animation: fluid-morph 6s ease-in-out infinite;
 }
 
+/* Print Styles for PDF Generation */
+@media print {
+  /* Hide UI elements that are not part of the audit content */
+  header,
+  aside,
+  button,
+  select,
+  .no-print,
+  .export-dropdown {
+    display: none !important;
+  }
+
+  /* Reset layout constraints to allow full-width scrollable printable pages */
+  body, 
+  .h-screen, 
+  main,
+  div,
+  main > div {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    background-image: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Remove scrollbars during print */
+  ::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 1.5cm 1.2cm;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Force background colors to print on cards and details blocks */
+  .bg-card, 
+  .bg-white,
+  .bg-slate-50,
+  .border,
+  .issue-card-expanded,
+  .issue-card-rec-box,
+  .issue-card-impact-box,
+  .issue-card-tech-box {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* High contrast text overrides */
+  .text-slate-900,
+  .text-slate-850,
+  .text-slate-800,
+  .text-slate-700,
+  .text-slate-655,
+  .text-slate-650,
+  .text-slate-600,
+  .text-slate-500,
+  .text-slate-400 {
+    color: #1e293b !important;
+  }
+
+  /* Exact color adjustments for severity labels */
+  .bg-rose-50, .text-rose-600, .bg-rose-50\/60 {
+    background-color: #fef2f2 !important;
+    color: #991b1b !important;
+    border-color: #fca5a5 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .bg-orange-50, .text-orange-600, .bg-orange-50\/60 {
+    background-color: #fff7ed !important;
+    color: #9a3412 !important;
+    border-color: #fed7aa !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .bg-amber-50, .text-amber-600, .bg-amber-50\/60 {
+    background-color: #fef9c3 !important;
+    color: #854d0e !important;
+    border-color: #fde047 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .bg-sky-50, .text-sky-655, .bg-sky-50\/60 {
+    background-color: #f0f9ff !important;
+    color: #0369a1 !important;
+    border-color: #bae6fd !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .bg-emerald-50, .text-emerald-700, .bg-emerald-50\/60 {
+    background-color: #f0fdf4 !important;
+    color: #15803d !important;
+    border-color: #bbf7d0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Page breaks configuration to prevent awkward cuts */
+  h1, h2, h3, h4, h5 {
+    page-break-after: avoid;
+  }
+  tr, li, .issue-card, .stat-card {
+    page-break-inside: avoid;
+  }
+}
+
 

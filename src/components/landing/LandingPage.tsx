@@ -19,9 +19,12 @@ import { Navbar } from "./Navbar";
 import { Hero } from "./Hero";
 import { LiveTicker } from "./LiveTicker";
 import { ModuleGrid } from "./ModuleGrid";
+import { FeaturesSection } from "./FeaturesSection";
 import { HowItWorks } from "./HowItWorks";
 import { ComparisonChart } from "./ComparisonChart";
 import { ScoringExplain } from "./ScoringExplain";
+import { Testimonials } from "./Testimonials";
+import { FreeToolbox } from "./FreeToolbox";
 import { FAQ } from "./FAQ";
 import { Pricing } from "./Pricing";
 import { Footer } from "./Footer";
@@ -113,9 +116,12 @@ export function LandingPage() {
       />
       <LiveTicker />
       <ModuleGrid scanResults={scanResults} phase={scanPhase} />
+      <FeaturesSection />
       <HowItWorks />
       <ScoringExplain />
       <ComparisonChart />
+      <Testimonials />
+      <FreeToolbox />
       <Pricing />
       <FAQ />
       <Footer />

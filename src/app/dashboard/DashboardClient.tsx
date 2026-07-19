@@ -540,6 +540,71 @@ export function DashboardClient({ user }: { user: User }) {
     return analysis?.modules?.find((m) => m.module === name);
   };
 
+  const handleExportCSV = useCallback((targetTab?: TabId) => {
+    if (!analysis) return;
+    const tabToExport = targetTab || activeTab;
+    const isOverview = tabToExport === "overview";
+    const targetModules = isOverview 
+      ? (analysis.modules || []) 
+      : (analysis.modules || []).filter(m => m.module === tabToExport);
+
+    const issuesToExport = targetModules.flatMap(m => 
+      (m.issues || []).map(i => ({
+        ...i,
+        moduleName: m.module
+      }))
+    );
+
+    if (issuesToExport.length === 0) {
+      alert("No issues found to export for this view.");
+      return;
+    }
+
+    const headers = ["Page URL", "Category/Module", "Issue ID", "Title", "Severity", "Description", "Impact", "Recommendation"];
+    const escapeCSV = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const csvRows = [
+      headers.join(","),
+      ...issuesToExport.map(issue => [
+        escapeCSV(issue.url || url),
+        escapeCSV(issue.moduleName),
+        escapeCSV(issue.id),
+        escapeCSV(issue.title),
+        escapeCSV(issue.severity),
+        escapeCSV(issue.description),
+        escapeCSV(issue.impact || ""),
+        escapeCSV(issue.recommendation)
+      ].join(","))
+    ];
+
+    const csvContent = csvRows.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    
+    let hostname = "website";
+    try {
+      hostname = new URL(url.startsWith("http") ? url : `https://${url}`).hostname;
+    } catch {}
+    
+    const fileName = `seoboostr_audit_${hostname}_${isOverview ? 'all' : tabToExport}_${new Date().toISOString().slice(0, 10)}.csv`;
+    
+    link.setAttribute("href", downloadUrl);
+    link.setAttribute("download", fileName);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [analysis, activeTab, url]);
+
+  const handlePrintPDF = useCallback(() => {
+    window.print();
+  }, []);
+
   // Fetch initial websites and load initial/last-selected target on mount
   useEffect(() => {
     const loadInitialWebsite = async () => {
@@ -792,7 +857,15 @@ export function DashboardClient({ user }: { user: User }) {
             } w-auto`}
         >
           <div className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="SEO Optimised" className="w-9 h-9 rounded-xl shrink-0 object-contain" />
+            <img
+              src="/logo.png"
+              alt="SEO Optimised"
+              className="w-9 h-9 rounded-xl shrink-0 object-contain"
+              width={36}
+              height={36}
+              fetchPriority="high"
+              decoding="async"
+            />
             {isSidebarExpanded && (
               <span className="text-xl font-black tracking-tight text-slate-800 animate-fade-in whitespace-nowrap hidden md:inline">
                 SEO Optimised
@@ -897,6 +970,10 @@ export function DashboardClient({ user }: { user: User }) {
                   alt={user.name || "User Avatar"}
                   className="w-8 h-8 rounded-full ring-2 ring-slate-100 object-cover"
                   referrerPolicy="no-referrer"
+                  width={32}
+                  height={32}
+                  fetchPriority="high"
+                  decoding="async"
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-xs ring-2 ring-slate-100 shadow-xs">
@@ -1331,6 +1408,8 @@ export function DashboardClient({ user }: { user: User }) {
                         isRefreshing={isLoading}
                         currentCoins={coins}
                         isDemoMode={user.email === "demo@seoptimised.com"}
+                        onExportPDF={handlePrintPDF}
+                        onExportCSV={() => handleExportCSV("overview")}
                       />
                     ) : activeTab === "pagespeed" ? (
                       <PageSpeedTab
@@ -1356,6 +1435,8 @@ export function DashboardClient({ user }: { user: User }) {
                             currentCoins={coins}
                             isDemoMode={user.email === "demo@seoptimised.com"}
                             scannedPagesCount={scannedPagesCount}
+                            onExportPDF={handlePrintPDF}
+                            onExportCSV={() => handleExportCSV(activeTab)}
                           />
                         );
                       })()
@@ -1377,7 +1458,15 @@ export function DashboardClient({ user }: { user: User }) {
                       <div className="relative z-10 px-8 pt-10 pb-9 sm:px-12">
                         {/* Badge + Title */}
                         <div className="flex items-center gap-2.5 mb-3">
-                          <img src="/logo.png" alt="SEO Optimised" className="w-9 h-9 rounded-xl object-contain" />
+                          <img
+                            src="/logo.png"
+                            alt="SEO Optimised"
+                            className="w-9 h-9 rounded-xl object-contain"
+                            width={36}
+                            height={36}
+                            fetchPriority="high"
+                            decoding="async"
+                          />
                           <span className="text-[9px] font-black text-accent uppercase tracking-[0.18em] bg-accent/5 border border-accent/10 px-2.5 py-1 rounded-full">SEO Analyzer</span>
                         </div>
                         <h3 className="text-2xl sm:text-[28px] font-black text-slate-850 mb-2 tracking-tight leading-tight">
@@ -1505,12 +1594,16 @@ function OverviewTab({
   isRefreshing,
   currentCoins,
   isDemoMode = false,
+  onExportPDF,
+  onExportCSV,
 }: {
   analysis: AnalysisData;
   onRefresh: (options?: { resume?: boolean }) => void;
   isRefreshing: boolean;
   currentCoins: number;
   isDemoMode?: boolean;
+  onExportPDF: () => void;
+  onExportCSV: () => void;
 }) {
   const [activeSeverityTab, setActiveSeverityTab] = useState<
     "all" | "critical" | "high" | "medium" | "low"
@@ -1750,36 +1843,40 @@ function OverviewTab({
             Key insights and summary metrics from your website scan.
           </p>
         </div>
-        <button
-          onClick={() => {
-            onRefresh({ resume: false });
-          }}
-          disabled={isRefreshing || (isCoinsInsufficient && !isDemoMode)}
-          title={
-            isDemoMode
-              ? "Refresh Audit"
-              : isCoinsInsufficient
-                ? `Insufficient coins. Requires at least ${minCoinsRequired.toFixed(1)} coins. Your balance: ${currentCoins.toFixed(1)} coins.`
-                : ""
-          }
-          className={`flex items-center gap-1.5 px-4 py-2 bg-white text-slate-700 font-bold border rounded-xl transition-all text-xs shrink-0 border-slate-200 ${(!isDemoMode && isCoinsInsufficient) || isRefreshing
-            ? "opacity-50 cursor-not-allowed pointer-events-none"
-            : "hover:bg-slate-50 cursor-pointer"
-            }`}
-        >
-          <HugeiconsIcon
-            icon={Refresh01Icon}
-            size={14}
-            className={isRefreshing ? "animate-spin-premium text-accent" : "text-slate-400"}
-          />
-          <span>
-            {isRefreshing
-              ? "Refreshing..."
-              : hasPending
-                ? `Resume Audit (${pendingCount} pending)`
-                : "Refresh Audit"}
-          </span>
-        </button>
+        <div className="flex items-center gap-3 no-print">
+          <ExportDropdown onExportPDF={onExportPDF} onExportCSV={onExportCSV} />
+          
+          <button
+            onClick={() => {
+              onRefresh({ resume: false });
+            }}
+            disabled={isRefreshing || (isCoinsInsufficient && !isDemoMode)}
+            title={
+              isDemoMode
+                ? "Refresh Audit"
+                : isCoinsInsufficient
+                  ? `Insufficient coins. Requires at least ${minCoinsRequired.toFixed(1)} coins. Your balance: ${currentCoins.toFixed(1)} coins.`
+                  : ""
+            }
+            className={`flex items-center gap-1.5 px-4 py-2 bg-white text-slate-700 font-bold border rounded-xl transition-all text-xs shrink-0 border-slate-200 ${(!isDemoMode && isCoinsInsufficient) || isRefreshing
+              ? "opacity-50 cursor-not-allowed pointer-events-none"
+              : "hover:bg-slate-50 cursor-pointer"
+              }`}
+          >
+            <HugeiconsIcon
+              icon={Refresh01Icon}
+              size={14}
+              className={isRefreshing ? "animate-spin-premium text-accent" : "text-slate-400"}
+            />
+            <span>
+              {isRefreshing
+                ? "Refreshing..."
+                : hasPending
+                  ? `Resume Audit (${pendingCount} pending)`
+                  : "Refresh Audit"}
+            </span>
+          </button>
+        </div>
       </div>
 
       {hasPending && (
@@ -2160,6 +2257,8 @@ function ModuleTab({
   currentCoins,
   isDemoMode = false,
   scannedPagesCount = 1,
+  onExportPDF,
+  onExportCSV,
 }: {
   result: ModuleResult | undefined;
   moduleId?: string;
@@ -2169,6 +2268,8 @@ function ModuleTab({
   currentCoins?: number;
   isDemoMode?: boolean;
   scannedPagesCount?: number;
+  onExportPDF: () => void;
+  onExportCSV: () => void;
 }) {
   const [selectedPage, setSelectedPage] = useState<string>("all");
   const [selectedIssueId, setSelectedIssueId] = useState<string>("all");
@@ -2398,32 +2499,36 @@ function ModuleTab({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         <div className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center justify-center relative">
           <ScoreGauge score={result.score} size={110} label={moduleName} />
-          {onRefreshModule && (
-            <button
-              onClick={() => {
-                onRefreshModule(result.module);
-              }}
-              disabled={isRefreshing || (isCoinsInsufficient && !isDemoMode)}
-              title={
-                isDemoMode
-                  ? "Refresh this section"
-                  : isCoinsInsufficient
-                    ? `Insufficient coins. Requires ${estimatedCost.toFixed(2)} coins. Your balance: ${currentCoins?.toFixed(2)} coins.`
-                    : `Refresh this section (costs ${estimatedCost.toFixed(2)} coins)`
-              }
-              className={`mt-4 flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-700 font-bold border rounded-xl transition-all text-xs border-slate-200 ${(!isDemoMode && isCoinsInsufficient) || isRefreshing
-                ? "opacity-50 cursor-not-allowed pointer-events-none"
-                : "hover:bg-slate-50 cursor-pointer"
-                }`}
-            >
-              <HugeiconsIcon
-                icon={Refresh01Icon}
-                size={12}
-                className={isRefreshing ? "animate-spin-premium text-accent" : "text-slate-400"}
-              />
-              <span>{isRefreshing ? "Refreshing..." : "Refresh Section"}</span>
-            </button>
-          )}
+          
+          <div className="mt-4 flex items-center gap-2 no-print">
+            <ExportDropdown onExportPDF={onExportPDF} onExportCSV={onExportCSV} />
+            {onRefreshModule && (
+              <button
+                onClick={() => {
+                  onRefreshModule(result.module);
+                }}
+                disabled={isRefreshing || (isCoinsInsufficient && !isDemoMode)}
+                title={
+                  isDemoMode
+                    ? "Refresh this section"
+                    : isCoinsInsufficient
+                      ? `Insufficient coins. Requires ${estimatedCost.toFixed(2)} coins. Your balance: ${currentCoins?.toFixed(2)} coins.`
+                      : `Refresh this section (costs ${estimatedCost.toFixed(2)} coins)`
+                }
+                className={`flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-700 font-bold border rounded-xl transition-all text-xs border-slate-200 ${(!isDemoMode && isCoinsInsufficient) || isRefreshing
+                  ? "opacity-50 cursor-not-allowed pointer-events-none"
+                  : "hover:bg-slate-50 cursor-pointer"
+                  }`}
+              >
+                <HugeiconsIcon
+                  icon={Refresh01Icon}
+                  size={12}
+                  className={isRefreshing ? "animate-spin-premium text-accent" : "text-slate-400"}
+                />
+                <span>{isRefreshing ? "Refreshing..." : "Refresh Section"}</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="bg-card border border-border rounded-2xl p-6 sm:col-span-2 flex flex-col justify-between">
@@ -2811,6 +2916,67 @@ function RenderDataValue({ label, value }: { label: string; value: any }) {
       >
         {String(value)}
       </span>
+    </div>
+  );
+}
+
+/* ---------- Export Dropdown Component ---------- */
+function ExportDropdown({ 
+  onExportPDF, 
+  onExportCSV 
+}: { 
+  onExportPDF: () => void; 
+  onExportCSV: () => void; 
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleOutsideClick = () => setIsOpen(false);
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, [isOpen]);
+
+  return (
+    <div className="relative inline-block text-left no-print">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
+        className="flex items-center gap-1.5 px-4 py-2 bg-white text-slate-700 font-bold border rounded-xl hover:bg-slate-50 transition-all text-xs border-slate-200 cursor-pointer shadow-xs"
+      >
+        {/* Custom SVG Download/Export Icon */}
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Export Report</span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-150 rounded-xl shadow-lg z-50 overflow-hidden py-1 animate-scale-up">
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              onExportPDF();
+            }}
+            className="w-full px-4 py-2.5 text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 cursor-pointer"
+          >
+            {/* Custom SVG PDF Document Icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-rose-500"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>Export PDF Report</span>
+          </button>
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              onExportCSV();
+            }}
+            className="w-full px-4 py-2.5 text-left text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors flex items-center gap-2 cursor-pointer border-t border-slate-50"
+          >
+            {/* Custom SVG CSV Grid Icon */}
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-500"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+            <span>Export CSV (Spreadsheet)</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 }
