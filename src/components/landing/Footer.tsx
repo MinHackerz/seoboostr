@@ -48,61 +48,75 @@ export function Footer() {
  
       {/* Top glowing divider line */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-teal-500/50 to-transparent pointer-events-none" />
- 
-      {/* CTA Banner inside Glass Container */}
-      <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-22 pb-12 sm:pb-16 text-center">
+
+      {/* CTA Banner - Minimal & Full Width */}
+      <motion.div
+        ref={cardRef}
+        onMouseMove={handleMouseMove}
+        className="group relative w-full border-b border-white/10 bg-slate-950/20 backdrop-blur-xs py-16 sm:py-24 text-center overflow-hidden transition-all duration-300"
+      >
+        {/* Spotlight Hover Glow */}
         <motion.div
-          ref={cardRef}
-          onMouseMove={handleMouseMove}
-          className="group rounded-3xl p-8 sm:p-12 border border-white/10 bg-slate-950/40 backdrop-blur-2xl shadow-2xl hover:border-teal-500/35 shadow-teal-500/5 transition-all duration-300 relative overflow-hidden"
-        >
-          {/* Spotlight Hover Glow */}
-          <motion.div
-            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-0"
-            style={{
-              background: useMotionTemplate`
-                radial-gradient(
-                  240px circle at ${mouseX}px ${mouseY}px,
-                  rgba(20, 184, 166, 0.15),
-                  transparent 80%
-                )
-              `,
-            }}
-          />
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-px bg-gradient-to-r from-transparent via-teal-400 to-transparent" />
-          
-          <div className="relative z-10">
-            <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight mb-4 leading-tight">
-              Ready to <span className="gradient-text">boost your SEO?</span>
-            </h3>
-            <p className="text-sm sm:text-base text-slate-300 max-w-lg mx-auto mb-8 font-medium leading-relaxed">
-              Join thousands of developers and marketers who audit smarter, ship faster, and rank higher. Zero setup required.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <button
-                onClick={async () => {
-                  if (session?.user?.email === "demo@seoptimised.com") {
-                    await signOut({ redirect: false });
-                  }
-                  signIn("google", { callbackUrl: "/dashboard" });
-                }}
-                className="px-8 py-4 text-base font-extrabold text-white bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 rounded-2xl transition-all duration-200 cursor-pointer shadow-xl shadow-teal-500/30 hover:shadow-teal-500/40 hover:-translate-y-0.5 active:translate-y-0"
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-0"
+          style={{
+            background: useMotionTemplate`
+              radial-gradient(
+                350px circle at ${mouseX}px ${mouseY}px,
+                rgba(20, 184, 166, 0.15),
+                transparent 80%
+              )
+            `,
+          }}
+        />
+
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
+          <h3 className="text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight mb-4 leading-tight">
+            Ready to <span className="gradient-text">boost your SEO?</span>
+          </h3>
+          <p className="text-sm sm:text-base text-slate-300 max-w-lg mx-auto mb-8 font-medium leading-relaxed">
+            Join thousands of developers and marketers who audit smarter, ship faster, and rank higher. Zero setup required.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {session?.user ? (
+              <Link
+                href="/dashboard"
+                className="px-8 py-4 text-base font-extrabold text-white bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 rounded-2xl transition-all duration-200 cursor-pointer shadow-xl shadow-teal-500/30 hover:shadow-teal-500/40 hover:-translate-y-0.5 active:translate-y-0 inline-flex items-center gap-2 group/btn"
               >
-                Get Started Free Today
-              </button>
-              <button
-                onClick={() => signIn("credentials", { email: "demo@seoptimised.com", callbackUrl: "/dashboard" })}
-                className="px-8 py-4 text-base font-bold text-slate-200 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 rounded-2xl transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 shadow-lg"
-              >
-                Launch Instant Demo
-              </button>
-            </div>
+                Go to Dashboard
+                <svg
+                  className="w-4 h-4 transition-transform duration-200 group-hover/btn:translate-x-0.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </Link>
+            ) : (
+              <>
+                <button
+                  onClick={async () => {
+                    if (session?.user?.email === "demo@seoptimised.com") {
+                      await signOut({ redirect: false });
+                    }
+                    signIn("google", { callbackUrl: "/dashboard" });
+                  }}
+                  className="px-8 py-4 text-base font-extrabold text-white bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-400 hover:to-teal-500 rounded-2xl transition-all duration-200 cursor-pointer shadow-xl shadow-teal-500/30 hover:shadow-teal-500/40 hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  Get Started Free Today
+                </button>
+                <button
+                  onClick={() => signIn("credentials", { email: "demo@seoptimised.com", callbackUrl: "/dashboard" })}
+                  className="px-8 py-4 text-base font-bold text-slate-200 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/30 rounded-2xl transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:translate-y-0 shadow-lg"
+                >
+                  Launch Instant Demo
+                </button>
+              </>
+            )}
           </div>
-        </motion.div>
-      </div>
- 
-      {/* Divider */}
-      <div className="h-px bg-gradient-to-r from-transparent via-white/10 to-transparent mx-4 sm:mx-8" />
+        </div>
+      </motion.div>
  
       {/* Footer content */}
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
